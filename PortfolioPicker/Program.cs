@@ -23,8 +23,8 @@ namespace PortfolioPicker
             //
             // follow a strategy to produce buy orders
             //
-            Console.WriteLine("Buy Orders:");
             var orders = Strategy.Perform<FourFund>();
+            Console.WriteLine("Buy Orders:");
             foreach (var o in orders)
                 Console.WriteLine("\t" + o);
 
