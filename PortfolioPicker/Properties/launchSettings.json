@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "PortfolioPicker": {
+      "commandName": "Project",
+      "commandLineArgs": "demo_finance_data\\data.json",
+      "workingDirectory": "C:\\code"
+    }
+  }
+}

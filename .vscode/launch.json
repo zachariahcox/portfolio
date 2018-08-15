@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "PortfolioPicker Debug",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/PortfolioPicker/bin/Debug/netcoreapp2.0/PortfolioPicker.dll",
+            "args": ["C:/code/demo_finance_data/data.json"],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "logging": {
+                "moduleLoad": false
+             },
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}
