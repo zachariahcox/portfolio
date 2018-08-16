@@ -7,6 +7,7 @@
             "type": "process",
             "args": [
                 "build",
+                // "--verbosity", "d",
                 "${workspaceFolder}/PortfolioPicker/PortfolioPicker.csproj",
                 "/property:GenerateFullPaths=true"
             ],
