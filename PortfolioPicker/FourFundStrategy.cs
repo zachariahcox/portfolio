@@ -1,17 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 
 namespace PortfolioPicker
 {
-    public class FourFund : Strategy
+    public class FourFundStrategy : Strategy
     {
+        //
+        // Strategy: 
         // accounts prefer funds sponsored by their brokerage
         // roth accounts should prioritize stocks over bonds
         // taxable accounts should prioritize international assets over domestic
         // 401k accounts should hold as many bonds as possible and avoid international assets
+        //
 
         //
         // basic ratios: 
@@ -21,7 +22,7 @@ namespace PortfolioPicker
         readonly static decimal international_stocks_ratio = 0.4m;
         readonly static decimal international_bonds_ratio = 0.3m;
 
-        public override IReadOnlyList<Order> Perform()
+        public override IReadOnlyList<Order> Perform(Data d)
         {
             // 
             // aggregate: 
@@ -30,7 +31,7 @@ namespace PortfolioPicker
             var total_value = 0m;
             var total_roth = 0m;
             var total_taxable = 0m;
-            Data.GetAccounts().AsParallel().ForAll((a) =>
+            d.GetAccounts().AsParallel().ForAll((a) =>
             {
                 total_value += a.value;
 
@@ -50,11 +51,11 @@ namespace PortfolioPicker
             var bonds_i = bonds_t * international_bonds_ratio;
 
             //
-            // pick some funds
+            // pick funds
             // 
             Fund find_fund(bool domestic, bool stock)
             {
-                var f = Data.GetFunds()
+                var f = d.GetFunds()
                 .Where(x => x.domestic == domestic && x.stock == stock)
                 .Aggregate((l, r) => l.expense_ratio < r.expense_ratio ? l : r);
                 Debug.Assert(f != null);
@@ -64,7 +65,6 @@ namespace PortfolioPicker
             var stock_i_fund = find_fund(domestic: false, stock: true);
             var bonds_d_fund = find_fund(domestic: true, stock: false);
             var bonds_i_fund = find_fund(domestic: false, stock: false);
-
 
             //
             // compose buy orders

@@ -18,11 +18,13 @@ namespace PortfolioPicker
         public AccountType type = AccountType.INVESTMENT;
         public decimal value = 0m;
         public IReadOnlyList<string> funds = null;
-        public IReadOnlyList<Fund> GetFunds()
+        public IReadOnlyList<Fund> resolvedFunds = null;
+
+        public void ResolveFunds(Data data)
         {
             if (funds == null)
-                return Data.GetBrokerageDefault(brokerage);
-            return Data.GetFunds(symbols: funds);
+                resolvedFunds = data.GetBrokerageDefault(brokerage);
+            resolvedFunds = data.GetFunds(symbols: funds);
         }
 
         public override string ToString()
@@ -33,7 +35,7 @@ namespace PortfolioPicker
                 "Value: " + String.Format("{0:c}", Convert.ToInt32(value)),
                 "Taxable?: " + taxable.ToString(),
                 "Type: " + type.ToString(),
-                "Funds: " + String.Join(", ", GetFunds())
+                "Funds: " + (funds != null ? String.Join(", ", funds) : "null")
             );
         }
     }
