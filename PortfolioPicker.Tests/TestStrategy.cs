@@ -38,8 +38,8 @@ namespace PortfolioPicker.Tests
         public void BuysFourFunds()
         {
             var s = new FourFundStrategy();
-            var orders = s.Perform(_demo_accounts);
-            Assert.Equal(4, orders.Count);
+            var portfolio = s.Perform(_demo_accounts);
+            Assert.Equal(4, portfolio.buy_orders.Count);
         }
     }
 }

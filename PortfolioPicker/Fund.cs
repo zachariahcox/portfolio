@@ -13,8 +13,6 @@ namespace PortfolioPicker
         public bool stock = true;
         public String exposure;
 
-
-
         public override string ToString()
         {
             return String.Format("{0} ({1})", symbol, expense_ratio);

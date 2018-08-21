@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -53,17 +54,19 @@ namespace PortfolioPicker
                     exposure="total",
                     domestic=true},
                 new Fund{ description="Vanguard Total International Bond Index Fund",
-                symbol="VTABX",
-                url="https://investor.vanguard.com/mutual-funds/profile/VTABX",
-                expense_ratio=0.11,
-                stock=false,
-                exposure="total",
-                domestic=false},
+                    symbol="VTABX",
+                    url="https://investor.vanguard.com/mutual-funds/profile/VTABX",
+                    expense_ratio=0.11,
+                    stock=false,
+                    exposure="total",
+                    domestic=false
+                }
             };
         }
 
+        
 
-        public override IReadOnlyList<Order> Perform(IReadOnlyList<Account> accounts)
+        public override Portfolio Perform(IReadOnlyList<Account> accounts)
         {
             // 
             // aggregate: 
@@ -83,7 +86,9 @@ namespace PortfolioPicker
                     total_taxable += a.value;
             });
 
+            //
             // compute basic ratios
+            //
             decimal stock_t = total_value * stocks_ratio;
             decimal stock_d = stock_t * (1m - international_stocks_ratio);
             decimal stock_i = stock_t * international_stocks_ratio;
@@ -110,7 +115,7 @@ namespace PortfolioPicker
             //
             // compose buy orders
             //
-            List<Order> rc = new List<Order>
+            List<Order> buy_orders = new List<Order>
             {
                 // domestic stock
                 new Order(fund: stock_d_fund, value: stock_d),
@@ -118,7 +123,18 @@ namespace PortfolioPicker
                 new Order(fund: bonds_d_fund, value: bonds_d),
                 new Order(fund:  bonds_i_fund, value: bonds_i),
             };
-            return rc;
+
+            //
+            // compute total er
+            //
+            var weighted_sum = buy_orders.Sum(x => x.fund.expense_ratio * (double)x.value);
+            var weight = buy_orders.Sum(x => (double)x.value);
+            var er = weighted_sum / weight;
+            return new Portfolio
+            {
+                buy_orders = buy_orders,
+                total_expense_ratio = er
+            };
         }
     }
 }

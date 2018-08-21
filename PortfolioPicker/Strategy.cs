@@ -4,6 +4,6 @@ namespace PortfolioPicker
 {
     public abstract class Strategy
     {
-        public abstract IReadOnlyList<Order> Perform(IReadOnlyList<Account> accounts);
+        public abstract Portfolio Perform(IReadOnlyList<Account> accounts);
     }
 }
