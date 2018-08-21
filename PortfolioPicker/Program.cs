@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 
 namespace PortfolioPicker
 {
@@ -30,19 +29,10 @@ namespace PortfolioPicker
             //
             // follow a strategy to produce buy orders
             //
-            var orders = strategy.Perform(data);
+            var orders = strategy.Perform(data.accounts);
             Console.WriteLine("Buy Orders:");
             foreach (var o in orders)
                 Console.WriteLine("\t" + o);
-
-// #if DEBUG
-//             //
-//             // annoying!
-//             // block the console from dropping
-//             //
-//             Console.WriteLine("DEBUG: program comlete: press any key to exit.");
-//             Console.Read();
-// #endif
         }
     }
 }

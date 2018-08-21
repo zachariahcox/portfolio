@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27703.2047
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortfolioPicker", "PortfolioPicker\PortfolioPicker.csproj", "{73CCF5E4-5FE0-490A-A923-B220F1352C1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortfolioPickerTest", "PortfolioPickerTest\PortfolioPickerTest.csproj", "{D9BA1B47-CC08-4843-921F-5A44DB54ED4E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortfolioPicker.Tests", "PortfolioPicker.Tests\PortfolioPicker.Tests.csproj", "{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,10 +17,10 @@ Global
 		{73CCF5E4-5FE0-490A-A923-B220F1352C1A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73CCF5E4-5FE0-490A-A923-B220F1352C1A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73CCF5E4-5FE0-490A-A923-B220F1352C1A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D9BA1B47-CC08-4843-921F-5A44DB54ED4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D9BA1B47-CC08-4843-921F-5A44DB54ED4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D9BA1B47-CC08-4843-921F-5A44DB54ED4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D9BA1B47-CC08-4843-921F-5A44DB54ED4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
