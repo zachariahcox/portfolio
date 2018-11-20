@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using PortfolioPicker.Strategies;
 using Xunit;
 
 namespace PortfolioPicker.Tests

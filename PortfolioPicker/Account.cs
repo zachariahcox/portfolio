@@ -22,9 +22,9 @@ namespace PortfolioPicker
 
         public void ResolveFunds(Data data)
         {
-            if (funds == null)
-                resolvedFunds = data.GetBrokerageDefault(brokerage);
-            resolvedFunds = data.GetFunds(symbols: funds);
+            //if (funds == null)
+            //    resolvedFunds = data.GetBrokerageDefault(brokerage);
+            //resolvedFunds = data.GetFunds(symbols: funds);
         }
 
         public override string ToString()
