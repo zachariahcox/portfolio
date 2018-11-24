@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PortfolioPicker
+namespace PortfolioPicker.App
 {
     public class Account
     {
@@ -17,11 +17,11 @@ namespace PortfolioPicker
 
         public IReadOnlyCollection<Fund> Funds { get; set; }
 
-        public void ResolveFunds(FundsByBrokerageMap allFunds)
+        public void ResolveFunds(IDictionary<string, IList<Fund>> allFunds)
         {
             if (Funds == null && allFunds != null)
             {
-                Funds = allFunds[this.Brokerage];
+                Funds = allFunds[Brokerage] as IReadOnlyCollection<Fund>;
             }
         }
 

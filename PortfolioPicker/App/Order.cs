@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace PortfolioPicker
+namespace PortfolioPicker.App
 {
     public class Order
     {

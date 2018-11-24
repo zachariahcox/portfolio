@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace PortfolioPicker.Strategies
+namespace PortfolioPicker.App.Strategies
 {
     public class FourFundStrategy : Strategy
     {
@@ -27,7 +27,7 @@ namespace PortfolioPicker.Strategies
 
         public override Portfolio Perform(
             IReadOnlyCollection<Account> accounts,
-            FundsByBrokerageMap funds)
+            IDictionary<string, IList<Fund>> funds)
         {
             // compute just the totals of everything 
             // for this, we don't actually care how much is in any particular account

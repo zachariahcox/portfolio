@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
-namespace PortfolioPicker
+namespace PortfolioPicker.App
 {
     public abstract class Strategy
     {
         public abstract Portfolio Perform(
             IReadOnlyCollection<Account> accounts,
-            FundsByBrokerageMap funds);
+            IDictionary<string, IList<Fund>> funds);
     }
 }
