@@ -1,21 +1,34 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace PortfolioPicker
 {
     public class Fund
     {
-        public String symbol;
-        public String description;
-        public String url; 
-        public double expense_ratio = -1.0;
-        public bool domestic = true;
-        public bool stock = true;
-        public String exposure;
+        public String Symbol { get; set; }
+        public String Description { get; set; }
+        public String URL { get; set; }
+        public double ExpenseRatio { get; set; } = -1.0;
+        public bool Domestic { get; set; } = true;
+        public bool Stock { get; set; } = true;
+        public String Exposure { get; set; }
+
+        public AssetLocation GetLocation()
+        {
+            return Domestic
+                ? AssetLocation.Domestic
+                : AssetLocation.International;
+        }
+
+        public AssetClass GetClass()
+        {
+            return Stock
+                ? AssetClass.Stock
+                : AssetClass.Bond;
+        }
 
         public override string ToString()
         {
-            return String.Format("{0} ({1})", symbol, expense_ratio);
+            return String.Format("{0} ({1})", Symbol, ExpenseRatio);
             //String.Join("\n\t", new List<String> {
             //    symbol,
             //    description,

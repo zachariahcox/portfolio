@@ -4,7 +4,7 @@
             "description": "Vanguard Total Stock Market Index Fund",
             "symbol": "VTSAX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/VTSAX",
-            "expense_ratio": 0.04,
+            "expenseRatio": 0.04,
             "stock": true,
             "exposure": "total",
             "domestic": true
@@ -13,7 +13,7 @@
             "description": "Vanguard Total International Stock Index Fund",
             "symbol": "VTIAX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/VTIAX",
-            "expense_ratio": 0.11,
+            "expenseRatio": 0.11,
             "stock": true,
             "exposure": "total",
             "domestic": false
@@ -22,7 +22,7 @@
             "description": "Vanguard Total Bond Market Index Fund",
             "symbol": "VBTLX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/VBTLX",
-            "expense_ratio": 0.05,
+            "expenseRatio": 0.05,
             "stock": false,
             "exposure": "total",
             "domestic": true
@@ -31,7 +31,7 @@
             "description": "Vanguard Total International Bond Index Fund",
             "symbol": "VTABX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/VTABX",
-            "expense_ratio": 0.11,
+            "expenseRatio": 0.11,
             "stock": false,
             "exposure": "total",
             "domestic": false
@@ -42,7 +42,7 @@
             "description": "Vanguard Institutional Index Fund Institutional Plus Shares",
             "symbol": "VIIIX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/portfolio/viiix",
-            "expense_ratio": 0.02,
+            "expenseRatio": 0.02,
             "stock": true,
             "exposure": "largecap",
             "domestic": true
@@ -51,7 +51,7 @@
             "description": "Vanguard Mid-Cap Index Fund Institutional Shares",
             "symbol": "VMCIX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/portfolio/VMCIX",
-            "expense_ratio": 0.04,
+            "expenseRatio": 0.04,
             "stock": true,
             "exposure": "midcap",
             "domestic": true
@@ -60,7 +60,7 @@
             "description": "Vanguard Small-Cap Index Fund Institutional Shares",
             "symbol": "VSCIX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/portfolio/VSCIX",
-            "expense_ratio": 0.04,
+            "expenseRatio": 0.04,
             "stock": true,
             "exposure": "smallcap",
             "domestic": true
@@ -69,7 +69,7 @@
             "description": "Vanguard Developed Markets Index Fund Institutional Shares",
             "symbol": "VTMNX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/portfolio/vtmnx",
-            "expense_ratio": 0.06,
+            "expenseRatio": 0.06,
             "stock": true,
             "exposure": "total",
             "domestic": false
@@ -78,10 +78,30 @@
             "description": "Vanguard Total Bond Market Index Fund",
             "symbol": "VBTIX",
             "url": "https://investor.vanguard.com/mutual-funds/profile/VBTIX",
-            "expense_ratio": 0.04,
+            "expenseRatio": 0.04,
             "stock": false,
             "exposure": "total",
             "domestic": true
+        }
+    ],
+    "Fidelity": [
+        {
+            "description": "Fidelity Zero Total Market Index Fund",
+            "symbol": "fzrox",
+            "url": "https://fundresearch.fidelity.com/mutual-funds/summary/31635T708",
+            "expenseRatio": 0.00,
+            "stock": true,
+            "exposure": "total",
+            "domestic": true
+        },
+        {
+            "description": "Fidelity ZERO International Index Fund ",
+            "symbol": "fzilx",
+            "url": "https://fundresearch.fidelity.com/mutual-funds/summary/31635T609",
+            "expenseRatio": 0.00,
+            "stock": true,
+            "exposure": "total",
+            "domestic": false
         }
     ]
 }

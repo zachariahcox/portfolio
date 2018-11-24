@@ -20,15 +20,6 @@ namespace PortfolioPicker
 #if DEBUG
             data.Print();
 #endif
-            // load funds data
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "PortfolioPicker.data.funds.json";
-            IReadOnlyDictionary<string, IReadOnlyCollection<Fund>> fundsByBrokerage = null;
-            using (var stream = assembly.GetManifestResourceStream(resourceName))
-            using (var reader = new StreamReader(stream))
-            {
-                fundsByBrokerage = JsonConvert.DeserializeObject<IReadOnlyDictionary<string, IReadOnlyCollection<Fund>>>(reader.ReadToEnd());
-            }
 
             // Load strategy
             var strategy_name = args.Length < 2 ? "FourFundStrategy" : args[1];
@@ -36,7 +27,7 @@ namespace PortfolioPicker
             var strategy = (Strategy)Activator.CreateInstance(strategy_type);
 
             // follow a strategy to produce buy orders
-            var portfolio = strategy.Perform(data.accounts, funds: fundsByBrokerage);
+            var portfolio = strategy.Perform(data.Accounts, funds: Data.Funds());
             Console.WriteLine("Buy Orders:");
             foreach (var o in portfolio.buy_orders)
                 Console.WriteLine("\t" + o);

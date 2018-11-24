@@ -4,19 +4,20 @@ using System.Linq;
 
 namespace PortfolioPicker.Strategies
 {
-    internal class DataRow
-    {
-        public AccountType type;
-        public string brokerage;
-        public IList<Fund> funds;
-    }
     public class FourFundStrategy : Strategy
     {
         // Strategy: 
-        // accounts prefer funds sponsored by their brokerage
-        // roth accounts should prioritize stocks over bonds
-        // taxable accounts should prioritize international assets over domestic
-        // 401k accounts should hold as many bonds as possible and avoid international assets
+        // * accounts prefer funds sponsored by their brokerage
+        // * roth accounts should prioritize stocks over bonds
+        // * taxable accounts should prioritize international assets over domestic
+        // * 401k accounts should prioritize bonds and avoid international assets
+        //
+        // dom stocks -> roth, tax, 401k
+        // int stocks -> tax, roth, 401k
+        // dom bonds  -> 401k, roth, tax
+        // int bonds  -> tax, 401k, roth
+
+
 
         // basic ratios: 
         private static readonly decimal stocks_ratio = 0.9m;
@@ -25,26 +26,25 @@ namespace PortfolioPicker.Strategies
         private static readonly decimal international_bonds_ratio = 0.3m;
 
         public override Portfolio Perform(
-            IReadOnlyList<Account> accounts,
-            IReadOnlyDictionary<string, IReadOnlyCollection<Fund>> funds)
+            IReadOnlyCollection<Account> accounts,
+            FundsByBrokerageMap funds)
         {
             // compute just the totals of everything 
             // for this, we don't actually care how much is in any particular account
             var total_value = 0m;
             var total_roth = 0m;
             var total_taxable = 0m;
-
-
-
             accounts.AsParallel().ForAll((a) =>
             {
-                total_value += a.value;
+                total_value += a.Value;
 
-                if (a.type == AccountType.ROTH)
-                    total_roth += a.value;
+                if (a.AccountType == AccountType.ROTH)
+                    total_roth += a.Value;
 
-                if (a.taxable)
-                    total_taxable += a.value;
+                if (a.Taxable)
+                    total_taxable += a.Value;
+
+                a.ResolveFunds(funds);
             });
 
             // compute overall exposures we want to acheive
@@ -54,138 +54,99 @@ namespace PortfolioPicker.Strategies
             var bonds_total = total_value * bonds_ratio;
             var bonds_domestic = bonds_total * (1m - international_bonds_ratio);
             var bonds_international = bonds_total * international_bonds_ratio;
-            var exposures = new Dictionary<bool, Dictionary<bool, decimal>>
+            var exposures = new List<Exposure>
             {
-                { true, new Dictionary<bool, decimal>
-                    {
-                        {false, stock_international},
-                        {true, stock_domestic },
-                    } },
-                {false, new Dictionary<bool, decimal>
-                {
-                    {false, bonds_international},
-                    {true, bonds_domestic },
-                } }
+                new Exposure(
+                    AssetClass.Stock, 
+                    AssetLocation.Domestic, 
+                    stock_domestic,
+                    new[]{AccountType.ROTH,  AccountType.TAXABLE, AccountType.CORPORATE}),
+                new Exposure(
+                    AssetClass.Stock, 
+                    AssetLocation.International, 
+                    stock_international,
+                    new[]{AccountType.TAXABLE,  AccountType.ROTH, AccountType.CORPORATE}),
+                new Exposure(
+                    AssetClass.Bond, 
+                    AssetLocation.Domestic, 
+                    bonds_domestic,
+                    new[]{AccountType.CORPORATE,  AccountType.ROTH, AccountType.TAXABLE}),
+                new Exposure(
+                    AssetClass.Bond, 
+                    AssetLocation.International, 
+                    bonds_international,
+                    new[]{AccountType.TAXABLE,  AccountType.CORPORATE, AccountType.ROTH}),
             };
-            // pick funds
-            Fund find_fund(
-                    string brokerage,
-                    bool domestic,
-                    bool stock)
+
+            // PRODUCE BUY ORDERS
+            var orders = new List<Order>();
+            foreach (var e in exposures)
             {
-                // return the fund that meets the criteria with the lowest expense ratio
-                if (funds.TryGetValue(brokerage, out var brokerageFunds))
+                var ec = e.Class;
+                var el = e.Location;
+
+                // find accounts with access to the right funds
+                var suitableAccounts = accounts.Where(a => a.GetFund(ec, el) != null).ToList();
+                if (suitableAccounts.Count == 0)
                 {
-                    return brokerageFunds
-                            .Where(x => x.domestic == domestic && x.stock == stock)
-                            .OrderBy(x => x.expense_ratio)
-                            .FirstOrDefault();
+                    var ecName = Enum.GetName(ec.GetType(), ec);
+                    var elName = Enum.GetName(el.GetType(), el);
+                    var m = $"Error: Cannot execute strategy: no account has access to asset class: {ecName}, {elName}";
+                    throw new Exception(m);
                 }
-                return null;
-            }
 
-
-            decimal ComputeValue(
-                Account a,
-                bool domestic,
-                bool stock)
-            {
-                if (domestic)
+                // buy as much as possible from prefered accounts, in order
+                var remainder = e.Value;
+                foreach(var t in e.AccountTypesPreference)
                 {
-                    if (stock)
+                    foreach(var a in accounts.Where(a => a.AccountType == t))
                     {
-                        stock_domestic -= a.value;
-                        return stock_domestic;
-                    }
-                    else
-                    {
-                        bonds_domestic -= a.value;
-                        return bonds_domestic;
-                    }
-                }
-                else
-                {
-                    if (stock)
-                    {
-                        stock_international -= a.value;
-                        return stock_international;
-                    }
-                    else
-                    {
-                        bonds_international -= a.value;
-                        return bonds_international;
-                    }
-                }
-            }
-
-
-            var buy_orders = new List<Order>();
-            foreach (var a in accounts)
-            {
-                foreach (var domestic in new[] { true, false })
-                {
-                    foreach (var stock in new[] { true, false })
-                    {
-                        var fund = find_fund(brokerage: a.brokerage, domestic: domestic, stock: stock);
-                        if (fund != null)
+                        var f = a.GetFund(ec, el);
+                        var purchaseValue = Math.Min(a.Value, remainder);
+                        if(purchaseValue > 0)
                         {
-                            buy_orders.Add(new Order
+                            orders.Add(new Order
                             {
-                                account = a,
-                                fund = fund,
-                                value = ComputeValue(a, domestic, stock),
+                                Account = a,
+                                Value = purchaseValue,
+                                Fund = f
                             });
+
+                            // update remainders and balances
+                            a.Value -= purchaseValue;
+                            remainder -= purchaseValue;
+                            if (remainder <= 0)
+                            {
+                                break; // stop looking through accounts
+                            }
                         }
                     }
+
+                    if (remainder <= 0)
+                    {
+                        break; // stop looking through account types
+                    }
                 }
-            }
 
-
-            decimal buy(ref decimal account_balance, decimal allotment)
-            {
-                var purchase_value = Math.Min(account_balance, allotment);
-                account_balance -= purchase_value;
-                allotment -= purchase_value;
-                return purchase_value;
-            }
-            foreach (var a in accounts)
-            {
-                switch (a.type)
+                // ensure that we allocated all funds
+                if (remainder > 0)
                 {
-                    case AccountType.CORPORATE:
-                        foreach (var stock in new[] { false, true })
-                            foreach (var domestic in new[] { true, false })
-                            {
-                                var b = buy(ref a.value, exposures[stock][domestic]);
-                                if (b > 0)
-                                {
-                                    var f = find_fund(a.brokerage, domestic, stock);
-                                    buy_orders.Add(new Order
-                                    {
-                                        account = a,
-                                        value = b,
-                                        fund = f
-                                    });
-                                }
-                            }
-                        
-                        break;
-                    case AccountType.ROTH:
-                        break;
-                    case AccountType.INVESTMENT:
-                        break;
+                    var ecName = Enum.GetName(ec.GetType(), ec);
+                    var elName = Enum.GetName(el.GetType(), el);
+                    var m = $"Error: could not spend all money alloted to asset class: {ecName}, {elName}";
+                    throw new Exception(m);
                 }
             }
 
             // compute total er
-            var weighted_sum = buy_orders.Sum(x => x.fund.expense_ratio * (double)x.value);
-            var weight = buy_orders.Sum(x => (double)x.value);
-            var er = weighted_sum / weight;
+            var weighted_sum = orders.Sum(x => x.Fund?.ExpenseRatio * (double)x.Value);
+            var weight = orders.Sum(x => (double)x.Value);
+            var er = weighted_sum.Value / weight;
 
             // return
             return new Portfolio
             {
-                buy_orders = buy_orders,
+                buy_orders = orders,
                 total_expense_ratio = er
             };
         }
