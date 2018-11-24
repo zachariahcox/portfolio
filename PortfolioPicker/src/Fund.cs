@@ -29,11 +29,6 @@ namespace PortfolioPicker
         public override string ToString()
         {
             return String.Format("{0} ({1})", Symbol, ExpenseRatio);
-            //String.Join("\n\t", new List<String> {
-            //    symbol,
-            //    description,
-            //    "Expense Ratio: " + expense_ratio.ToString(),
-            //    "Prospectus: " + url});
         }
     }
 }

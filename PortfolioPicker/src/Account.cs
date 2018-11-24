@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace PortfolioPicker
 {
@@ -27,13 +26,13 @@ namespace PortfolioPicker
         }
 
         public Fund GetFund(
-            AssetClass c, 
+            AssetClass c,
             AssetLocation l)
         {
             var best = (Fund)null;
-            foreach(var f in Funds)
+            foreach (var f in Funds)
             {
-                if (f.GetLocation() == l && 
+                if (f.GetLocation() == l &&
                     f.GetClass() == c &&
                     (best == null || f.ExpenseRatio < best.ExpenseRatio))
                 {

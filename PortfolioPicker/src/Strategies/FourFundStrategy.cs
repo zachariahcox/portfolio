@@ -91,7 +91,7 @@ namespace PortfolioPicker.Strategies
                 {
                     var ecName = Enum.GetName(ec.GetType(), ec);
                     var elName = Enum.GetName(el.GetType(), el);
-                    var m = $"Error: Cannot execute strategy: no account has access to asset class: {ecName}, {elName}";
+                    var m = $"Error: Cannot execute strategy: no account has access to asset type: {ecName}, {elName}";
                     throw new Exception(m);
                 }
 
@@ -133,7 +133,7 @@ namespace PortfolioPicker.Strategies
                 {
                     var ecName = Enum.GetName(ec.GetType(), ec);
                     var elName = Enum.GetName(el.GetType(), el);
-                    var m = $"Error: could not spend all money alloted to asset class: {ecName}, {elName}";
+                    var m = $"Error: could not spend all money alloted to asset type: {ecName}, {elName}";
                     throw new Exception(m);
                 }
             }
@@ -146,8 +146,8 @@ namespace PortfolioPicker.Strategies
             // return
             return new Portfolio
             {
-                buy_orders = orders,
-                total_expense_ratio = er
+                BuyOrders = orders,
+                ExpenseRatio = er
             };
         }
     }

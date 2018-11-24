@@ -6,7 +6,7 @@ namespace PortfolioPicker
 {
     public class Portfolio
     {
-        public double total_expense_ratio = 0.0;
-        public IReadOnlyList<Order> buy_orders;
+        public double ExpenseRatio = 0.0;
+        public IReadOnlyList<Order> BuyOrders;
     }
 }

@@ -29,7 +29,7 @@ namespace PortfolioPicker
             // follow a strategy to produce buy orders
             var portfolio = strategy.Perform(data.Accounts, funds: Data.Funds());
             Console.WriteLine("Buy Orders:");
-            foreach (var o in portfolio.buy_orders)
+            foreach (var o in portfolio.BuyOrders)
                 Console.WriteLine("\t" + o);
         }
     }
