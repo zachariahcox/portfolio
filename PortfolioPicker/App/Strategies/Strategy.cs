@@ -6,6 +6,6 @@ namespace PortfolioPicker.App
     {
         public abstract Portfolio Perform(
             IReadOnlyCollection<Account> accounts,
-            IDictionary<string, IList<Fund>> funds);
+            IReadOnlyDictionary<string, IReadOnlyList<Fund>> funds);
     }
 }

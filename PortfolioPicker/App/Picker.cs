@@ -1,7 +1,9 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace PortfolioPicker.App
@@ -10,7 +12,7 @@ namespace PortfolioPicker.App
     {
         public IReadOnlyList<Account> Accounts { get; private set; }
 
-        public static IDictionary<string, IList<Fund>> Funds { get; private set; }
+        public static IReadOnlyDictionary<string, IReadOnlyList<Fund>> Funds { get; private set; }
 
         public Strategy Strategy { get; private set; }
 
@@ -36,9 +38,16 @@ namespace PortfolioPicker.App
                 using (var stream = assembly.GetManifestResourceStream(resourceName))
                 using (var reader = new StreamReader(stream))
                 {
-                    Funds = JsonConvert.DeserializeObject<IDictionary<string, IList<Fund>>>(reader.ReadToEnd());
+                    var d = JsonConvert.DeserializeObject<IDictionary<string, IReadOnlyList<Fund>>>(reader.ReadToEnd());
+                    Funds = d as IReadOnlyDictionary<string, IReadOnlyList<Fund>>;
                 }
             }
+        }
+
+        public Picker(string accountsData, string strategyName)
+            : this(JsonConvert.DeserializeObject<IList<Account>>(accountsData) as IReadOnlyList<Account>,
+                   strategyName)
+        {
         }
 
         public Portfolio Pick()

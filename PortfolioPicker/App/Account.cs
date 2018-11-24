@@ -15,13 +15,13 @@ namespace PortfolioPicker.App
 
         public decimal Value { get; set; } = 0m;
 
-        public IReadOnlyCollection<Fund> Funds { get; set; }
+        public IReadOnlyList<Fund> Funds { get; set; }
 
-        public void ResolveFunds(IDictionary<string, IList<Fund>> allFunds)
+        public void ResolveFunds(IReadOnlyDictionary<string, IReadOnlyList<Fund>> allFunds)
         {
             if (Funds == null && allFunds != null)
             {
-                Funds = allFunds[Brokerage] as IReadOnlyCollection<Fund>;
+                Funds = allFunds[Brokerage];
             }
         }
 

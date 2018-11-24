@@ -27,7 +27,7 @@ namespace PortfolioPicker.App.Strategies
 
         public override Portfolio Perform(
             IReadOnlyCollection<Account> accounts,
-            IDictionary<string, IList<Fund>> funds)
+            IReadOnlyDictionary<string, IReadOnlyList<Fund>> funds)
         {
             // compute just the totals of everything 
             // for this, we don't actually care how much is in any particular account
