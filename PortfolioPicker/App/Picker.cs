@@ -44,7 +44,9 @@ namespace PortfolioPicker.App
             }
         }
 
-        public Picker(string accountsData, string strategyName)
+        public Picker(
+            string accountsData, 
+            string strategyName)
             : this(JsonConvert.DeserializeObject<IList<Account>>(accountsData) as IReadOnlyList<Account>,
                    strategyName)
         {
