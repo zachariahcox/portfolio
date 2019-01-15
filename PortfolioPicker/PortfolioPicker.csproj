@@ -11,6 +11,9 @@
     <EmbeddedResource Remove="wwwroot\**" />
     <None Remove="wwwroot\**" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Remove="App\data\funds.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="App\data\funds.json" />

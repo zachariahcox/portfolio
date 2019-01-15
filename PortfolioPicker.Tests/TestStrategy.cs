@@ -74,5 +74,24 @@ namespace PortfolioPicker.Tests
             var p = new Picker(accounts, "FourFundStrategy");
             Assert.Throws<Exception>(() => p.Pick());
         }
+
+        [Fact]
+        public void FromJson()
+        {
+            var accounts = @"
+            [{
+              'name': 'Roth',
+              'brokerage': 'Vanguard',
+              'type': 'ROTH',
+              'taxable': false,
+              'value': 100.0
+            }]";
+            
+            var p = new Picker(accounts, "FourFundStrategy");
+            var portfolio = p.Pick();
+            Assert.Equal(4, portfolio.BuyOrders.Count);
+            var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
+            Assert.Equal(100, actualValue);
+        }
     }
 }

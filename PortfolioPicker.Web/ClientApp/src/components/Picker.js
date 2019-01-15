@@ -11,14 +11,23 @@ export class Picker extends Component {
             loading: true
         };
 
-        // fetch sample portfolio
-        fetch('api/Picker')
+        this.handleUploadData = this.handleUploadData.bind(this);
+    }
+
+    handleUploadData(ev) {
+
+        ev.preventDefault();
+
+        // data payload
+        const data = new FormData();
+        data.append('file', this.uploadInput.files[0]);
+        data.append('filename', 'data.json');
+        fetch('api/picker', { method: 'POST', body: data })
             .then(response => response.json())
-            .then(result => {
+            .then(portfolio => {
                 this.setState({
-                    expenseRatio: result.expenseRatio,
-                    buyOrders: result.buyOrders.map(o => 
-                    {
+                    expenseRatio: portfolio.expenseRatio,
+                    buyOrders: portfolio.buyOrders.map(o => {
                         var rc = new Object();
                         rc.fund = o.fund.symbol;
                         rc.account = o.account.name;
@@ -30,10 +39,10 @@ export class Picker extends Component {
             });
     }
 
-    static renderTable(er, buyOrders) {
+    static renderTable(expenseRatio, buyOrders) {
         return (
             <div>
-                <h2>Total Expense Ratio: {er}</h2>
+                <h2>Total Expense Ratio: {expenseRatio}</h2>
                 <h3>Buy Orders:</h3>
                 <table className='table'>
                     <thead>
@@ -44,7 +53,7 @@ export class Picker extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {buyOrders.map(o => 
+                        {buyOrders.map(o =>
                             <tr key={o.value}>
                                 <td>{o.fund}</td>
                                 <td>{o.account}</td>
@@ -58,15 +67,26 @@ export class Picker extends Component {
     }
 
     render() {
-        let contents = this.state.loading
+        let results = this.state.loading
             ? <p><em>Loading...</em></p>
             : Picker.renderTable(this.state.expenseRatio, this.state.buyOrders);
 
         return (
             <div>
                 <h1>Suggested Portfolio</h1>
-                <p>A buggy robot did its best:</p>
-                {contents}
+                <p>Upload your data</p>
+                <form onSubmit={this.handleUploadData}>
+                    <div>
+                        <input
+                            ref={(ref) => { this.uploadInput = ref; }}
+                            type="file" />
+                    </div>
+                    <br />
+                    <div>
+                        <button>Upload</button>
+                    </div>
+                </form>
+                {results}
             </div>
         );
     }
