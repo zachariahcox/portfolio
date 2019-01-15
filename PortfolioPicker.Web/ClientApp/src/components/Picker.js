@@ -28,10 +28,11 @@ export class Picker extends Component {
                 this.setState({
                     expenseRatio: portfolio.expenseRatio,
                     buyOrders: portfolio.buyOrders.map(o => {
-                        var rc = new Object();
-                        rc.fund = o.fund.symbol;
-                        rc.account = o.account.name;
-                        rc.value = o.value;
+                        var rc = {
+                            fund: (o.fund) ? o.fund.symbol : "unallocated",
+                            account: o.account.name,
+                            value: o.value
+                        };
                         return rc;
                     }),
                     loading: false
