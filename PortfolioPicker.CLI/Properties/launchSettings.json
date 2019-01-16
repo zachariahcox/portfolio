@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PortfolioPicker.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "c:\\Users\\zacox\\Documents\\accounts.json"
+    }
+  }
+}

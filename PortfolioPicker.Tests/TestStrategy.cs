@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using PortfolioPicker;
 using PortfolioPicker.App;
@@ -23,7 +24,7 @@ namespace PortfolioPicker.Tests
                 },
             };
 
-            var p = new Picker(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts, "FourFundStrategy");
             var portfolio = p.Pick();
             Assert.Equal(4, portfolio.BuyOrders.Count);
             var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
@@ -52,7 +53,7 @@ namespace PortfolioPicker.Tests
                 }
             };
             var total_value = accounts.Sum(a => a.Value);
-            var p = new Picker(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts, "FourFundStrategy");
             Assert.Throws<Exception>(() => p.Pick());
         }
 
@@ -71,7 +72,7 @@ namespace PortfolioPicker.Tests
             };
 
             var total_value = accounts.Sum(a => a.Value);
-            var p = new Picker(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts, "FourFundStrategy");
             Assert.Throws<Exception>(() => p.Pick());
         }
 
@@ -87,11 +88,91 @@ namespace PortfolioPicker.Tests
               'value': 100.0
             }]";
             
-            var p = new Picker(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts, "FourFundStrategy");
             var portfolio = p.Pick();
             Assert.Equal(4, portfolio.BuyOrders.Count);
             var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
             Assert.Equal(100, actualValue);
+        }
+
+        [Fact]
+        public void MixedJson()
+        {
+            var accounts = @"
+                [
+                    {
+                      'name': 'SAS 401k',
+                      'brokerage': 'SAS',
+                      'type': 'CORPORATE',
+                      'taxable': false,
+                      'value': 100000.0
+                    },
+                    {
+                      'name': 'Zach Roth',
+                      'brokerage': 'Vanguard',
+                      'type': 'ROTH',
+                      'taxable': false,
+                      'value': 100000.0
+                    },
+                    {
+                      'name': 'Llael Roth',
+                      'brokerage': 'Vanguard',
+                      'type': 'ROTH',
+                      'taxable': false,
+                      'value': 100000.0
+                    },
+                    {
+                      'name': 'Llael Investment',
+                      'brokerage': 'Vanguard',
+                      'type': 'INVESTMENT',
+                      'taxable': true,
+                      'value': 100000.0
+                    },
+                    {
+                      'name': 'Zach Investment',
+                      'brokerage': 'Fidelity',
+                      'type': 'INVESTMENT',
+                      'taxable': true,
+                      'value': 100000.0
+                    }
+                ]";
+
+            var expectedTotal = 500000m;
+            var p = Picker.Create(accounts, "FourFundStrategy");
+            var portfolio = p.Pick();
+            Assert.Equal(8, portfolio.BuyOrders.Count);
+            var actualTotal = portfolio.BuyOrders.Sum(o => o.Value);
+            Assert.Equal(expectedTotal, actualTotal);
+        }
+
+        private IReadOnlyDictionary<string, IReadOnlyList<Fund>> GetFundData()
+        {
+            Fund CreateFund(string symbol, double er, bool stock, bool domestic)
+            {
+                return new Fund
+                {
+                    Symbol = symbol,
+                    ExpenseRatio = er,
+                    Stock = stock,
+                    Domestic = domestic
+                };
+            }
+
+            var fakeFunds = new List<Fund> {
+                CreateFund("a", 1, true, true),
+                CreateFund("b", 2, true, false),
+                CreateFund("c", 3, false, true),
+                CreateFund("d", 4, false, false),
+            };
+
+            var rc = new Dictionary<string, IReadOnlyList<Fund>>
+            {
+                {"Vanguard", fakeFunds},
+                {"Fidelity", fakeFunds},
+                {"SAS", fakeFunds},
+            };
+
+            return new ReadOnlyDictionary<string, IReadOnlyList<Fund>>(rc);
         }
     }
 }

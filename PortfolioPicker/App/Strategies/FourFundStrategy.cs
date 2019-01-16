@@ -34,7 +34,7 @@ namespace PortfolioPicker.App.Strategies
             var total_value = 0m;
             var total_roth = 0m;
             var total_taxable = 0m;
-            accounts.AsParallel().ForAll((a) =>
+            foreach (var a in accounts)
             {
                 total_value += a.Value;
 
@@ -45,7 +45,7 @@ namespace PortfolioPicker.App.Strategies
                     total_taxable += a.Value;
 
                 a.ResolveFunds(funds);
-            });
+            }
 
             // compute overall exposures we want to acheive
             var stock_total = total_value * stocks_ratio;
