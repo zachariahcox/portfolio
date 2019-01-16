@@ -29,10 +29,24 @@ export class Picker extends Component {
                     expenseRatio: portfolio.expenseRatio,
                     buyOrders: portfolio.buyOrders.map(o => {
                         var rc = {
-                            fund: (o.fund) ? o.fund.symbol : "unallocated",
+                            fund: o.fund,
                             account: o.account.name,
-                            value: o.value
+                            value: o.value,
+                            symbol: "",
+                            url: "",
+                            description: "",
+                            domestic: null,
+                            stock: null
                         };
+
+                        const f = o.fund;
+                        if (f) {
+                            rc.symbol = f.symbol;
+                            rc.url = f.url;
+                            rc.description = f.description;
+                            rc.domestic = f.domestic;
+                            rc.stock = f.stock;
+                        }
                         return rc;
                     }),
                     loading: false
@@ -48,7 +62,8 @@ export class Picker extends Component {
                 <table className='table'>
                     <thead>
                         <tr>
-                            <th>Fund</th>
+                            <th>Symbol</th>
+                            <th>Class</th>
                             <th>Account</th>
                             <th>Value (USD)</th>
                         </tr>
@@ -56,7 +71,8 @@ export class Picker extends Component {
                     <tbody>
                         {buyOrders.map(o =>
                             <tr key={o.value}>
-                                <td>{o.fund}</td>
+                                <td><a href={o.url}>{o.symbol}</a></td>
+                                <td>{o.stock ? "Stock" : "Bond"}</td>
                                 <td>{o.account}</td>
                                 <td>{o.value}</td>
                             </tr>

@@ -96,53 +96,48 @@ namespace PortfolioPicker.Tests
         }
 
         [Fact]
-        public void MixedJson()
+        public void Complex()
         {
-            var accounts = @"
-                [
-                    {
-                      'name': 'SAS 401k',
-                      'brokerage': 'SAS',
-                      'type': 'CORPORATE',
-                      'taxable': false,
-                      'value': 100000.0
-                    },
-                    {
-                      'name': 'Zach Roth',
-                      'brokerage': 'Vanguard',
-                      'type': 'ROTH',
-                      'taxable': false,
-                      'value': 100000.0
-                    },
-                    {
-                      'name': 'Llael Roth',
-                      'brokerage': 'Vanguard',
-                      'type': 'ROTH',
-                      'taxable': false,
-                      'value': 100000.0
-                    },
-                    {
-                      'name': 'Llael Investment',
-                      'brokerage': 'Vanguard',
-                      'type': 'INVESTMENT',
-                      'taxable': true,
-                      'value': 100000.0
-                    },
-                    {
-                      'name': 'Zach Investment',
-                      'brokerage': 'Fidelity',
-                      'type': 'INVESTMENT',
-                      'taxable': true,
-                      'value': 100000.0
-                    }
-                ]";
-
-            var expectedTotal = 500000m;
-            var p = Picker.Create(accounts, "FourFundStrategy");
+            var accounts = GetAccountData();
+            var brokerages = GetFundData();
+            var expectedTotal = accounts.Count * 10000m;
+            var p = Picker.Create(accounts, brokerages, "FourFundStrategy");
             var portfolio = p.Pick();
-            Assert.Equal(8, portfolio.BuyOrders.Count);
+            Assert.Equal(12, portfolio.BuyOrders.Count);
+            Assert.Equal(1.59, portfolio.ExpenseRatio);
             var actualTotal = portfolio.BuyOrders.Sum(o => o.Value);
             Assert.Equal(expectedTotal, actualTotal);
+        }
+
+        private IReadOnlyList<Account> GetAccountData()
+        {
+            Account CreateAccount(
+                string brokerage,
+                AccountType type,
+                bool taxable,
+                decimal value
+                )
+            {
+                return new Account
+                {
+                    Brokerage = brokerage,
+                    Name = $"My {brokerage} account",
+                    AccountType = type,
+                    Taxable = taxable,
+                    Value = value
+                };
+            }
+
+            var rc = new List<Account>();
+            foreach (var t in new[] { AccountType.CORPORATE, AccountType.ROTH, AccountType.TAXABLE })
+            {
+                foreach (var name in new [] { "a", "b", "c"})
+                {
+                    rc.Add(CreateAccount(name, t, t == AccountType.TAXABLE, 10000m));
+                }
+            }
+
+            return rc;
         }
 
         private IReadOnlyDictionary<string, IReadOnlyList<Fund>> GetFundData()
@@ -159,17 +154,17 @@ namespace PortfolioPicker.Tests
             }
 
             var fakeFunds = new List<Fund> {
-                CreateFund("a", 1, true, true),
-                CreateFund("b", 2, true, false),
-                CreateFund("c", 3, false, true),
-                CreateFund("d", 4, false, false),
+                CreateFund("m", 1, true, true),
+                CreateFund("n", 2, true, false),
+                CreateFund("o", 3, false, true),
+                CreateFund("p", 4, false, false),
             };
 
             var rc = new Dictionary<string, IReadOnlyList<Fund>>
             {
-                {"Vanguard", fakeFunds},
-                {"Fidelity", fakeFunds},
-                {"SAS", fakeFunds},
+                {"a", fakeFunds},
+                {"b", fakeFunds},
+                {"c", fakeFunds},
             };
 
             return new ReadOnlyDictionary<string, IReadOnlyList<Fund>>(rc);

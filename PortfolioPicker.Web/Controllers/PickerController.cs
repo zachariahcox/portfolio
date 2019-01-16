@@ -28,7 +28,7 @@ namespace PortfolioPicker.Web.Controllers
                 },
             };
 
-            var p = new Picker(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts, "FourFundStrategy");
             return p.Pick();
         }
 
@@ -44,7 +44,7 @@ namespace PortfolioPicker.Web.Controllers
             using (var reader = new StreamReader(file.OpenReadStream(), Encoding.UTF8))
             {
                 var data = await reader.ReadToEndAsync();
-                var p = new Picker(data, "FourFundStrategy");
+                var p = Picker.Create(data, "FourFundStrategy");
                 return p.Pick();
             }
         }
