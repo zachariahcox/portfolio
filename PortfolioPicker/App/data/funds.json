@@ -86,8 +86,8 @@
     ],
     "Fidelity": [
         {
-            "description": "Fidelity Zero Total Market Index Fund",
-            "symbol": "fzrox",
+            "description": "Fidelity ZERO Total Market Index Fund",
+            "symbol": "FZROX",
             "url": "https://fundresearch.fidelity.com/mutual-funds/summary/31635T708",
             "expenseRatio": 0.00,
             "stock": true,
@@ -96,12 +96,31 @@
         },
         {
             "description": "Fidelity ZERO International Index Fund ",
-            "symbol": "fzilx",
+            "symbol": "FZILX",
             "url": "https://fundresearch.fidelity.com/mutual-funds/summary/31635T609",
             "expenseRatio": 0.00,
             "stock": true,
             "exposure": "total",
             "domestic": false
+        },
+        {
+            "symbol": "FXNAX",
+            "description": "Fidelity U.S. Bond Index Fund",
+            "url": "https://fundresearch.fidelity.com/mutual-funds/summary/316146356",
+            "expenseRatio": 0.025,
+            "stock": false,
+            "exposure": "total",
+            "domestic": true
+        }
+    ],
+    "Microsoft": [
+        {   "symbol": "BTC LP IDX 2050N",
+            "description": "LifePath Dynamic 2050 Fund",
+            "url": "https://www.blackrock.com/investing/products/227823/blackrock-lifepath-2050-portfolioclass-i-fund",
+            "expenseRatio": 0.06,
+            "exposure": "total",
+            "stock": false,
+            "domestic": true
         }
     ]
 }

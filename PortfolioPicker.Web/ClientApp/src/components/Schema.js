@@ -9,9 +9,23 @@ export class Schema extends Component {
     }
 
     render() {
+
+        let exampleAccountString = `
+[{
+    'name': 'Roth',
+    'brokerage': 'Vanguard',
+    'type': 'ROTH',
+    'taxable': false,
+    'value': 100.0
+}]`;
+
         return (
             <div>
-                Detailed info about json schema
+                <em>Account data</em>
+                <pre>{exampleAccountString}</pre>
+
+                <em>Funds data</em>
+                <pre>todo</pre>
             </div>
         );
     }

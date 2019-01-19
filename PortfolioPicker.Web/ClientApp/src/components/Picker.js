@@ -8,15 +8,20 @@ export class Picker extends Component {
         this.state = {
             expenseRatio: 0,
             buyOrders: [],
-            loading: true
+            loading: false,
+            hasData: false
         };
 
         this.handleUploadData = this.handleUploadData.bind(this);
     }
 
     handleUploadData(ev) {
-
+        // "ev" is a synthetic react event. 
+        // prevent the default behavior of the action, whatever it is.
         ev.preventDefault();
+
+        // loading
+        this.setState({ loading: true });
 
         // data payload
         const data = new FormData();
@@ -49,7 +54,9 @@ export class Picker extends Component {
                         }
                         return rc;
                     }),
-                    loading: false
+
+                    loading: false,
+                    hasData: true
                 });
             });
     }
@@ -70,7 +77,7 @@ export class Picker extends Component {
                     </thead>
                     <tbody>
                         {buyOrders.map(o =>
-                            <tr key={o.value}>
+                            <tr key={o.account}>
                                 <td><a href={o.url}>{o.symbol}</a></td>
                                 <td>{o.stock ? "Stock" : "Bond"}</td>
                                 <td>{o.account}</td>
@@ -84,21 +91,26 @@ export class Picker extends Component {
     }
 
     render() {
+        // Message based on state
         let results = this.state.loading
-            ? <p><em>Loading...</em></p>
-            : Picker.renderTable(this.state.expenseRatio, this.state.buyOrders);
+            ? <p><em>loading...</em></p>
+            : this.state.hasData
+                ? Picker.renderTable(this.state.expenseRatio, this.state.buyOrders)
+                : <p>Please select files.</p>;
 
         return (
             <div>
                 <h1>Suggested Portfolio</h1>
-                <p>Upload your data</p>
+                <p>Upload your data:</p>
                 <form onSubmit={this.handleUploadData}>
                     <div>
                         <input
                             ref={(ref) => { this.uploadInput = ref; }}
                             type="file" />
                     </div>
+
                     <br />
+
                     <div>
                         <button>Upload</button>
                     </div>
