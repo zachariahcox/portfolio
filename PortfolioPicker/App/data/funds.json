@@ -114,10 +114,11 @@
         }
     ],
     "Microsoft": [
-        {   "symbol": "BTC LP IDX 2050N",
+        {   
+            "symbol": "BTC LP IDX 2050N",
             "description": "LifePath Dynamic 2050 Fund",
             "url": "https://www.blackrock.com/investing/products/227823/blackrock-lifepath-2050-portfolioclass-i-fund",
-            "expenseRatio": 0.06,
+            "expenseRatio": 0.08,
             "exposure": "total",
             "stock": false,
             "domestic": true

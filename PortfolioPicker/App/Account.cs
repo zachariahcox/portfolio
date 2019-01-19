@@ -1,23 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace PortfolioPicker.App
 {
+    [DataContract]
     public class Account
     {
+        [DataMember(IsRequired = true)]
         public string Name { get; set; }
 
+        [DataMember(IsRequired = true)]
         public string Brokerage { get; set; }
 
+        [DataMember(IsRequired = true)]
         public bool Taxable { get; set; } = false;
 
-        public AccountType AccountType { get; set; } = AccountType.TAXABLE;
+        [DataMember(IsRequired = true)]
+        public AccountType Type { get; set; } = AccountType.TAXABLE;
 
+        [DataMember(IsRequired = true)]
         public decimal Value { get; set; } = 0m;
 
-        public IReadOnlyList<Fund> Funds { get; set; }
+        [IgnoreDataMember]
+        internal IReadOnlyList<Fund> Funds { get; set; }
 
-        public void ResolveFunds(IReadOnlyDictionary<string, IReadOnlyList<Fund>> allFunds)
+        //
+        // APIs
+        //
+
+        internal void ResolveFunds(IReadOnlyDictionary<string, IReadOnlyList<Fund>> allFunds)
         {
             if (Funds == null && allFunds != null)
             {
@@ -44,13 +56,13 @@ namespace PortfolioPicker.App
 
         public override string ToString()
         {
-            return String.Join("\n\t",
+            return string.Join("\n\t",
                 Name,
                 "Brokerage: " + Brokerage,
-                "Value: " + String.Format("{0:c}", Convert.ToInt32(Value)),
+                "Value: " + string.Format("{0:c}", Convert.ToInt32(Value)),
                 "Taxable?: " + Taxable.ToString(),
-                "Type: " + AccountType.ToString(),
-                "Funds: " + (this.Funds != null ? String.Join(", ", this.Funds) : "null")
+                "Type: " + Type.ToString(),
+                "Funds: " + (this.Funds != null ? string.Join(", ", this.Funds) : "null")
             );
         }
     }

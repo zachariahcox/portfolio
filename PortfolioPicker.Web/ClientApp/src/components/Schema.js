@@ -10,8 +10,7 @@ export class Schema extends Component {
 
     render() {
 
-        let exampleAccountString = `
-[{
+        let exampleAccountString = `[{
     'name': 'Roth',
     'brokerage': 'Vanguard',
     'type': 'ROTH',

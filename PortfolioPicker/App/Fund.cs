@@ -5,13 +5,19 @@ namespace PortfolioPicker.App
 {
     public class Fund
     {
-        public String Symbol { get; set; }
-        public String Description { get; set; }
-        public String URL { get; set; }
+        public string Symbol { get; set; }
+
+        public string Description { get; set; }
+
+        public string URL { get; set; }
+
         public double ExpenseRatio { get; set; } = -1.0;
+
         public bool Domestic { get; set; } = true;
+
         public bool Stock { get; set; } = true;
-        public String Exposure { get; set; }
+
+        public string Exposure { get; set; }
 
         public AssetLocation GetLocation()
         {
@@ -29,7 +35,7 @@ namespace PortfolioPicker.App
 
         public override string ToString()
         {
-            return String.Format("{0} ({1})", Symbol, ExpenseRatio);
+            return string.Format("{0} ({1})", Symbol, ExpenseRatio);
         }
     }
 }

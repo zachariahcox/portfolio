@@ -5,8 +5,12 @@ namespace PortfolioPicker.App
 {
     public class Order
     {
+        public Guid Id { get; private set; }
+
         public Account Account { get; set; }
+
         public Fund Fund { get; set; }
+
         public decimal Value { get; set; } = 0m;
 
         public Order(
@@ -17,15 +21,16 @@ namespace PortfolioPicker.App
             this.Account = account;
             this.Fund = fund;
             this.Value = value;
+            this.Id = Guid.NewGuid();
         }
 
         public override string ToString()
         {
-            return String.Join(", ", new List<String> {
+            return string.Join(", ", new List<string> {
                 "Order",
                 (Account != null ? Account.Name : "null"),
                 (Fund != null ? Fund.Symbol : "null"),
-                String.Format("{0:c}", Convert.ToInt32(Value))});
+                string.Format("{0:c}", Convert.ToInt32(Value))});
         }
     }
 }

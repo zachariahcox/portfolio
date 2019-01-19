@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PortfolioPicker.App
 {
-    public class Exposure
+    internal class Exposure
     {
         public Exposure(
             AssetClass c,
@@ -19,8 +19,11 @@ namespace PortfolioPicker.App
         }
 
         public AssetClass Class { get; }
+
         public AssetLocation Location { get; }
+
         public decimal Value { get; set; }
+
         public AccountType[] AccountTypesPreference { get; set; }
     }
 }

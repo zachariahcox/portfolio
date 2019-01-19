@@ -22,7 +22,7 @@ namespace PortfolioPicker.Web.Controllers
                 new Account{
                     Name ="roth",
                     Brokerage="Vanguard",
-                    AccountType=AccountType.ROTH,
+                    Type=AccountType.ROTH,
                     Taxable=false,
                     Value=100
                 },

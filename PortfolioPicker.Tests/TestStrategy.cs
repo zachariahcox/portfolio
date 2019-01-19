@@ -18,7 +18,7 @@ namespace PortfolioPicker.Tests
                 new Account{
                     Name ="roth",
                     Brokerage="Vanguard",
-                    AccountType=AccountType.ROTH,
+                    Type=AccountType.ROTH,
                     Taxable=false,
                     Value=100
                 },
@@ -40,14 +40,14 @@ namespace PortfolioPicker.Tests
                 new Account{
                     Name ="taxable",
                     Brokerage="Fidelity",
-                    AccountType=AccountType.TAXABLE,
+                    Type=AccountType.TAXABLE,
                     Taxable=true,
                     Value=100
                 },
                 new Account{
                     Name ="401k",
                     Brokerage="Fidelity",
-                    AccountType=AccountType.CORPORATE,
+                    Type=AccountType.CORPORATE,
                     Taxable=false,
                     Value=100
                 }
@@ -65,7 +65,7 @@ namespace PortfolioPicker.Tests
                 new Account{
                     Name ="401k",
                     Brokerage="Fidelity",
-                    AccountType=AccountType.CORPORATE,
+                    Type=AccountType.CORPORATE,
                     Taxable=false,
                     Value=100
                 }
@@ -122,7 +122,7 @@ namespace PortfolioPicker.Tests
                 {
                     Brokerage = brokerage,
                     Name = $"My {brokerage} account",
-                    AccountType = type,
+                    Type = type,
                     Taxable = taxable,
                     Value = value
                 };

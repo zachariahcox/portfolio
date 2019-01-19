@@ -38,7 +38,7 @@ namespace PortfolioPicker.App.Strategies
             {
                 total_value += a.Value;
 
-                if (a.AccountType == AccountType.ROTH)
+                if (a.Type == AccountType.ROTH)
                     total_roth += a.Value;
 
                 if (a.Taxable)
@@ -99,7 +99,7 @@ namespace PortfolioPicker.App.Strategies
                 var remainder = e.Value;
                 foreach(var t in e.AccountTypesPreference)
                 {
-                    foreach(var a in accounts.Where(a => a.AccountType == t))
+                    foreach(var a in accounts.Where(a => a.Type == t))
                     {
                         var f = a.GetFund(ec, el);
                         var purchaseValue = Math.Min(a.Value, remainder);
@@ -146,8 +146,12 @@ namespace PortfolioPicker.App.Strategies
             // return
             return new Portfolio
             {
+                Strategy = this.GetType().Name,
                 BuyOrders = orders,
-                ExpenseRatio = er
+                ExpenseRatio = er,
+                BondPercent = (double)bonds_ratio,
+                StockPercent = (double)stocks_ratio,
+                TotalValue = total_value
             };
         }
     }

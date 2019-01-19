@@ -44,7 +44,7 @@ namespace PortfolioPicker.App
             string brokerageToFundMapJson,
             string strategyName)
         {
-            var map = String.IsNullOrEmpty(brokerageToFundMapJson)
+            var map = string.IsNullOrEmpty(brokerageToFundMapJson)
                 ? null
                 : JsonConvert.DeserializeObject<IReadOnlyDictionary<string, IReadOnlyList<Fund>>>(brokerageToFundMapJson);
 

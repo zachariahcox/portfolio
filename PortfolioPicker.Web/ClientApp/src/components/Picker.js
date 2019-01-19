@@ -6,10 +6,16 @@ export class Picker extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            expenseRatio: 0,
-            buyOrders: [],
             loading: false,
-            hasData: false
+            hasData: false,
+
+            // portfolio values
+            expenseRatio: 0,
+            totalValue: 0,
+            strategy: "",
+            stockPercent: 0,
+            bondPercent: 0,
+            buyOrders: []
         };
 
         this.handleUploadData = this.handleUploadData.bind(this);
@@ -31,9 +37,18 @@ export class Picker extends Component {
             .then(response => response.json())
             .then(portfolio => {
                 this.setState({
+                    loading: false,
+                    hasData: true,
+
                     expenseRatio: portfolio.expenseRatio,
+                    totalValue: portfolio.totalValue,
+                    strategy: portfolio.strategy,
+                    stockPercent: portfolio.stockPercent,
+                    bondPercent: portfolio.bondPercent,
+
                     buyOrders: portfolio.buyOrders.map(o => {
                         var rc = {
+                            id: o.id,
                             fund: o.fund,
                             account: o.account.name,
                             value: o.value,
@@ -53,18 +68,31 @@ export class Picker extends Component {
                             rc.stock = f.stock;
                         }
                         return rc;
-                    }),
-
-                    loading: false,
-                    hasData: true
+                    })
                 });
             });
     }
 
-    static renderTable(expenseRatio, buyOrders) {
+    static renderTable(portfolio) {
         return (
             <div>
-                <h2>Total Expense Ratio: {expenseRatio}</h2>
+                <h3>Summary:</h3>
+                <table className='table'>
+                    <thead>
+                        <tr>
+                            <th>Statistic</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Strategy</td><td>{portfolio.strategy}</td></tr>
+                        <tr><td>Effective Expense Ratio</td><td>{portfolio.expenseRatio}</td></tr>
+                        <tr><td>Total Value</td><td>${portfolio.totalValue}</td></tr>
+                        <tr><td>Stock %</td><td>{portfolio.stockPercent}</td></tr>
+                        <tr><td>Bonds %</td> <td>{portfolio.bondPercent}</td></tr>
+                    </tbody>
+                </table>
+
                 <h3>Buy Orders:</h3>
                 <table className='table'>
                     <thead>
@@ -76,8 +104,8 @@ export class Picker extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {buyOrders.map(o =>
-                            <tr key={o.account}>
+                        {portfolio.buyOrders.map(o =>
+                            <tr key={o.id}>
                                 <td><a href={o.url}>{o.symbol}</a></td>
                                 <td>{o.stock ? "Stock" : "Bond"}</td>
                                 <td>{o.account}</td>
@@ -95,7 +123,7 @@ export class Picker extends Component {
         let results = this.state.loading
             ? <p><em>loading...</em></p>
             : this.state.hasData
-                ? Picker.renderTable(this.state.expenseRatio, this.state.buyOrders)
+                ? Picker.renderTable(this.state)
                 : <p>Please select files.</p>;
 
         return (
