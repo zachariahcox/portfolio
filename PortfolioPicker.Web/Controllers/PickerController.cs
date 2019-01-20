@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
 using PortfolioPicker.App;
 
 namespace PortfolioPicker.Web.Controllers
@@ -33,20 +34,10 @@ namespace PortfolioPicker.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<Portfolio> Post()
+        public Portfolio Post([FromBody] JToken token)
         {
-            var file = Request.Form.Files[0];
-            if (file.Length > MAX_FILE_SIZE)
-            {
-                throw new Exception("file too big");
-            }
-
-            using (var reader = new StreamReader(file.OpenReadStream(), Encoding.UTF8))
-            {
-                var data = await reader.ReadToEndAsync();
-                var p = Picker.Create(data, "FourFundStrategy");
-                return p.Pick();
-            }
+            var p = Picker.Create(token.ToString(), "FourFundStrategy");
+            return p.Pick();
         }
 
         private const int MAX_FILE_SIZE = 1024 * 1024; // 1Mb

@@ -15,10 +15,25 @@ export class Picker extends Component {
             strategy: "",
             stockPercent: 0,
             bondPercent: 0,
-            buyOrders: []
+            buyOrders: [],
+            
+            src: "<enter data or load from file>"
         };
 
         this.handleUploadData = this.handleUploadData.bind(this);
+
+        this.handleFileChosen = this.handleFileChosen.bind(this);
+
+    }
+
+    handleFileChosen(file) {
+        var reader = new FileReader();
+        reader.onloadend = (event) => {
+            this.setState({
+                src: reader.result
+            });
+        };
+        reader.readAsText(file);
     }
 
     handleUploadData(ev) {
@@ -30,47 +45,51 @@ export class Picker extends Component {
         this.setState({ loading: true });
 
         // data payload
-        const data = new FormData();
-        data.append('file', this.uploadInput.files[0]);
-        data.append('filename', 'data.json');
-        fetch('api/picker', { method: 'POST', body: data })
-            .then(response => response.json())
-            .then(portfolio => {
-                this.setState({
-                    loading: false,
-                    hasData: true,
+        fetch('api/picker', {
+            method: 'POST',
+            headers: {'Content-type': 'application/json'},
+            body: JSON.stringify(JSON.parse(this.finalSrc.textContent))
+        })
+        .then(r => r.json())
+        .then(portfolio => {
+            this.setState({
+                loading: false,
+                hasData: true,
 
-                    expenseRatio: portfolio.expenseRatio,
-                    totalValue: portfolio.totalValue,
-                    strategy: portfolio.strategy,
-                    stockPercent: portfolio.stockPercent,
-                    bondPercent: portfolio.bondPercent,
+                expenseRatio: portfolio.expenseRatio,
+                totalValue: portfolio.totalValue,
+                strategy: portfolio.strategy,
+                stockPercent: portfolio.stockPercent,
+                bondPercent: portfolio.bondPercent,
 
-                    buyOrders: portfolio.buyOrders.map(o => {
-                        var rc = {
-                            id: o.id,
-                            fund: o.fund,
-                            account: o.account.name,
-                            value: o.value,
-                            symbol: "",
-                            url: "",
-                            description: "",
-                            domestic: null,
-                            stock: null
-                        };
+                buyOrders: portfolio.buyOrders.map(o => {
+                    var rc = {
+                        id: o.id,
+                        fund: o.fund,
+                        account: o.account.name,
+                        value: o.value,
+                        symbol: "",
+                        url: "",
+                        description: "",
+                        domestic: null,
+                        stock: null
+                    };
 
-                        const f = o.fund;
-                        if (f) {
-                            rc.symbol = f.symbol;
-                            rc.url = f.url;
-                            rc.description = f.description;
-                            rc.domestic = f.domestic;
-                            rc.stock = f.stock;
-                        }
-                        return rc;
-                    })
-                });
+                    const f = o.fund;
+                    if (f) {
+                        rc.symbol = f.symbol;
+                        rc.url = f.url;
+                        rc.description = f.description;
+                        rc.domestic = f.domestic;
+                        rc.stock = f.stock;
+                    }
+                    return rc;
+                })
             });
+        })
+        .catch(data => {
+            console.log(data);
+        });
     }
 
     static renderTable(portfolio) {
@@ -132,16 +151,25 @@ export class Picker extends Component {
                 <p>Upload your data:</p>
                 <form onSubmit={this.handleUploadData}>
                     <div>
-                        <input
-                            ref={(ref) => { this.uploadInput = ref; }}
-                            type="file" />
+                        <button>Pick!</button>
+                    </div>
+                    <br />
+
+                    <input
+                        type="file"
+                        accept=".json"
+                        onChange={e => this.handleFileChosen(e.target.files[0])}
+                    />
+
+                    <div
+                        contentEditable="true"
+                        onChangeText={(newSrc) => this.setState({ src: newSrc })}
+                        ref={(ref) => { this.finalSrc = ref; }}
+                    >
+                    <pre>{this.state.src}</pre>
                     </div>
 
                     <br />
-
-                    <div>
-                        <button>Upload</button>
-                    </div>
                 </form>
                 {results}
             </div>
