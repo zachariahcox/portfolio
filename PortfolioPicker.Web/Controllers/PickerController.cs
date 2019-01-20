@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using PortfolioPicker.App;
@@ -39,7 +33,5 @@ namespace PortfolioPicker.Web.Controllers
             var p = Picker.Create(token.ToString(), "FourFundStrategy");
             return p.Pick();
         }
-
-        private const int MAX_FILE_SIZE = 1024 * 1024; // 1Mb
     }
 }
