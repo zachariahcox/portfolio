@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.Serialization;
 
 namespace PortfolioPicker.App
@@ -25,18 +26,22 @@ namespace PortfolioPicker.App
         [IgnoreDataMember]
         internal IReadOnlyList<Fund> Funds { get; set; }
 
-        //
-        // APIs
-        //
-
-        internal void ResolveFunds(IReadOnlyDictionary<string, IReadOnlyList<Fund>> allFunds)
+        /// <summary>
+        /// Decide which funds to use from available
+        /// </summary>
+        internal void SelectFunds(IReadOnlyList<Fund> funds)
         {
-            if (Funds == null && allFunds != null)
+            if (Funds == null && funds != null)
             {
-                Funds = allFunds[Brokerage];
+                var matches = funds.Where(x => string.Equals(x.Brokerage, Brokerage, StringComparison.OrdinalIgnoreCase)).ToList();
+                matches.Sort((x, y) => x.Symbol.CompareTo(y.Symbol));
+                this.Funds = matches as IReadOnlyList<Fund>;
             }
         }
 
+        /// <summary>
+        /// Pick the best fund meeting the requirements from the list available to this account
+        /// </summary>
         public Fund GetFund(
             AssetClass c,
             AssetLocation l)

@@ -9,22 +9,40 @@ export class Schema extends Component {
     }
 
     render() {
+        const accountsYaml = `- name: Roth
+  brokerage: Vanguard
+  type: ROTH
+  taxable: false
+  value: 100
+- name: Other
+  brokerage: Vanguard
+  type: TAXABLE
+  taxable: false
+  value: 100";`;
 
-        let exampleAccountString = `[{
-    'name': 'Roth',
-    'brokerage': 'Vanguard',
-    'type': 'ROTH',
-    'taxable': false,
-    'value': 100.0
-}]`;
+        const fundsYaml = `- description: Vanguard Total Stock Market Index Fund
+  symbol: VTSAX
+  brokerage: Vanguard
+  url: https://investor.vanguard.com/mutual-funds/profile/VTSAX
+  expenseRatio: 0.04
+  stockRatio: 1
+  domesticRatio: 1
+
+- description: Vanguard Total International Stock Index Fund
+  symbol: VTIAX
+  brokerage: Vanguard
+  url: https://investor.vanguard.com/mutual-funds/profile/VTIAX
+  expenseRatio: 0.11
+  stockRatio: 1
+  domesticRatio: 0`;
 
         return (
             <div>
                 <em>Account data</em>
-                <pre>{exampleAccountString}</pre>
+                <pre>{accountsYaml}</pre>
 
                 <em>Funds data</em>
-                <pre>todo</pre>
+                <pre>{fundsYaml}</pre>
             </div>
         );
     }

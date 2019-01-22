@@ -21,7 +21,6 @@ export class Picker extends Component {
         };
 
         this.handleUploadData = this.handleUploadData.bind(this);
-
         this.handleFileChosen = this.handleFileChosen.bind(this);
 
     }
@@ -42,13 +41,16 @@ export class Picker extends Component {
         ev.preventDefault();
 
         // loading
-        this.setState({ loading: true });
+        this.setState({
+            loading: true,
+            src: ''
+        });
 
         // data payload
         fetch('api/picker', {
             method: 'POST',
-            headers: {'Content-type': 'application/json'},
-            body: JSON.stringify(JSON.parse(this.finalSrc.textContent))
+            headers: { 'Content-type': 'text/plain'},
+            body: this.finalSrc.textContent
         })
         .then(r => r.json())
         .then(portfolio => {
@@ -71,8 +73,8 @@ export class Picker extends Component {
                         symbol: "",
                         url: "",
                         description: "",
-                        domestic: null,
-                        stock: null
+                        stock: 1,
+                        domestic: 1
                     };
 
                     const f = o.fund;
@@ -80,8 +82,8 @@ export class Picker extends Component {
                         rc.symbol = f.symbol;
                         rc.url = f.url;
                         rc.description = f.description;
-                        rc.domestic = f.domestic;
-                        rc.stock = f.stock;
+                        rc.domestic = f.domesticRatio;
+                        rc.stock = f.stockRatio;
                     }
                     return rc;
                 })
@@ -116,18 +118,24 @@ export class Picker extends Component {
                 <table className='table'>
                     <thead>
                         <tr>
-                            <th>Symbol</th>
-                            <th>Class</th>
                             <th>Account</th>
+                            <th>Symbol</th>
+                            <th>Stock%</th>
+                            <th>Bond%</th>
+                            <th>Domestic%</th>
+                            <th>International%</th>
                             <th>Value (USD)</th>
                         </tr>
                     </thead>
                     <tbody>
                         {portfolio.buyOrders.map(o =>
                             <tr key={o.id}>
-                                <td><a href={o.url}>{o.symbol}</a></td>
-                                <td>{o.stock ? "Stock" : "Bond"}</td>
                                 <td>{o.account}</td>
+                                <td><a href={o.url}>{o.symbol}</a></td>
+                                <td>{o.stock}</td>
+                                <td>{1.0 - o.stock}</td>
+                                <td>{o.domestic}</td>
+                                <td>{1.0 - o.domestic}</td>
                                 <td>{o.value}</td>
                             </tr>
                         )}
@@ -151,19 +159,17 @@ export class Picker extends Component {
                 <p>Upload your data:</p>
                 <form onSubmit={this.handleUploadData}>
                     <div>
-                        <button>Pick!</button>
+                        <button>Do it!</button>
                     </div>
                     <br />
 
                     <input
                         type="file"
-                        accept=".json"
+                        accept=".yaml"
                         onChange={e => this.handleFileChosen(e.target.files[0])}
                     />
 
                     <div
-                        contentEditable="true"
-                        onChangeText={(newSrc) => this.setState({ src: newSrc })}
                         ref={(ref) => { this.finalSrc = ref; }}
                     >
                     <pre>{this.state.src}</pre>

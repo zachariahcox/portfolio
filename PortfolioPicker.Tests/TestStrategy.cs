@@ -1,15 +1,85 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using PortfolioPicker;
 using PortfolioPicker.App;
 using Xunit;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace PortfolioPicker.Tests
 {
     public class TestStrategy
     {
+        Account CreateAccount(
+                string brokerage,
+                AccountType type,
+                bool taxable,
+                decimal value
+                )
+        {
+            return new Account
+            {
+                Brokerage = brokerage,
+                Name = $"My {brokerage} account",
+                Type = type,
+                Taxable = taxable,
+                Value = value
+            };
+        }
+
+        Fund CreateFund(
+            string symbol,
+            string brokerage,
+            double er,
+            double stock = 1.0,
+            double domestic = 1.0,
+            bool targeted = false)
+        {
+            return new Fund
+            {
+                Symbol = symbol,
+                Brokerage = brokerage,
+                Description = $"{symbol}@{brokerage} ({er})",
+                ExpenseRatio = er,
+                StockRatio = stock,
+                DomesticRatio = domestic,
+                TargetDate = targeted
+            };
+        }
+
+        private IReadOnlyList<Account> CreateAccounts()
+        {
+            var rc = new List<Account>();
+            foreach (var t in new[] { AccountType.CORPORATE, AccountType.ROTH, AccountType.TAXABLE })
+            {
+                foreach (var name in new[] { "a", "b", "c" })
+                {
+                    rc.Add(CreateAccount(name, t, t == AccountType.TAXABLE, 10000m));
+                }
+            }
+
+            return rc;
+        }
+
+        private IReadOnlyList<Fund> CreateFundMap()
+        {
+            List<Fund> makeList(string b)
+            {
+                return new List<Fund> {
+                CreateFund("m", b, 1, 1, 1),
+                CreateFund("n", b, 2, 1, 0),
+                CreateFund("o", b, 3, 0, 1),
+                CreateFund("p", b, 4, 0, 0),
+                };
+            }
+
+            var rc = new List<Fund>();
+            rc.AddRange(makeList("a"));
+            rc.AddRange(makeList("b"));
+            rc.AddRange(makeList("c"));
+            return rc as IReadOnlyList<Fund>;
+        }
+
         [Fact]
         public void JustVanguard()
         {
@@ -54,7 +124,7 @@ namespace PortfolioPicker.Tests
             };
             var total_value = accounts.Sum(a => a.Value);
             var p = Picker.Create(accounts, "FourFundStrategy");
-            Assert.Throws<Exception>(() => p.Pick());
+            Assert.Throws<StrategyException>(() => p.Pick());
         }
 
         [Fact]
@@ -73,33 +143,75 @@ namespace PortfolioPicker.Tests
 
             var total_value = accounts.Sum(a => a.Value);
             var p = Picker.Create(accounts, "FourFundStrategy");
-            Assert.Throws<Exception>(() => p.Pick());
+            Assert.Throws<StrategyException>(() => p.Pick());
         }
 
         [Fact]
-        public void FromJson()
+        public void AccountsFromYaml()
         {
             var accounts = @"
-            [{
-              'name': 'Roth',
-              'brokerage': 'Vanguard',
-              'type': 'ROTH',
-              'taxable': false,
-              'value': 100.0
-            }]";
-            
+- name: Roth
+  brokerage: Vanguard
+  type: ROTH
+  taxable: false
+  value: 100";
+
             var p = Picker.Create(accounts, "FourFundStrategy");
             var portfolio = p.Pick();
             Assert.Equal(4, portfolio.BuyOrders.Count);
             var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
             Assert.Equal(100, actualValue);
         }
+        
+        [Fact]
+        public void FromYaml()
+        {
+            var yaml = @"
+- description: Vanguard Total Stock Market Index Fund
+  symbol: VTSAX
+  brokerage: Vanguard
+  url: https://investor.vanguard.com/mutual-funds/profile/VTSAX
+  expenseRatio: 0.04
+  stockRatio: 1
+  domesticRatio: 1
+
+- description: Vanguard Total International Stock Index Fund
+  symbol: VTIAX
+  brokerage: Vanguard
+  url: https://investor.vanguard.com/mutual-funds/profile/VTIAX
+  expenseRatio: 0.11
+  stockRatio: 1
+  domesticRatio: 0";
+
+            var accountsYaml = @"
+
+- name: Roth
+  brokerage: Vanguard
+  type: ROTH
+  taxable: false
+  value: 100
+- name: Other
+  brokerage: Vanguard
+  type: TAXABLE
+  taxable: false
+  value: 100";
+
+            var deserializer = new DeserializerBuilder()
+            .WithNamingConvention(new CamelCaseNamingConvention())
+            .Build();
+
+            var funds = deserializer.Deserialize<IList<Fund>>(yaml);
+            Assert.Equal(2, funds.Count);
+
+            var accounts = deserializer.Deserialize<IList<Account>>(accountsYaml);
+            Assert.Equal(2, accounts.Count);
+        }
 
         [Fact]
         public void Complex()
         {
-            var accounts = GetAccountData();
-            var brokerages = GetFundData();
+            var accounts = CreateAccounts();
+            var brokerages = CreateFundMap();
             var expectedTotal = accounts.Count * 10000m;
             var p = Picker.Create(accounts, brokerages, "FourFundStrategy");
             var portfolio = p.Pick();
@@ -109,65 +221,26 @@ namespace PortfolioPicker.Tests
             Assert.Equal(expectedTotal, actualTotal);
         }
 
-        private IReadOnlyList<Account> GetAccountData()
-        {
-            Account CreateAccount(
-                string brokerage,
-                AccountType type,
-                bool taxable,
-                decimal value
-                )
-            {
-                return new Account
-                {
-                    Brokerage = brokerage,
-                    Name = $"My {brokerage} account",
-                    Type = type,
-                    Taxable = taxable,
-                    Value = value
-                };
-            }
+        //[Fact]
+        //public void Corportate()
+        //{
+        //    // Basically, corporate accounts should be allowed to funnel money into targeted funds if available. 
+        //    var brokerage = "CORP";
+        //    var funds = new List<Fund> {
+        //        CreateFund("XYZ", brokerage, 0.1, targeted: true)
+        //    };
 
-            var rc = new List<Account>();
-            foreach (var t in new[] { AccountType.CORPORATE, AccountType.ROTH, AccountType.TAXABLE })
-            {
-                foreach (var name in new [] { "a", "b", "c"})
-                {
-                    rc.Add(CreateAccount(name, t, t == AccountType.TAXABLE, 10000m));
-                }
-            }
+        //    var accounts = new List<Account>
+        //    {
+        //        CreateAccount(
+        //            brokerage: brokerage,
+        //            type: AccountType.CORPORATE,
+        //            taxable: false,
+        //            value: 100m)
+        //    };
 
-            return rc;
-        }
-
-        private IReadOnlyDictionary<string, IReadOnlyList<Fund>> GetFundData()
-        {
-            Fund CreateFund(string symbol, double er, bool stock, bool domestic)
-            {
-                return new Fund
-                {
-                    Symbol = symbol,
-                    ExpenseRatio = er,
-                    Stock = stock,
-                    Domestic = domestic
-                };
-            }
-
-            var fakeFunds = new List<Fund> {
-                CreateFund("m", 1, true, true),
-                CreateFund("n", 2, true, false),
-                CreateFund("o", 3, false, true),
-                CreateFund("p", 4, false, false),
-            };
-
-            var rc = new Dictionary<string, IReadOnlyList<Fund>>
-            {
-                {"a", fakeFunds},
-                {"b", fakeFunds},
-                {"c", fakeFunds},
-            };
-
-            return new ReadOnlyDictionary<string, IReadOnlyList<Fund>>(rc);
-        }
+        //    var p = Picker.Create(accounts, funds, "FourFundStrategy");
+        //    Assert.Throws<StrategyException>(() => p.Pick());
+        //}
     }
 }

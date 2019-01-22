@@ -3,6 +3,7 @@
     public enum AssetClass
     {
         Stock,
-        Bond
+        Bond,
+        TargetDate
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 using PortfolioPicker.App;
 
 namespace PortfolioPicker.Web.Controllers
@@ -28,10 +28,14 @@ namespace PortfolioPicker.Web.Controllers
         }
 
         [HttpPost]
-        public Portfolio Post([FromBody] JToken token)
+        public Portfolio Post()
         {
-            var p = Picker.Create(token.ToString(), "FourFundStrategy");
-            return p.Pick();
+            using (var reader = new StreamReader(Request.Body))
+            {
+                var yaml = reader.ReadToEnd();
+                var p = Picker.Create(yaml, "FourFundStrategy");
+                return p.Pick();
+            }
         }
     }
 }
