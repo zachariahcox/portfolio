@@ -40,18 +40,25 @@ namespace PortfolioPicker.App
         }
 
         /// <summary>
-        /// Pick the best fund meeting the requirements from the list available to this account
+        /// Pick the best fund meeting the requirements from the list available to this account. 
+        /// A "better" fund has better ratios for the target exposure, or has the lowest expense ratio. 
         /// </summary>
-        public Fund GetFund(
-            AssetClass c,
-            AssetLocation l)
+        internal Fund GetFund(Exposure e)
         {
             var best = (Fund)null;
+            var bestCoverage = -1.0;
             foreach (var f in Funds)
             {
-                if (f.GetLocation() == l &&
-                    f.GetClass() == c &&
-                    (best == null || f.ExpenseRatio < best.ExpenseRatio))
+                var coverageForThisExposure = f.Ratio(e);
+                if (coverageForThisExposure == 0.0)
+                    continue;
+
+                if (best == null)
+                {
+                    best = f;
+                    bestCoverage = coverageForThisExposure;
+                }
+                else if(coverageForThisExposure > bestCoverage || f.ExpenseRatio < best.ExpenseRatio)
                 {
                     best = f;
                 }
@@ -61,14 +68,7 @@ namespace PortfolioPicker.App
 
         public override string ToString()
         {
-            return string.Join("\n\t",
-                Name,
-                "Brokerage: " + Brokerage,
-                "Value: " + string.Format("{0:c}", Convert.ToInt32(Value)),
-                "Taxable?: " + Taxable.ToString(),
-                "Type: " + Type.ToString(),
-                "Funds: " + (this.Funds != null ? string.Join(", ", this.Funds) : "null")
-            );
+            return $"{Name}, value: {string.Format("{0:c}", Convert.ToInt32(Value))}, taxable: {Taxable}, type: {Type}";
         }
     }
 }

@@ -15,5 +15,11 @@ namespace PortfolioPicker.App
         public double StockPercent { get; set; } = 0.0;
 
         public IReadOnlyList<Order> BuyOrders { get; set; }
+
+        public IList<string> Warnings { get; set; }
+
+        public IList<string> Errors { get; set; }
+
+        public double Score { get; set; }
     }
 }

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace PortfolioPicker.App
 {
@@ -14,7 +12,7 @@ namespace PortfolioPicker.App
         {
             Class = c;
             Location = l;
-            Value = v;
+            Target = v;
             AccountTypesPreference = types;
         }
 
@@ -22,8 +20,13 @@ namespace PortfolioPicker.App
 
         public AssetLocation Location { get; }
 
-        public decimal Value { get; set; }
+        public decimal Target { get; }
 
         public AccountType[] AccountTypesPreference { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Enum.GetName(typeof(AssetClass), Class)}, {Enum.GetName(typeof(AssetLocation), Location)}, target: {Target}";
+        }
     }
 }

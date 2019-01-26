@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using PortfolioPicker.App;
 using Xunit;
@@ -124,7 +125,7 @@ namespace PortfolioPicker.Tests
             };
             var total_value = accounts.Sum(a => a.Value);
             var p = Picker.Create(accounts, "FourFundStrategy");
-            Assert.Throws<StrategyException>(() => p.Pick());
+            Assert.Null(p.Pick());
         }
 
         [Fact]
@@ -143,7 +144,7 @@ namespace PortfolioPicker.Tests
 
             var total_value = accounts.Sum(a => a.Value);
             var p = Picker.Create(accounts, "FourFundStrategy");
-            Assert.Throws<StrategyException>(() => p.Pick());
+            Assert.Null(p.Pick());
         }
 
         [Fact]
@@ -222,25 +223,12 @@ namespace PortfolioPicker.Tests
         }
 
         //[Fact]
-        //public void Corportate()
+        //public void Real()
         //{
-        //    // Basically, corporate accounts should be allowed to funnel money into targeted funds if available. 
-        //    var brokerage = "CORP";
-        //    var funds = new List<Fund> {
-        //        CreateFund("XYZ", brokerage, 0.1, targeted: true)
-        //    };
-
-        //    var accounts = new List<Account>
-        //    {
-        //        CreateAccount(
-        //            brokerage: brokerage,
-        //            type: AccountType.CORPORATE,
-        //            taxable: false,
-        //            value: 100m)
-        //    };
-
-        //    var p = Picker.Create(accounts, funds, "FourFundStrategy");
-        //    Assert.Throws<StrategyException>(() => p.Pick());
+        //    var accounts = File.ReadAllText("C:/Users/zacox/Documents/accounts.yaml");
+        //    var p = Picker.Create(accounts, "FourFundStrategy");
+        //    var portfolio = p.Pick();
+        //    Assert.Equal(11, portfolio.BuyOrders.Count);
         //}
     }
 }

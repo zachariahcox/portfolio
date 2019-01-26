@@ -26,7 +26,7 @@ namespace PortfolioPicker.App.Strategies
         /// <summary>
         /// Produce desired exposures based on ratios and total available money
         /// </summary>
-        private IList<Exposure> ComputeExposures(decimal totalValue)
+        private static IList<Exposure> ComputeExposures(decimal totalValue)
         {
             var stock_total = totalValue * stocks_ratio;
             var stock_domestic = stock_total * (1m - international_stocks_ratio);
@@ -59,13 +59,190 @@ namespace PortfolioPicker.App.Strategies
             };
         }
 
-        private double ComputeExpenseRatio(IList<Order> orders)
+        private static ICollection<ICollection<T>> Permutations<T>(ICollection<T> list)
+        {
+            var result = new List<ICollection<T>>();
+
+            // If only one possible permutation, add it and return it
+            if (list.Count == 1)
+            { 
+                result.Add(list); 
+                return result;
+            }
+            
+            // For each element in that list
+            foreach (var element in list)
+            { 
+                var remainingList = new List<T>(list);
+                remainingList.Remove(element); // Get a list containing everything except of chosen element
+
+                // Get all possible sub-permutations
+                foreach (var permutation in Permutations<T>(remainingList))
+                { 
+                    // Add that element
+                    permutation.Add(element); 
+                    result.Add(permutation);
+                }
+            }
+
+            return result;
+        }
+
+        private static double ComputeExpenseRatio(IList<Order> orders)
         {
             var weighted_sum = orders.Sum(x => x.Fund?.ExpenseRatio * (double)x.Value);
             var weight = orders.Sum(x => (double)x.Value);
             var er = weighted_sum.Value / weight;
             return er;
         }
+
+        private Portfolio GeneratePortfolio(
+            IReadOnlyCollection<Account> accounts,
+            ICollection<Exposure> exposures)
+        {
+            // parameters should be readonly
+            var accountRemainders = new Dictionary<Account, decimal>();
+            foreach (var a in accounts)
+            {
+                accountRemainders[a] = a.Value;
+            }
+            var exposureRemainders = new Dictionary<Exposure, decimal>();
+            foreach (var e in exposures)
+            {
+                exposureRemainders[e] = e.Target;
+            }
+
+            // BUY ORDERS
+            var orders = new List<Order>();
+            var warnings = new List<string>();
+            var errors = new List<string>();
+            foreach (var e in exposures)
+            {
+                // find accounts with access to the right funds
+                var suitableAccounts = accounts
+                    .Where(a => accountRemainders[a] > 0m && a.GetFund(e) != null)
+                    .OrderByDescending(a => accountRemainders[a]);
+
+                if (!suitableAccounts.Any())
+                {
+                    var ecName = Enum.GetName(typeof(AssetClass), e.Class);
+                    var elName = Enum.GetName(typeof(AssetLocation), e.Location);
+                    var m = $"Error: Cannot execute strategy: no account has access to asset type: {ecName}, {elName}";
+                    errors.Add(m);
+                    continue;
+                }
+
+                // buy as much as possible from prefered accounts, in order
+                foreach (var t in e.AccountTypesPreference)
+                {
+                    var efficientAccounts = suitableAccounts
+                        .Where(x => x.Type == t)
+                        .OrderByDescending(x => x.GetFund(e).Ratio(e));
+
+                    foreach (var a in efficientAccounts)
+                    {
+                        // pick best fund from account
+                        var f = a.GetFund(e);
+
+                        // try to exhaust this exposure with this fund
+                        var efficiencyRatio = f.Ratio(e);
+                        var purchaseValue = Math.Min(accountRemainders[a], exposureRemainders[e] / (decimal)efficiencyRatio);
+
+                        // create order and reduce remainders
+                        if (purchaseValue > 0)
+                        {
+                            // create order
+                            orders.Add(new Order
+                            {
+                                Account = a,
+                                Value = purchaseValue,
+                                Fund = f
+                            });
+
+                            // reduce account remainders
+                            accountRemainders[a] -= purchaseValue;
+
+                            // reduce exposure remainders
+                            foreach (var c in (AssetClass[])Enum.GetValues(typeof(AssetClass)))
+                            {
+                                foreach (var l in (AssetLocation[])Enum.GetValues(typeof(AssetLocation)))
+                                {
+                                    var exposureValue = (decimal)((double)purchaseValue * f.Ratio(c) * f.Ratio(l));
+                                    if (exposureValue > 0m)
+                                    {
+                                        var _e = exposures.First(x => x.Class == c && x.Location == l);
+                                        exposureRemainders[_e] -= exposureValue;
+                                    }
+                                }
+                            }
+
+                            if (exposureRemainders[e] <= 0)
+                            {
+                                break; // Exposure met: stop looking through accounts
+                            }
+                        }
+                    }
+
+                    if (exposureRemainders[e] <= 0)
+                    {
+                        break; // Exposure met: stop looking through account types
+                    }
+                }
+            }
+
+            // SCORE THE PORTFOLIO (bigger is better)
+            var score = 0.0;
+            foreach (var e in exposures)
+            {
+                var r = exposureRemainders[e];
+                if (r == 0)
+                    continue;
+
+                warnings.Add($"Warning: Imbalance: {e}, remainder: {r}");
+                score += 1.0 - (double)Math.Abs(r) / (double)e.Target;
+            }
+
+            var totalValue = 0m;
+            foreach (var a in accounts)
+            {
+                totalValue += a.Value;
+
+                var r = accountRemainders[a];
+                if (r == 0m)
+                {
+                    // cool, it all worked out
+                    score += 1.0;
+                }
+                else if (r > 0m)
+                {
+                    // how far were we off? 
+                    score += 1.0 - (double)r / (double)a.Value;
+                    warnings.Add($"Warning: Underdraft: {a}, remainder: {r}");
+                }
+                else if(r < 0m)
+                {
+                    errors.Add($"Error: Overdraft: {a}, remainder: {r}");
+                }
+            }
+            
+            // compute final score
+            score = score / (double)(accounts.Count + exposures.Count);
+
+            // RESULT
+            return new Portfolio
+            {
+                Strategy = this.GetType().Name,
+                BuyOrders = orders,
+                ExpenseRatio = ComputeExpenseRatio(orders),
+                BondPercent = (double)bonds_ratio,
+                StockPercent = (double)stocks_ratio,
+                TotalValue = totalValue,
+                Score = score,
+                Warnings = warnings,
+                Errors  = errors
+            };
+        }
+
 
         public override Portfolio Perform(
             IReadOnlyCollection<Account> accounts,
@@ -81,90 +258,19 @@ namespace PortfolioPicker.App.Strategies
                 a.SelectFunds(funds);
             }
 
-            // DESIRED EXPOSURES
             // compute final exposures we want to acheive
             var exposures = ComputeExposures(totalValue);
 
-            // BUY ORDERS
-            // Fulfill each exposure type with provided accounts
-            var orders = new List<Order>();
-            var errorMessages = new List<string>();
-            foreach (var e in exposures)
-            {
-                var ec = e.Class;
-                var el = e.Location;
+            var portfolios = Permutations(exposures)
+                .Select(x => GeneratePortfolio(accounts, x));
 
-                // find accounts with access to the right funds
-                var suitableAccounts = accounts.Where(a => a.GetFund(ec, el) != null).ToList();
-                if (suitableAccounts.Count == 0)
-                {
-                    var ecName = Enum.GetName(ec.GetType(), ec);
-                    var elName = Enum.GetName(el.GetType(), el);
-                    var m = $"Error: Cannot execute strategy: no account has access to asset type: {ecName}, {elName}";
-                    errorMessages.Add(m);
-                    continue;
-                }
+            var bestToWorst = portfolios
+                .Where(x => x.Errors.Count == 0)       // no errors
+                .OrderByDescending(x => x.Score)       // best score
+                .ThenByDescending(x => x.ExpenseRatio) // lowest cost
+                .ThenBy(x => x.BuyOrders.Count);       // fewest orders
 
-                // buy as much as possible from prefered accounts, in order
-                var remainder = e.Value;
-                foreach(var t in e.AccountTypesPreference)
-                {
-                    foreach(var a in accounts.Where(a => a.Type == t))
-                    {
-                        var f = a.GetFund(ec, el);
-                        var purchaseValue = Math.Min(a.Value, remainder);
-                        if(purchaseValue > 0)
-                        {
-                            orders.Add(new Order
-                            {
-                                Account = a,
-                                Value = purchaseValue,
-                                Fund = f
-                            });
-
-                            // update remainders and balances
-                            a.Value -= purchaseValue;
-                            remainder -= purchaseValue;
-                            if (remainder <= 0)
-                            {
-                                break; // stop looking through accounts
-                            }
-                        }
-                    }
-
-                    if (remainder <= 0)
-                    {
-                        break; // stop looking through account types
-                    }
-                }
-
-                // ensure that we allocated all funds
-                if (remainder > 0)
-                {
-                    var ecName = Enum.GetName(ec.GetType(), ec);
-                    var elName = Enum.GetName(el.GetType(), el);
-                    var m = $"Error: could not spend all money alloted to asset type: {ecName}, {elName}";
-                    errorMessages.Add(m);
-                    continue;
-                }
-            }
-
-            // Ohnoes!
-            if (errorMessages.Count != 0)
-            {
-                throw new StrategyException(errorMessages);
-            }
-
-            // return
-            return new Portfolio
-            {
-                Strategy = this.GetType().Name,
-                BuyOrders = orders,
-                ExpenseRatio = ComputeExpenseRatio(orders),
-                BondPercent = (double)bonds_ratio,
-                StockPercent = (double)stocks_ratio,
-                TotalValue = totalValue
-            };
+            return bestToWorst.FirstOrDefault();
         }
     }
 }
