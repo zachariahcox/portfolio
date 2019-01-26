@@ -35,6 +35,12 @@ export class NavMenu extends Component {
                     <Glyphicon glyph='th-list' /> Picker
                 </NavItem>
             </LinkContainer>
+
+            <LinkContainer to={'/editor'}>
+                <NavItem>
+                    <Glyphicon glyph='th-list' /> Editor
+                </NavItem>
+            </LinkContainer>
           </Nav>
         </Navbar.Collapse>
       </Navbar>

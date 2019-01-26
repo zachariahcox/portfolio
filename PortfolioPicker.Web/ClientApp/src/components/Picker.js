@@ -22,7 +22,6 @@ export class Picker extends Component {
 
         this.handleUploadData = this.handleUploadData.bind(this);
         this.handleFileChosen = this.handleFileChosen.bind(this);
-
     }
 
     handleFileChosen(file) {
@@ -169,12 +168,9 @@ export class Picker extends Component {
                         onChange={e => this.handleFileChosen(e.target.files[0])}
                     />
 
-                    <div
-                        ref={(ref) => { this.finalSrc = ref; }}
-                    >
-                    <pre>{this.state.src}</pre>
+                    <div ref={(ref) => { this.finalSrc = ref; }}>
+                        <pre>{this.state.src}</pre>
                     </div>
-
                     <br />
                 </form>
                 {results}
