@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using PortfolioPicker.App.Strategies;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -10,38 +11,24 @@ namespace PortfolioPicker.App
 {
     public class Picker
     {
+        public Strategy Strategy { get; private set; }
+
         public IReadOnlyList<Account> Accounts { get; private set; }
 
         public IReadOnlyList<Fund> Funds { get; private set; }
 
-        public Strategy Strategy { get; private set; }
-
         static public Picker Create(
             IReadOnlyList<Account> accounts,
-            string strategyName)
+            IReadOnlyList<Fund> funds = null,
+            Strategy strategy = null)
         {
-            return Create(accounts, null, strategyName);
+            return new Picker(accounts, funds, strategy);
         }
 
         static public Picker Create(
-            string accountsYaml, 
-            string strategyName)
-        {
-            return Create(accountsYaml, null, strategyName);
-        }
-
-        static public Picker Create(
-            IReadOnlyList<Account> accounts,
-            IReadOnlyList<Fund> funds,
-            string strategyName)
-        {
-            return new Picker(accounts, funds, strategyName);
-        }
-
-        static public Picker Create(
-            string accountsYaml,
-            string fundsYaml,
-            string strategyName)
+            string accountsYaml = null,
+            string fundsYaml = null,
+            string strategyName = null)
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(new CamelCaseNamingConvention())
@@ -55,10 +42,15 @@ namespace PortfolioPicker.App
                 ? null
                 : deserializer.Deserialize<IList<Fund>>(fundsYaml);
 
-            return new Picker(
+            // load strategy
+            strategyName = strategyName ?? "FourFundStrategy";
+            var strategyType = Type.GetType("PortfolioPicker.App.Strategies." + strategyName);
+            var strategy = Activator.CreateInstance(strategyType) as Strategy;
+
+            return Create(
                 accounts: accounts as IReadOnlyList<Account>,
                 funds: funds as IReadOnlyList<Fund>,
-                strategyName: strategyName);
+                strategy: strategy);
         }
 
         /// <summary>
@@ -72,15 +64,11 @@ namespace PortfolioPicker.App
         private Picker(
             IReadOnlyList<Account> accounts,
             IReadOnlyList<Fund> funds,
-            string strategyName)
+            Strategy strategy)
         {
             this.Accounts = accounts.OrderBy(a => a.Name).ToList();
             this.Funds = funds ?? LoadDefaultFunds();
-
-            // load strategy
-            strategyName = strategyName ?? "FourFundStrategy";
-            var strategyType = Type.GetType("PortfolioPicker.App.Strategies." + strategyName);
-            this.Strategy = Activator.CreateInstance(strategyType) as Strategy;
+            this.Strategy = strategy ?? new FourFundStrategy();
         }
 
         static private IReadOnlyList<Fund> LoadDefaultFunds()

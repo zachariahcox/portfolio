@@ -4,23 +4,11 @@ namespace PortfolioPicker.App
 {
     internal class Exposure
     {
-        public Exposure(
-            AssetClass c,
-            AssetLocation l,
-            decimal v,
-            AccountType[] types)
-        {
-            Class = c;
-            Location = l;
-            Target = v;
-            AccountTypesPreference = types;
-        }
+        public decimal Target { get; set; }
 
-        public AssetClass Class { get; }
+        public AssetClass Class { get; set; }
 
-        public AssetLocation Location { get; }
-
-        public decimal Target { get; }
+        public AssetLocation Location { get; set; }
 
         public AccountType[] AccountTypesPreference { get; set; }
 

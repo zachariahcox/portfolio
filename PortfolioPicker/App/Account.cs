@@ -15,9 +15,6 @@ namespace PortfolioPicker.App
         public string Brokerage { get; set; }
 
         [DataMember(IsRequired = true)]
-        public bool Taxable { get; set; } = false;
-
-        [DataMember(IsRequired = true)]
         public AccountType Type { get; set; } = AccountType.TAXABLE;
 
         [DataMember(IsRequired = true)]
@@ -68,7 +65,7 @@ namespace PortfolioPicker.App
 
         public override string ToString()
         {
-            return $"{Name}, value: {string.Format("{0:c}", Convert.ToInt32(Value))}, taxable: {Taxable}, type: {Type}";
+            return $"{Name}, value: {string.Format("{0:c}", Convert.ToInt32(Value))}, type: {Type}";
         }
     }
 }

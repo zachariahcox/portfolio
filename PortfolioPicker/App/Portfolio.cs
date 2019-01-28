@@ -6,14 +6,6 @@ namespace PortfolioPicker.App
     {
         public string Strategy { get; set; }
 
-        public decimal TotalValue { get; set; }
-
-        public double ExpenseRatio { get; set; } = 0.0;
-
-        public double BondPercent { get; set; } = 0.0;
-
-        public double StockPercent { get; set; } = 0.0;
-
         public IReadOnlyList<Order> BuyOrders { get; set; }
 
         public IList<string> Warnings { get; set; }
@@ -21,5 +13,18 @@ namespace PortfolioPicker.App
         public IList<string> Errors { get; set; }
 
         public double Score { get; set; }
+
+        // Stats
+        public decimal TotalValue { get; set; }
+
+        public double ExpenseRatio { get; set; } = 0.0;
+
+        public double BondRatio { get; set; } = 0.0;
+
+        public double StockRatio { get; set; } = 0.0;
+
+        public double DomesticRatio { get; set; }
+
+        public double InternationalRatio { get; set; }
     }
 }

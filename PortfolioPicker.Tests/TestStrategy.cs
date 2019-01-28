@@ -1,8 +1,7 @@
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using PortfolioPicker.App;
+using PortfolioPicker.App.Strategies;
 using Xunit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -14,27 +13,23 @@ namespace PortfolioPicker.Tests
         Account CreateAccount(
                 string brokerage,
                 AccountType type,
-                bool taxable,
-                decimal value
-                )
+                decimal value = 100m)
         {
             return new Account
             {
                 Brokerage = brokerage,
                 Name = $"My {brokerage} account",
                 Type = type,
-                Taxable = taxable,
                 Value = value
             };
         }
 
         Fund CreateFund(
-            string symbol,
             string brokerage,
+            string symbol,
             double er,
             double stock = 1.0,
-            double domestic = 1.0,
-            bool targeted = false)
+            double domestic = 1.0)
         {
             return new Fund
             {
@@ -43,8 +38,7 @@ namespace PortfolioPicker.Tests
                 Description = $"{symbol}@{brokerage} ({er})",
                 ExpenseRatio = er,
                 StockRatio = stock,
-                DomesticRatio = domestic,
-                TargetDate = targeted
+                DomesticRatio = domestic
             };
         }
 
@@ -55,7 +49,7 @@ namespace PortfolioPicker.Tests
             {
                 foreach (var name in new[] { "a", "b", "c" })
                 {
-                    rc.Add(CreateAccount(name, t, t == AccountType.TAXABLE, 10000m));
+                    rc.Add(CreateAccount(name, t, 10000m));
                 }
             }
 
@@ -67,10 +61,10 @@ namespace PortfolioPicker.Tests
             List<Fund> makeList(string b)
             {
                 return new List<Fund> {
-                CreateFund("m", b, 1, 1, 1),
-                CreateFund("n", b, 2, 1, 0),
-                CreateFund("o", b, 3, 0, 1),
-                CreateFund("p", b, 4, 0, 0),
+                CreateFund(b, "m", 1, 1, 1),
+                CreateFund(b, "n", 2, 1, 0),
+                CreateFund(b, "o", 3, 0, 1),
+                CreateFund(b, "p", 4, 0, 0),
                 };
             }
 
@@ -90,12 +84,11 @@ namespace PortfolioPicker.Tests
                     Name ="roth",
                     Brokerage="Vanguard",
                     Type=AccountType.ROTH,
-                    Taxable=false,
                     Value=100
                 },
             };
 
-            var p = Picker.Create(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts);
             var portfolio = p.Pick();
             Assert.Equal(4, portfolio.BuyOrders.Count);
             var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
@@ -112,19 +105,17 @@ namespace PortfolioPicker.Tests
                     Name ="taxable",
                     Brokerage="Fidelity",
                     Type=AccountType.TAXABLE,
-                    Taxable=true,
                     Value=100
                 },
                 new Account{
                     Name ="401k",
                     Brokerage="Fidelity",
                     Type=AccountType.CORPORATE,
-                    Taxable=false,
                     Value=100
                 }
             };
             var total_value = accounts.Sum(a => a.Value);
-            var p = Picker.Create(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts);
             Assert.Null(p.Pick());
         }
 
@@ -137,13 +128,12 @@ namespace PortfolioPicker.Tests
                     Name ="401k",
                     Brokerage="Fidelity",
                     Type=AccountType.CORPORATE,
-                    Taxable=false,
                     Value=100
                 }
             };
 
             var total_value = accounts.Sum(a => a.Value);
-            var p = Picker.Create(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts);
             Assert.Null(p.Pick());
         }
 
@@ -154,16 +144,15 @@ namespace PortfolioPicker.Tests
 - name: Roth
   brokerage: Vanguard
   type: ROTH
-  taxable: false
   value: 100";
 
-            var p = Picker.Create(accounts, "FourFundStrategy");
+            var p = Picker.Create(accounts);
             var portfolio = p.Pick();
             Assert.Equal(4, portfolio.BuyOrders.Count);
             var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
             Assert.Equal(100, actualValue);
         }
-        
+
         [Fact]
         public void FromYaml()
         {
@@ -189,12 +178,10 @@ namespace PortfolioPicker.Tests
 - name: Roth
   brokerage: Vanguard
   type: ROTH
-  taxable: false
   value: 100
 - name: Other
   brokerage: Vanguard
   type: TAXABLE
-  taxable: false
   value: 100";
 
             var deserializer = new DeserializerBuilder()
@@ -214,7 +201,7 @@ namespace PortfolioPicker.Tests
             var accounts = CreateAccounts();
             var brokerages = CreateFundMap();
             var expectedTotal = accounts.Count * 10000m;
-            var p = Picker.Create(accounts, brokerages, "FourFundStrategy");
+            var p = Picker.Create(accounts, brokerages);
             var portfolio = p.Pick();
             Assert.Equal(12, portfolio.BuyOrders.Count);
             Assert.Equal(1.59, portfolio.ExpenseRatio);
@@ -226,9 +213,172 @@ namespace PortfolioPicker.Tests
         //public void Real()
         //{
         //    var accounts = File.ReadAllText("C:/Users/zacox/Documents/accounts.yaml");
-        //    var p = Picker.Create(accounts, "FourFundStrategy");
+        //    var p = Picker.Create(accounts);
         //    var portfolio = p.Pick();
         //    Assert.Equal(11, portfolio.BuyOrders.Count);
         //}
+
+        [Fact]
+        public void OneAccountFourPerfectFunds()
+        {
+            var dollars = 100m;
+            var accounts = new List<Account>{
+                CreateAccount("X", AccountType.TAXABLE, dollars)
+            };
+            var funds = new List<Fund>{
+                CreateFund("X", "SD", 0, 1, 1),
+                CreateFund("X", "SI", 0, 1, 0),
+                CreateFund("X", "BD", 0, 0, 1),
+                CreateFund("X", "BI", 0, 0, 0),
+            };
+
+            // construct strategy
+            var s = new FourFundStrategy
+            {
+                StockRatio = 0.5m,
+                StockDomesticRatio = 0.5m,
+                BondsDomesticRatio = 0.5m
+            };
+            var picker = Picker.Create(accounts, funds, s);
+            var p = picker.Pick();
+
+            // funds should be equally split
+            Assert.NotNull(p);
+            Assert.Equal(1.0, p.Score);
+            Assert.Equal(4, p.BuyOrders.Count);
+            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "SI").Value);
+            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "BI").Value);
+
+            // output percentages should match input requests
+            Assert.Equal(0.5, p.StockRatio);
+            Assert.Equal(0.5, p.BondRatio);
+            Assert.Equal(0.5, p.DomesticRatio);
+            Assert.Equal(0.5, p.InternationalRatio);
+
+            // ==================================
+            // Change stock ratio
+            s.StockRatio = 0.9m;
+            s.StockDomesticRatio = 1m;
+            s.BondsDomesticRatio = 1m;
+            p = picker.Pick();
+            Assert.NotNull(p);
+            Assert.Equal(1.0, p.Score);
+            Assert.Equal(2, p.BuyOrders.Count);
+            Assert.Equal(0.9m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(0.1m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(0.9, p.StockRatio);
+            Assert.Equal(0.1, p.BondRatio);
+            Assert.Equal(1, p.DomesticRatio);
+            Assert.Equal(0, p.InternationalRatio);
+
+            // ==================================
+            // Change domestic ratio
+            s.StockRatio = 0.5m;
+            s.StockDomesticRatio = 0.9m;
+            s.BondsDomesticRatio = 0.1m;
+            p = picker.Pick();
+            Assert.NotNull(p);
+            Assert.Equal(1.0, p.Score);
+            Assert.Equal(4, p.BuyOrders.Count);
+            Assert.Equal(s.StockRatio * s.StockDomesticRatio * dollars, 
+                         p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(s.StockRatio * s.StockInternationalRatio * dollars,
+                         p.BuyOrders.First(x => x.Fund.Symbol == "SI").Value);
+            Assert.Equal(s.BondsRatio * s.BondsDomesticRatio * dollars, 
+                         p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(s.BondsRatio * s.BondsInternationalRatio * dollars,
+                         p.BuyOrders.First(x => x.Fund.Symbol == "BI").Value);
+            Assert.Equal(0.5, p.StockRatio);
+            Assert.Equal(0.5, p.BondRatio);
+            Assert.Equal(0.5, p.DomesticRatio);
+            Assert.Equal(0.5, p.InternationalRatio);
+        }
+
+        [Fact]
+        public void OneAccountFourEqualFunds_IgnoreWorseER()
+        {
+            var accounts = new List<Account>{
+                CreateAccount("X", AccountType.TAXABLE, value: 100)
+            };
+            var funds = new List<Fund>{
+                CreateFund("X", "SD", .5, 1, 1), // should be ignored, worse ER
+                CreateFund("X", "ZZ_SD", 0, 1, 1), // should be ignored, alphabetically sorted
+                CreateFund("X", "SD", 0, 1, 1),
+                CreateFund("X", "SI", 0, 1, 0),
+                CreateFund("X", "BD", 0, 0, 1),
+                CreateFund("X", "BI", 0, 0, 0),
+            };
+
+            // construct strategy
+            var s = new FourFundStrategy
+            {
+                StockRatio = 0.5m,
+                StockDomesticRatio = 0.5m,
+                BondsDomesticRatio = 0.5m
+            };
+            var picker = Picker.Create(accounts, funds, s);
+            var p = picker.Pick();
+
+            // funds should be equally split
+            Assert.NotNull(p);
+            Assert.Equal(1.0, p.Score); // perfect score
+            Assert.Equal(4, p.BuyOrders.Count);
+            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "SI").Value);
+            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "BI").Value);
+
+            // output percentages should match input requests
+            Assert.Equal(0.5, p.StockRatio);
+            Assert.Equal(0.5, p.BondRatio);
+            Assert.Equal(0.5, p.DomesticRatio);
+            Assert.Equal(0.5, p.InternationalRatio);
+        }
+
+        [Fact]
+        public void ThreeAccountsOneFund()
+        {
+            var brokerageName = "x";
+            var symbolName = "Generic";
+            var accounts = new List<Account>{
+                CreateAccount(brokerageName, AccountType.TAXABLE, value: 100),
+                CreateAccount(brokerageName, AccountType.ROTH, value: 100),
+                CreateAccount(brokerageName, AccountType.CORPORATE, value: 100),
+            };
+            var funds = new List<Fund>{
+                CreateFund(brokerageName, symbolName, 0, .5, .5),
+            };
+
+            // construct strategy
+            var s = new FourFundStrategy
+            {
+                StockRatio = 0.5m,
+                StockDomesticRatio = 0.5m,
+                BondsDomesticRatio = 0.5m
+            };
+            var picker = Picker.Create(accounts, funds, s);
+            var p = picker.Pick();
+
+            // assert portfolio correctness
+            Assert.NotNull(p);
+            Assert.Equal(1.0, p.Score); // perfect score
+            Assert.Equal(100 * accounts.Count, p.TotalValue);
+            Assert.Equal(accounts.Count, p.BuyOrders.Count);
+            foreach (var o in p.BuyOrders)
+            {
+                // one fund per account, spend all the money there
+                Assert.Equal(brokerageName, o.Fund.Brokerage);
+                Assert.Equal(symbolName, o.Fund.Symbol);
+                Assert.Equal(100m, o.Value); 
+            }
+
+            // output percentages should match input requests
+            Assert.Equal((double)s.StockRatio, p.StockRatio);
+            Assert.Equal((double)s.BondsRatio, p.BondRatio);
+            Assert.Equal(0.5, p.DomesticRatio);
+            Assert.Equal(0.5, p.InternationalRatio);
+        }
     }
 }
