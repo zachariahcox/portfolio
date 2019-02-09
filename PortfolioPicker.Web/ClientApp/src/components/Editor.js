@@ -27,15 +27,14 @@ export class Editor extends Component {
         super(props);
         this.editor = null;
     }
-    editorDidMount(editor, monaco) {
-        editor.focus();
-        this.editor = editor;
-    }
-
-    saveContent() {
+    componentWillUnmount() {
         if (this.editor) {
             this.props.save(this.editor.getValue());
         }
+    }
+    editorDidMount(editor, monaco) {
+        editor.focus();
+        this.editor = editor;
     }
 
     handleFileChosen(file) {
@@ -55,7 +54,6 @@ export class Editor extends Component {
             <div>
                 <h1>Accounts</h1>
                 <MonacoEditor
-                    ref="monaco"
                     height="600"
                     language="yaml"
                     theme="vs-dark"
@@ -63,7 +61,6 @@ export class Editor extends Component {
                     options={options}
                     editorDidMount={this.editorDidMount.bind(this)}
                 />
-                <button onClick={this.saveContent.bind(this)}>Save</button>
                 <input
                     type="file"
                     accept=".yaml"

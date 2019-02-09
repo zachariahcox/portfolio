@@ -3,80 +3,59 @@
 export class Portfolio extends Component {
     displayName = Portfolio.name
 
-    constructor(props) {
-        super(props);
-        this.code = props.code;
-
-        this.state = {
-            loading: false,
-            hasData: false,
-
-            // portfolio values
-            expenseRatio: 0,
-            totalValue: 0,
-            strategy: "",
-            stockPercent: 0,
-            bondPercent: 0,
-            buyOrders: [],
-        };
-    }
-
     componentDidMount() {
         // call web service with code from editor
-        // loading
-        this.setState({
-            loading: true,
-        });
 
-        // data payload
+        if (this.props.portfolio != null) {
+            return; // just rerender the cached result
+        }
+   
+        // fetch new results
         fetch('api/picker', {
             method: 'POST',
             headers: { 'Content-type': 'text/plain' },
             body: this.props.code
         })
-            .then(r => r.json())
-            .then(portfolio => {
-                this.setState({
-                    loading: false,
-                    hasData: true,
-
-                    expenseRatio: portfolio.expenseRatio,
-                    totalValue: portfolio.totalValue,
-                    strategy: portfolio.strategy,
-                    stockPercent: 100.0 * portfolio.stockRatio,
-                    bondPercent: 100.0 * portfolio.bondRatio,
-
-                    buyOrders: portfolio.buyOrders.map(o => {
-                        var rc = {
-                            id: o.id,
-                            fund: o.fund,
-                            account: o.account.name,
-                            value: o.value,
-                            symbol: "",
-                            url: "",
-                            description: "",
-                            stock: 100,
-                            domestic: 100
-                        };
-
-                        const f = o.fund;
-                        if (f) {
-                            rc.symbol = f.symbol;
-                            rc.url = f.url;
-                            rc.description = f.description;
-                            rc.domestic = 100.0 * f.domesticRatio;
-                            rc.stock = 100.0 * f.stockRatio;
-                        }
-                        return rc;
-                    })
-                });
-            })
-            .catch(data => {
-                console.log(data);
-            });
+        .then(r => r.json())
+        .then(portfolio => {
+            this.props.cachePortfolio(portfolio);
+        })
+        .catch(data => {
+            console.log(data);
+        });
     }
 
     static renderTable(portfolio) {
+        const expenseRatio = portfolio.expenseRatio;
+        const totalValue = portfolio.totalValue;
+        const strategy = portfolio.strategy;
+        const stockPercent = 100.0 * portfolio.stockRatio;
+        const bondPercent = 100.0 * portfolio.bondRatio;
+        const buyOrders = portfolio.buyOrders.map(o => {
+            var rc = {
+                id: o.id,
+                fund: o.fund,
+                account: o.account.name,
+                value: o.value,
+                symbol: "",
+                url: "",
+                description: "",
+                stock: 100,
+                domestic: 100
+            };
+
+            const f = o.fund;
+            if (f) {
+                rc.symbol = f.symbol;
+                rc.url = f.url;
+                rc.description = f.description;
+                rc.domestic = 100.0 * f.domesticRatio;
+                rc.stock = 100.0 * f.stockRatio;
+            }
+            return rc;
+        });
+
+
         return (
             <div>
                 <h3>Summary:</h3>
@@ -88,11 +67,11 @@ export class Portfolio extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Strategy</td><td>{portfolio.strategy}</td></tr>
-                        <tr><td>Effective Expense Ratio</td><td>{portfolio.expenseRatio.toFixed(2)}</td></tr>
-                        <tr><td>Total Value</td><td>${portfolio.totalValue}</td></tr>
-                        <tr><td>Stock %</td><td>{portfolio.stockPercent.toFixed(2)}</td></tr>
-                        <tr><td>Bonds %</td> <td>{portfolio.bondPercent.toFixed(2)}</td></tr>
+                        <tr><td>Strategy</td><td>{strategy}</td></tr>
+                        <tr><td>Effective Expense Ratio</td><td>{expenseRatio.toFixed(2)}</td></tr>
+                        <tr><td>Total Value</td><td>${totalValue}</td></tr>
+                        <tr><td>Stock %</td><td>{stockPercent.toFixed(2)}</td></tr>
+                        <tr><td>Bonds %</td> <td>{bondPercent.toFixed(2)}</td></tr>
                     </tbody>
                 </table>
 
@@ -110,7 +89,7 @@ export class Portfolio extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {portfolio.buyOrders.map(o =>
+                        {buyOrders.map(o =>
                             <tr key={o.id}>
                                 <td>{o.account}</td>
                                 <td><a href={o.url}>{o.symbol}</a></td>
@@ -128,9 +107,9 @@ export class Portfolio extends Component {
     }
 
     render() {
-        let results = this.state.hasData
-            ? Portfolio.renderTable(this.state)
-            : <p>Please enter account information</p>;
+        let results = this.props.portfolio == null
+            ? <p>Please enter account information</p>
+            : Portfolio.renderTable(this.props.portfolio);
 
         return (
             <div>
