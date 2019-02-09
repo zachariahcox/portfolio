@@ -25,15 +25,29 @@ export class Editor extends Component {
     displayName = Editor.name
     constructor(props) {
         super(props);
-        this.updateCode = props.updateCode;
-        this.onChange = (newValue, event) => {
-            //this.updateCode(newValue);
+        this.editor = null;
+    }
+    editorDidMount(editor, monaco) {
+        editor.focus();
+        this.editor = editor;
+    }
+
+    saveContent() {
+        if (this.editor) {
+            this.props.save(this.editor.getValue());
+        }
+    }
+
+    handleFileChosen(file) {
+        var reader = new FileReader();
+        reader.onloadend = (event) => {
+            this.editor.setValue(reader.result);
         };
+        reader.readAsText(file);
     }
 
     render() {
         const code = this.props.code;
-        const change = this.onChange;
         const options = {
             selectOnLineNumbers: true
         };
@@ -41,16 +55,20 @@ export class Editor extends Component {
             <div>
                 <h1>Accounts</h1>
                 <MonacoEditor
+                    ref="monaco"
                     height="600"
                     language="yaml"
                     theme="vs-dark"
                     value={code}
                     options={options}
-                    onChange={change}
+                    editorDidMount={this.editorDidMount.bind(this)}
                 />
-                <button>
-                    Submit
-                </button>
+                <button onClick={this.saveContent.bind(this)}>Save</button>
+                <input
+                    type="file"
+                    accept=".yaml"
+                    onChange={e => this.handleFileChosen.bind(this)(e.target.files[0])}
+                />
             </div>
         );
     }
