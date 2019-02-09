@@ -42,8 +42,7 @@ namespace PortfolioPicker.App.Strategies
         {
             Class = AssetClass.Bond,
             Location = AssetLocation.International,
-            AccountTypesPreference = new[]{AccountType.TAXABLE,  AccountType.CORPORATE, AccountType.ROTH
-    }
+            AccountTypesPreference = new[] { AccountType.TAXABLE, AccountType.CORPORATE, AccountType.ROTH }
         };
 
         /// <summary>
@@ -261,8 +260,8 @@ namespace PortfolioPicker.App.Strategies
         }
 
         double ComputePercentage(
-            IDictionary<Exposure, decimal> remainders, 
-            Exposure a, 
+            IDictionary<Exposure, decimal> remainders,
+            Exposure a,
             Exposure b,
             decimal total)
         {
