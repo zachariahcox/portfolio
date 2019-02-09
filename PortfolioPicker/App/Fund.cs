@@ -32,9 +32,6 @@ namespace PortfolioPicker.App
         [IgnoreDataMember]
         public double BondRatio => 1.0 - StockRatio;
 
-        [DataMember(IsRequired = false)]
-        public bool TargetDate { get; set; } = false;
-
         [DataMember(IsRequired =false, EmitDefaultValue =false)]
         public string Exposure { get; set; }
 

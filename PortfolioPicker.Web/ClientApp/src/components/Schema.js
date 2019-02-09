@@ -12,12 +12,10 @@ export class Schema extends Component {
         const accountsYaml = `- name: Roth
   brokerage: Vanguard
   type: ROTH
-  taxable: false
   value: 100
 - name: Other
   brokerage: Vanguard
   type: TAXABLE
-  taxable: false
   value: 100";`;
 
         const fundsYaml = `- description: Vanguard Total Stock Market Index Fund

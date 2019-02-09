@@ -19,7 +19,6 @@ export class Picker extends Component {
             
             src: "<enter data or load from file>"
         };
-
         this.handleUploadData = this.handleUploadData.bind(this);
         this.handleFileChosen = this.handleFileChosen.bind(this);
     }
@@ -60,8 +59,8 @@ export class Picker extends Component {
                 expenseRatio: portfolio.expenseRatio,
                 totalValue: portfolio.totalValue,
                 strategy: portfolio.strategy,
-                stockPercent: portfolio.stockPercent,
-                bondPercent: portfolio.bondPercent,
+                stockPercent: 100.0 * portfolio.stockRatio,
+                bondPercent: 100.0 * portfolio.bondRatio,
 
                 buyOrders: portfolio.buyOrders.map(o => {
                     var rc = {
@@ -72,8 +71,8 @@ export class Picker extends Component {
                         symbol: "",
                         url: "",
                         description: "",
-                        stock: 1,
-                        domestic: 1
+                        stock: 100,
+                        domestic: 100
                     };
 
                     const f = o.fund;
@@ -81,8 +80,8 @@ export class Picker extends Component {
                         rc.symbol = f.symbol;
                         rc.url = f.url;
                         rc.description = f.description;
-                        rc.domestic = f.domesticRatio;
-                        rc.stock = f.stockRatio;
+                        rc.domestic = 100.0 * f.domesticRatio;
+                        rc.stock = 100.0 * f.stockRatio;
                     }
                     return rc;
                 })
@@ -106,10 +105,10 @@ export class Picker extends Component {
                     </thead>
                     <tbody>
                         <tr><td>Strategy</td><td>{portfolio.strategy}</td></tr>
-                        <tr><td>Effective Expense Ratio</td><td>{portfolio.expenseRatio}</td></tr>
+                        <tr><td>Effective Expense Ratio</td><td>{portfolio.expenseRatio.toFixed(2)}</td></tr>
                         <tr><td>Total Value</td><td>${portfolio.totalValue}</td></tr>
-                        <tr><td>Stock %</td><td>{portfolio.stockPercent}</td></tr>
-                        <tr><td>Bonds %</td> <td>{portfolio.bondPercent}</td></tr>
+                        <tr><td>Stock %</td><td>{portfolio.stockPercent.toFixed(2)}</td></tr>
+                        <tr><td>Bonds %</td> <td>{portfolio.bondPercent.toFixed(2)}</td></tr>
                     </tbody>
                 </table>
 
@@ -131,11 +130,11 @@ export class Picker extends Component {
                             <tr key={o.id}>
                                 <td>{o.account}</td>
                                 <td><a href={o.url}>{o.symbol}</a></td>
-                                <td>{o.stock}</td>
-                                <td>{1.0 - o.stock}</td>
-                                <td>{o.domestic}</td>
-                                <td>{1.0 - o.domestic}</td>
-                                <td>{o.value}</td>
+                                <td align="right">{o.stock.toFixed(2)}</td>
+                                <td align="right">{(100.0 - o.stock).toFixed(2)}</td>
+                                <td align="right">{o.domestic.toFixed(2)}</td>
+                                <td align="right">{(100.0 - o.domestic).toFixed(2)}</td>
+                                <td align="right">${o.value.toFixed(2)}</td>
                             </tr>
                         )}
                     </tbody>
