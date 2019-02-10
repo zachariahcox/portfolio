@@ -53,6 +53,11 @@ export class Editor extends Component {
         return (
             <div>
                 <h1>Accounts</h1>
+                <input
+                    type="file"
+                    accept=".yaml"
+                    onChange={e => this.handleFileChosen.bind(this)(e.target.files[0])}
+                />
                 <MonacoEditor
                     height="600"
                     language="yaml"
@@ -61,11 +66,7 @@ export class Editor extends Component {
                     options={options}
                     editorDidMount={this.editorDidMount.bind(this)}
                 />
-                <input
-                    type="file"
-                    accept=".yaml"
-                    onChange={e => this.handleFileChosen.bind(this)(e.target.files[0])}
-                />
+               
             </div>
         );
     }

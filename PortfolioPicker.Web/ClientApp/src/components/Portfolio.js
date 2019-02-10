@@ -69,9 +69,9 @@ export class Portfolio extends Component {
                     <tbody>
                         <tr><td>Strategy</td><td>{strategy}</td></tr>
                         <tr><td>Effective Expense Ratio</td><td>{expenseRatio.toFixed(2)}</td></tr>
-                        <tr><td>Total Value</td><td>${totalValue}</td></tr>
-                        <tr><td>Stock %</td><td>{stockPercent.toFixed(2)}</td></tr>
-                        <tr><td>Bonds %</td> <td>{bondPercent.toFixed(2)}</td></tr>
+                        <tr><td>Total Value</td><td>${totalValue.toFixed(2)}</td></tr>
+                        <tr><td>Stock</td><td>%{stockPercent.toFixed(2)}</td></tr>
+                        <tr><td>Bonds</td> <td>%{bondPercent.toFixed(2)}</td></tr>
                     </tbody>
                 </table>
 
@@ -81,10 +81,10 @@ export class Portfolio extends Component {
                         <tr>
                             <th>Account</th>
                             <th>Symbol</th>
-                            <th>Stock%</th>
-                            <th>Bond%</th>
-                            <th>Domestic%</th>
-                            <th>International%</th>
+                            <th>Stock</th>
+                            <th>Bond</th>
+                            <th>Domestic</th>
+                            <th>International</th>
                             <th>Value (USD)</th>
                         </tr>
                     </thead>
@@ -93,11 +93,11 @@ export class Portfolio extends Component {
                             <tr key={o.id}>
                                 <td>{o.account}</td>
                                 <td><a href={o.url}>{o.symbol}</a></td>
-                                <td align="right">{o.stock.toFixed(2)}</td>
-                                <td align="right">{(100.0 - o.stock).toFixed(2)}</td>
-                                <td align="right">{o.domestic.toFixed(2)}</td>
-                                <td align="right">{(100.0 - o.domestic).toFixed(2)}</td>
-                                <td align="right">${o.value.toFixed(2)}</td>
+                                <td>%{o.stock.toFixed(2)}</td>
+                                <td>%{(100.0 - o.stock).toFixed(2)}</td>
+                                <td>%{o.domestic.toFixed(2)}</td>
+                                <td>%{(100.0 - o.domestic).toFixed(2)}</td>
+                                <td>${o.value.toFixed(2)}</td>
                             </tr>
                         )}
                     </tbody>

@@ -16,7 +16,7 @@ export class Schema extends Component {
 - name: Other
   brokerage: Vanguard
   type: TAXABLE
-  value: 100";`;
+  value: 100`;
 
         const fundsYaml = `- description: Vanguard Total Stock Market Index Fund
   symbol: VTSAX
