@@ -25,28 +25,43 @@ export class Editor extends Component {
     displayName = Editor.name
     constructor(props) {
         super(props);
-        this.editor = null;
+        this.accountsEditor = null;
+        this.fundsEditor = null;
     }
     componentWillUnmount() {
-        if (this.editor) {
-            this.props.save(this.editor.getValue());
+        if (this.accountsEditor) {
+            this.props.cacheAccounts(this.accountsEditor.getValue());
+        }
+        if (this.fundsEditor) {
+            this.props.cacheFunds(this.fundsEditor.getValue());
         }
     }
-    editorDidMount(editor, monaco) {
-        editor.focus();
-        this.editor = editor;
-    }
 
-    handleFileChosen(file) {
+    mountAccounts(editor, monaco) {
+        editor.focus();
+        this.accountsEditor = editor;
+    }
+    mountFunds(editor, monaco) {
+        editor.focus();
+        this.fundsEditor = editor;
+    }
+    setAccounts(file) {
         var reader = new FileReader();
         reader.onloadend = (event) => {
-            this.editor.setValue(reader.result);
+            this.accountsEditor.setValue(reader.result);
+        };
+        reader.readAsText(file);
+    }
+    setFunds(file) {
+        var reader = new FileReader();
+        reader.onloadend = (event) => {
+            this.fundsEditor.setValue(reader.result);
         };
         reader.readAsText(file);
     }
 
+
     render() {
-        const code = this.props.code;
         const options = {
             selectOnLineNumbers: true
         };
@@ -56,17 +71,31 @@ export class Editor extends Component {
                 <input
                     type="file"
                     accept=".yaml"
-                    onChange={e => this.handleFileChosen.bind(this)(e.target.files[0])}
+                    onChange={e => this.setAccounts.bind(this)(e.target.files[0])}
                 />
                 <MonacoEditor
-                    height="600"
+                    height="300"
                     language="yaml"
                     theme="vs-dark"
-                    value={code}
+                    value={this.props.accountsYaml}
                     options={options}
-                    editorDidMount={this.editorDidMount.bind(this)}
+                    editorDidMount={this.mountAccounts.bind(this)}
                 />
-               
+
+                <h1>Funds List</h1>
+                <input
+                    type="file"
+                    accept=".yaml"
+                    onChange={e => this.setFunds.bind(this)(e.target.files[0])}
+                />
+                <MonacoEditor
+                    height="300"
+                    language="yaml"
+                    theme="vs-dark"
+                    value={this.props.fundsYaml}
+                    options={options}
+                    editorDidMount={this.mountFunds.bind(this)}
+                />
             </div>
         );
     }

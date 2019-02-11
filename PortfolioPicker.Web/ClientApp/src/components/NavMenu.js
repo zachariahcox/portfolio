@@ -20,7 +20,7 @@ export class NavMenu extends Component {
           <Nav>
             <LinkContainer to={'/'} exact>
               <NavItem>
-                <Glyphicon glyph='home' /> Home
+              <Glyphicon glyph='th-list' /> Rules
               </NavItem>
             </LinkContainer>
 
@@ -32,12 +32,12 @@ export class NavMenu extends Component {
 
             <LinkContainer to={'/editor'}>
                 <NavItem>
-                    <Glyphicon glyph='th-list' /> Editor
+                <Glyphicon glyph='pencil' /> Editor
                 </NavItem>
             </LinkContainer>
             <LinkContainer to={'/portfolio'}>
                 <NavItem>
-                    <Glyphicon glyph='th-list' /> Portfolio
+                <Glyphicon glyph='piggy-bank' /> Portfolio
                 </NavItem>
             </LinkContainer>
           </Nav>

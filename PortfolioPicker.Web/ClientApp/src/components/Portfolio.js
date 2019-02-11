@@ -5,24 +5,42 @@ export class Portfolio extends Component {
 
     componentDidMount() {
         // call web service with code from editor
-
         if (this.props.portfolio != null) {
-            return; // just rerender the cached result
+            return; // just re-render the cached result
         }
-   
+
         // fetch new results
         fetch('api/picker', {
             method: 'POST',
             headers: { 'Content-type': 'text/plain' },
-            body: this.props.code
+            body: this.props.accountsYaml
         })
-        .then(r => r.json())
-        .then(portfolio => {
-            this.props.cachePortfolio(portfolio);
-        })
-        .catch(data => {
-            console.log(data);
-        });
+            .then(r => r.json())
+            .then(portfolio => {
+                this.props.cachePortfolio(portfolio);
+            })
+            .catch(data => {
+                console.log(data);
+            });
+    }
+
+    static formatMoney(amount, decimalCount = 2, decimal = ".", thousands = ",", symbol="$") {
+        try {
+            decimalCount = Math.abs(decimalCount);
+            decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
+
+            const negativeSign = amount < 0 ? "-" : "";
+
+            let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString();
+            let j = (i.length > 3) ? i.length % 3 : 0;
+
+            return negativeSign + symbol + (j ? i.substr(0, j) + thousands : '')
+                + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands)
+                + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
+
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     static renderTable(portfolio) {
@@ -68,10 +86,10 @@ export class Portfolio extends Component {
                     </thead>
                     <tbody>
                         <tr><td>Strategy</td><td>{strategy}</td></tr>
-                        <tr><td>Effective Expense Ratio</td><td>{expenseRatio.toFixed(2)}</td></tr>
-                        <tr><td>Total Value</td><td>${totalValue.toFixed(2)}</td></tr>
-                        <tr><td>Stock</td><td>%{stockPercent.toFixed(2)}</td></tr>
-                        <tr><td>Bonds</td> <td>%{bondPercent.toFixed(2)}</td></tr>
+                        <tr><td>Effective Expense Ratio</td><td>{expenseRatio.toFixed(3)}</td></tr>
+                        <tr><td>Total Value</td><td>{Portfolio.formatMoney(totalValue)}</td></tr>
+                        <tr><td>Stock</td><td>%{stockPercent.toFixed(1)}</td></tr>
+                        <tr><td>Bonds</td> <td>%{bondPercent.toFixed(1)}</td></tr>
                     </tbody>
                 </table>
 
@@ -93,11 +111,11 @@ export class Portfolio extends Component {
                             <tr key={o.id}>
                                 <td>{o.account}</td>
                                 <td><a href={o.url}>{o.symbol}</a></td>
-                                <td>%{o.stock.toFixed(2)}</td>
-                                <td>%{(100.0 - o.stock).toFixed(2)}</td>
-                                <td>%{o.domestic.toFixed(2)}</td>
-                                <td>%{(100.0 - o.domestic).toFixed(2)}</td>
-                                <td>${o.value.toFixed(2)}</td>
+                                <td>%{o.stock.toFixed(1)}</td>
+                                <td>%{(100.0 - o.stock).toFixed(1)}</td>
+                                <td>%{o.domestic.toFixed(1)}</td>
+                                <td>%{(100.0 - o.domestic).toFixed(1)}</td>
+                                <td>{Portfolio.formatMoney(o.value)}</td>
                             </tr>
                         )}
                     </tbody>
