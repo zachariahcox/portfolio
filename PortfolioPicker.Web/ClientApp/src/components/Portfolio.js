@@ -15,13 +15,13 @@ export class Portfolio extends Component {
             headers: { 'Content-type': 'text/plain' },
             body: this.props.accountsYaml
         })
-            .then(r => r.json())
-            .then(portfolio => {
-                this.props.cachePortfolio(portfolio);
-            })
-            .catch(data => {
-                console.log(data);
-            });
+        .then(r => r.json())
+        .then(portfolio => {
+            this.props.cachePortfolio(portfolio);
+        })
+        .catch(data => {
+            console.log(data);
+        });
     }
 
     static formatMoney(amount, decimalCount = 2, decimal = ".", thousands = ",", symbol="$") {
