@@ -26,13 +26,18 @@ export class NavMenu extends Component {
 
             <LinkContainer to={'/schema'}>
               <NavItem>
-                <Glyphicon glyph='education' /> Data Schema
+                <Glyphicon glyph='education' /> Schema
               </NavItem>
             </LinkContainer>
 
-            <LinkContainer to={'/picker'}>
+            <LinkContainer to={'/editor'}>
                 <NavItem>
-                    <Glyphicon glyph='th-list' /> Picker
+                    <Glyphicon glyph='th-list' /> Editor
+                </NavItem>
+            </LinkContainer>
+            <LinkContainer to={'/portfolio'}>
+                <NavItem>
+                    <Glyphicon glyph='th-list' /> Portfolio
                 </NavItem>
             </LinkContainer>
           </Nav>
