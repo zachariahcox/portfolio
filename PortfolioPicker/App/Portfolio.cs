@@ -35,8 +35,12 @@ namespace PortfolioPicker.App
             {
                 lines.Add("|" + string.Join("|", values) + "|");
             }
+
+            lines.Add("# portfolio");
+            lines.Add("## stats");
             Draw("stat", "value");
             Draw("---", "---");
+            Draw("date", System.DateTime.Now.ToString("dd / MM / yyyy"));
             Draw(nameof(TotalValue), string.Format("{0:c}", TotalValue));
             Draw(nameof(ExpenseRatio), ExpenseRatio);
             Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
@@ -46,6 +50,7 @@ namespace PortfolioPicker.App
             Draw(nameof(Strategy), Strategy);
             lines.Add("");
 
+            lines.Add("## buy orders");
             Draw("account", "fund", "value");
             Draw("---", "---", "---");
             foreach(var o in BuyOrders
