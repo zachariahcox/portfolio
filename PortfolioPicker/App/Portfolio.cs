@@ -50,7 +50,7 @@ namespace PortfolioPicker.App
             Draw(nameof(Strategy), Strategy);
             lines.Add("");
 
-            lines.Add("## buy orders");
+            lines.Add("## positions");
             Draw("account", "fund", "value");
             Draw("---", "---", "---");
             foreach(var o in BuyOrders
