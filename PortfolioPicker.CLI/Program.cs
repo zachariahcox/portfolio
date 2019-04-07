@@ -8,9 +8,9 @@ namespace PortfolioPicker.CLI
     {
         static void Main(string[] args)
         {
-            if (args.Length != 1)
+            if (args.Length != 2)
             {
-                Console.Write("Please provide path to accounts file.");
+                Console.Write("Please provide path to accounts file and a path to output file.");
                 return;
             }
 
@@ -20,7 +20,7 @@ namespace PortfolioPicker.CLI
                 fundsYaml: null, 
                 strategyName: "FourFundStrategy");
             var portfolio = p.Pick();
-            Console.Write(portfolio.ToString());
+            File.WriteAllLines(args[1], portfolio.ToMarkdownLines());
         }
     }
 }
