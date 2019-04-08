@@ -54,7 +54,7 @@ namespace PortfolioPicker.App
         }
 
         /// <summary>
-        /// follow a strategy to produce buy orders
+        /// follow a strategy to produce positions
         /// </summary>
         public Portfolio Pick()
         {

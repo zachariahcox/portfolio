@@ -7,7 +7,7 @@ namespace PortfolioPicker.App
     {
         public string Strategy { get; set; }
 
-        public IReadOnlyList<Order> BuyOrders { get; set; }
+        public IReadOnlyList<Position> Positions { get; set; }
 
         public IList<string> Warnings { get; set; }
 
@@ -53,7 +53,7 @@ namespace PortfolioPicker.App
             lines.Add("## positions");
             Draw("account", "fund", "value");
             Draw("---", "---", "---");
-            foreach(var o in BuyOrders
+            foreach(var o in Positions
                 .OrderBy(x => x.Account.Name)
                 .ThenBy(x => x.Fund.Symbol)
                 .ThenBy(x => x.Value))

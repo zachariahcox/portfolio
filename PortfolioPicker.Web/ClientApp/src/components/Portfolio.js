@@ -49,7 +49,7 @@ export class Portfolio extends Component {
         const strategy = portfolio.strategy;
         const stockPercent = 100.0 * portfolio.stockRatio;
         const bondPercent = 100.0 * portfolio.bondRatio;
-        const buyOrders = portfolio.buyOrders.map(o => {
+        const positions = portfolio.positions.map(o => {
             var rc = {
                 id: o.id,
                 fund: o.fund,
@@ -93,7 +93,7 @@ export class Portfolio extends Component {
                     </tbody>
                 </table>
 
-                <h3>Buy Orders:</h3>
+                <h3>Positions:</h3>
                 <table className='table'>
                     <thead>
                         <tr>
@@ -107,7 +107,7 @@ export class Portfolio extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        {buyOrders.map(o =>
+                        {positions.map(o =>
                             <tr key={o.id}>
                                 <td>{o.account}</td>
                                 <td><a href={o.url}>{o.symbol}</a></td>

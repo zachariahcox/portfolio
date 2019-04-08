@@ -88,10 +88,10 @@ namespace PortfolioPicker.App.Strategies
             return result;
         }
 
-        static double ComputeExpenseRatio(IList<Order> orders)
+        static double ComputeExpenseRatio(IList<Position> positions)
         {
-            var weighted_sum = orders.Sum(x => x.Fund?.ExpenseRatio * (double)x.Value);
-            var weight = orders.Sum(x => (double)x.Value);
+            var weighted_sum = positions.Sum(x => x.Fund?.ExpenseRatio * (double)x.Value);
+            var weight = positions.Sum(x => (double)x.Value);
             var er = weighted_sum.Value / weight;
             return er;
         }
@@ -112,8 +112,8 @@ namespace PortfolioPicker.App.Strategies
                 exposureRemainders[e] = e.Target;
             }
 
-            // BUY ORDERS
-            var orders = new List<Order>();
+            // POSITIONS
+            var positions = new List<Position>();
             var warnings = new List<string>();
             var errors = new List<string>();
             foreach (var e in exposures)
@@ -155,11 +155,11 @@ namespace PortfolioPicker.App.Strategies
                         var percentOfThisFundThatAppliesToThisExposureType = f.Ratio(e);
                         var purchaseValue = Math.Min(accountRemainders[a], exposureRemainders[e] / (decimal)percentOfThisFundThatAppliesToThisExposureType);
 
-                        // create order and reduce remainders
+                        // create position and reduce remainders
                         if (purchaseValue > 0)
                         {
-                            // create order
-                            orders.Add(new Order
+                            // create position
+                            positions.Add(new Position
                             {
                                 Account = a,
                                 Value = purchaseValue,
@@ -246,12 +246,12 @@ namespace PortfolioPicker.App.Strategies
                 Score = score,
                 TotalValue = totalValue,
                 Strategy = this.GetType().Name,
-                BuyOrders = orders,
+                Positions = positions,
                 Warnings = warnings,
                 Errors = errors,
 
                 // aggregate stats
-                ExpenseRatio = ComputeExpenseRatio(orders),
+                ExpenseRatio = ComputeExpenseRatio(positions),
                 BondRatio = ComputePercentage(exposureRemainders, BD, BI, totalValue),
                 StockRatio = ComputePercentage(exposureRemainders, SD, SI, totalValue),
                 DomesticRatio = ComputePercentage(exposureRemainders, SD, BD, totalValue),
@@ -292,7 +292,7 @@ namespace PortfolioPicker.App.Strategies
                 .Where(x => x.Errors.Count == 0)       // no errors
                 .OrderByDescending(x => x.Score)       // best score
                 .ThenByDescending(x => x.ExpenseRatio) // lowest cost
-                .ThenBy(x => x.BuyOrders.Count);       // fewest orders
+                .ThenBy(x => x.Positions.Count);       // fewest positions
 
             return bestToWorst.FirstOrDefault();
         }

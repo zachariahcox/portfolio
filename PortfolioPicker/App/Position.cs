@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace PortfolioPicker.App
 {
-    public class Order
+    public class Position
     {
         public Guid Id { get; private set; }
 
@@ -13,7 +13,7 @@ namespace PortfolioPicker.App
 
         public decimal Value { get; set; } = 0m;
 
-        public Order(
+        public Position(
             Account account = null, 
             Fund fund = null, 
             decimal value = 0m)
@@ -27,7 +27,7 @@ namespace PortfolioPicker.App
         public override string ToString()
         {
             return string.Join(", ", new List<string> {
-                "Order",
+                "Position",
                 (Account != null ? Account.Name : "null"),
                 (Fund != null ? Fund.Symbol : "null"),
                 string.Format("{0:c}", Convert.ToInt32(Value))});

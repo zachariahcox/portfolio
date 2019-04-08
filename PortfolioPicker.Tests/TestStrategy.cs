@@ -90,8 +90,8 @@ namespace PortfolioPicker.Tests
 
             var p = Picker.Create(accounts);
             var portfolio = p.Pick();
-            Assert.Equal(4, portfolio.BuyOrders.Count);
-            var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
+            Assert.Equal(4, portfolio.Positions.Count);
+            var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(100, actualValue);
         }
 
@@ -148,8 +148,8 @@ namespace PortfolioPicker.Tests
 
             var p = Picker.Create(accounts);
             var portfolio = p.Pick();
-            Assert.Equal(4, portfolio.BuyOrders.Count);
-            var actualValue = portfolio.BuyOrders.Sum(o => o.Value);
+            Assert.Equal(4, portfolio.Positions.Count);
+            var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(100, actualValue);
         }
 
@@ -203,9 +203,9 @@ namespace PortfolioPicker.Tests
             var expectedTotal = accounts.Count * 10000m;
             var p = Picker.Create(accounts, brokerages);
             var portfolio = p.Pick();
-            Assert.Equal(12, portfolio.BuyOrders.Count);
+            Assert.Equal(12, portfolio.Positions.Count);
             Assert.Equal(1.59, portfolio.ExpenseRatio);
-            var actualTotal = portfolio.BuyOrders.Sum(o => o.Value);
+            var actualTotal = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(expectedTotal, actualTotal);
         }
 
@@ -215,7 +215,7 @@ namespace PortfolioPicker.Tests
         //    var accounts = File.ReadAllText("C:/Users/zacox/Documents/accounts.yaml");
         //    var p = Picker.Create(accounts);
         //    var portfolio = p.Pick();
-        //    Assert.Equal(11, portfolio.BuyOrders.Count);
+        //    Assert.Equal(11, portfolio.Positions.Count);
         //}
 
         [Fact]
@@ -245,11 +245,11 @@ namespace PortfolioPicker.Tests
             // funds should be equally split
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
-            Assert.Equal(4, p.BuyOrders.Count);
-            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
-            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "SI").Value);
-            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
-            Assert.Equal(0.25m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "BI").Value);
+            Assert.Equal(4, p.Positions.Count);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "SI").Value);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "BI").Value);
 
             // output percentages should match input requests
             Assert.Equal(0.5, p.StockRatio);
@@ -265,9 +265,9 @@ namespace PortfolioPicker.Tests
             p = picker.Pick();
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
-            Assert.Equal(2, p.BuyOrders.Count);
-            Assert.Equal(0.9m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
-            Assert.Equal(0.1m * dollars, p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(2, p.Positions.Count);
+            Assert.Equal(0.9m * dollars, p.Positions.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(0.1m * dollars, p.Positions.First(x => x.Fund.Symbol == "BD").Value);
             Assert.Equal(0.9, p.StockRatio);
             Assert.Equal(0.1, p.BondRatio);
             Assert.Equal(1, p.DomesticRatio);
@@ -281,15 +281,15 @@ namespace PortfolioPicker.Tests
             p = picker.Pick();
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
-            Assert.Equal(4, p.BuyOrders.Count);
+            Assert.Equal(4, p.Positions.Count);
             Assert.Equal(s.StockRatio * s.StockDomesticRatio * dollars, 
-                         p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
+                         p.Positions.First(x => x.Fund.Symbol == "SD").Value);
             Assert.Equal(s.StockRatio * s.StockInternationalRatio * dollars,
-                         p.BuyOrders.First(x => x.Fund.Symbol == "SI").Value);
+                         p.Positions.First(x => x.Fund.Symbol == "SI").Value);
             Assert.Equal(s.BondsRatio * s.BondsDomesticRatio * dollars, 
-                         p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
+                         p.Positions.First(x => x.Fund.Symbol == "BD").Value);
             Assert.Equal(s.BondsRatio * s.BondsInternationalRatio * dollars,
-                         p.BuyOrders.First(x => x.Fund.Symbol == "BI").Value);
+                         p.Positions.First(x => x.Fund.Symbol == "BI").Value);
             Assert.Equal(0.5, p.StockRatio);
             Assert.Equal(0.5, p.BondRatio);
             Assert.Equal(0.5, p.DomesticRatio);
@@ -324,11 +324,11 @@ namespace PortfolioPicker.Tests
             // funds should be equally split
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score); // perfect score
-            Assert.Equal(4, p.BuyOrders.Count);
-            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "SD").Value);
-            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "SI").Value);
-            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "BD").Value);
-            Assert.Equal(25m, p.BuyOrders.First(x => x.Fund.Symbol == "BI").Value);
+            Assert.Equal(4, p.Positions.Count);
+            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "SI").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "BI").Value);
 
             // output percentages should match input requests
             Assert.Equal(0.5, p.StockRatio);
@@ -365,8 +365,8 @@ namespace PortfolioPicker.Tests
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score); // perfect score
             Assert.Equal(100 * accounts.Count, p.TotalValue);
-            Assert.Equal(accounts.Count, p.BuyOrders.Count);
-            foreach (var o in p.BuyOrders)
+            Assert.Equal(accounts.Count, p.Positions.Count);
+            foreach (var o in p.Positions)
             {
                 // one fund per account, spend all the money there
                 Assert.Equal(brokerageName, o.Fund.Brokerage);
