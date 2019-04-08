@@ -40,9 +40,9 @@ namespace PortfolioPicker.App
             lines.Add("## stats");
             Draw("stat", "value");
             Draw("---", "---");
-            Draw("date", System.DateTime.Now.ToString("dd / MM / yyyy"));
+            Draw("date", System.DateTime.Now.ToString("MM / dd / yyyy"));
             Draw(nameof(TotalValue), string.Format("{0:c}", TotalValue));
-            Draw(nameof(ExpenseRatio), ExpenseRatio);
+            Draw(nameof(ExpenseRatio), string.Format("{0:0.0000}", ExpenseRatio));
             Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
             Draw(nameof(StockRatio), string.Format("{0:0.00}", StockRatio));
             Draw(nameof(DomesticRatio), string.Format("{0:0.00}", DomesticRatio));
