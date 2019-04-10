@@ -13,6 +13,7 @@ namespace PortfolioPicker.Tests
         Account CreateAccount(
                 string brokerage,
                 AccountType type,
+                string symbol = "VTSAX",
                 decimal value = 100m)
         {
             return new Account
@@ -20,7 +21,14 @@ namespace PortfolioPicker.Tests
                 Brokerage = brokerage,
                 Name = $"My {brokerage} account",
                 Type = type,
-                Value = value
+                Positions = new List<PositionReference>
+                {
+                    new PositionReference
+                    {
+                        Symbol = symbol,
+                        Value = value
+                    }
+                }
             };
         }
 
@@ -42,6 +50,9 @@ namespace PortfolioPicker.Tests
             };
         }
 
+        /// <summary>
+        /// returns 3 accounts
+        /// </summary>
         private IReadOnlyList<Account> CreateAccounts()
         {
             var rc = new List<Account>();
@@ -49,7 +60,7 @@ namespace PortfolioPicker.Tests
             {
                 foreach (var name in new[] { "a", "b", "c" })
                 {
-                    rc.Add(CreateAccount(name, t, 10000m));
+                    rc.Add(CreateAccount(name, t, value:10000m));
                 }
             }
 
@@ -80,19 +91,26 @@ namespace PortfolioPicker.Tests
         {
             var accounts = new List<Account>
             {
-                new Account{
+                new Account
+                {
                     Name ="roth",
                     Brokerage="Vanguard",
                     Type=AccountType.ROTH,
-                    Value=100
+                    Positions = new List<PositionReference>
+                    {
+                        new PositionReference
+                        {
+                            Symbol = "FZROX",
+                            Value = 100
+                        }
+                    }
                 },
             };
 
             var p = Picker.Create(accounts);
             var portfolio = p.Pick();
-            Assert.Equal(4, portfolio.Positions.Count);
-            var actualValue = portfolio.Positions.Sum(o => o.Value);
-            Assert.Equal(100, actualValue);
+            Assert.Equal(4, portfolio.NumberOfPositions);
+            Assert.Equal(100, portfolio.TotalValue);
         }
 
         [Fact]
@@ -105,16 +123,32 @@ namespace PortfolioPicker.Tests
                     Name ="taxable",
                     Brokerage="Fidelity",
                     Type=AccountType.TAXABLE,
-                    Value=100
+                    Positions = new List<PositionReference>
+                    {
+                        new PositionReference
+                        {
+                            Symbol = "FZROX",
+                            Value = 100
+                        }
+                    }
                 },
                 new Account{
                     Name ="401k",
                     Brokerage="Fidelity",
                     Type=AccountType.CORPORATE,
-                    Value=100
+                    Positions = new List<PositionReference>
+                    {
+                        new PositionReference
+                        {
+                            Symbol = "FXNAX",
+                            Value = 100
+                        }
+                    }
                 }
             };
-            var total_value = accounts.Sum(a => a.Value);
+            var total_value = accounts
+                .SelectMany(x => x.Positions)
+                .Sum(x => x.Value);
             var p = Picker.Create(accounts);
             Assert.Null(p.Pick());
         }
@@ -128,11 +162,20 @@ namespace PortfolioPicker.Tests
                     Name ="401k",
                     Brokerage="Fidelity",
                     Type=AccountType.CORPORATE,
-                    Value=100
+                    Positions = new List<PositionReference>
+                    {
+                        new PositionReference
+                        {
+                            Symbol = "FXNAX",
+                            Value = 100
+                        }
+                    }
                 }
             };
 
-            var total_value = accounts.Sum(a => a.Value);
+            var total_value = accounts
+                .SelectMany(x => x.Positions)
+                .Sum(a => a.Value);
             var p = Picker.Create(accounts);
             Assert.Null(p.Pick());
         }
@@ -140,17 +183,40 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void AccountsFromYaml()
         {
-            var accounts = @"
+            var yaml = @"
 - name: Roth
   brokerage: Vanguard
   type: ROTH
-  value: 100";
+  positions:
+    - symbol: VTSAX
+      value: 100
+    - symbol: VTIAX
+      value: 200
+      hold: true";
 
-            var p = Picker.Create(accounts);
+            var p = Picker.Create(yaml);
             var portfolio = p.Pick();
-            Assert.Equal(4, portfolio.Positions.Count);
+            Assert.Equal(4, portfolio.NumberOfPositions);
             var actualValue = portfolio.Positions.Sum(o => o.Value);
-            Assert.Equal(100, actualValue);
+            Assert.Equal(300, actualValue);
+        }
+
+        [Fact]
+        public void PortfolioSerialization()
+        {
+            var expected = @"- name: Roth
+  brokerage: Vanguard
+  type: ROTH
+  positions:
+  - symbol: VTSAX
+    value: 100
+  - symbol: VTIAX
+    value: 200
+    hold: true
+";
+            var p = Portfolio.FromYaml(expected);
+            var actual = p.ToYaml();
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
@@ -174,15 +240,18 @@ namespace PortfolioPicker.Tests
   domesticRatio: 0";
 
             var accountsYaml = @"
-
 - name: Roth
   brokerage: Vanguard
   type: ROTH
-  value: 100
+  positions:
+  - symbol: VTSAX
+    value: 100
 - name: Other
   brokerage: Vanguard
   type: TAXABLE
-  value: 100";
+  positions:
+  - symbol: VTSAX
+    value: 100";
 
             var deserializer = new DeserializerBuilder()
             .WithNamingConvention(new CamelCaseNamingConvention())
@@ -193,6 +262,9 @@ namespace PortfolioPicker.Tests
 
             var accounts = deserializer.Deserialize<IList<Account>>(accountsYaml);
             Assert.Equal(2, accounts.Count);
+
+            var p = Portfolio.FromYaml(accountsYaml);
+            Assert.NotNull(p);
         }
 
         [Fact]
@@ -203,27 +275,17 @@ namespace PortfolioPicker.Tests
             var expectedTotal = accounts.Count * 10000m;
             var p = Picker.Create(accounts, brokerages);
             var portfolio = p.Pick();
-            Assert.Equal(12, portfolio.Positions.Count);
+            Assert.Equal(12, portfolio.NumberOfPositions);
             Assert.Equal(1.59, portfolio.ExpenseRatio);
-            var actualTotal = portfolio.Positions.Sum(o => o.Value);
-            Assert.Equal(expectedTotal, actualTotal);
+            Assert.Equal(expectedTotal, portfolio.TotalValue);
         }
-
-        //[Fact]
-        //public void Real()
-        //{
-        //    var accounts = File.ReadAllText("C:/Users/zacox/Documents/accounts.yaml");
-        //    var p = Picker.Create(accounts);
-        //    var portfolio = p.Pick();
-        //    Assert.Equal(11, portfolio.Positions.Count);
-        //}
 
         [Fact]
         public void OneAccountFourPerfectFunds()
         {
             var dollars = 100m;
             var accounts = new List<Account>{
-                CreateAccount("X", AccountType.TAXABLE, dollars)
+                CreateAccount("X", AccountType.TAXABLE, value: dollars)
             };
             var funds = new List<Fund>{
                 CreateFund("X", "SD", 0, 1, 1),
@@ -245,11 +307,11 @@ namespace PortfolioPicker.Tests
             // funds should be equally split
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
-            Assert.Equal(4, p.Positions.Count);
-            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "SD").Value);
-            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "SI").Value);
-            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "BD").Value);
-            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Fund.Symbol == "BI").Value);
+            Assert.Equal(4, p.NumberOfPositions);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Symbol == "SD").Value);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Symbol == "SI").Value);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Symbol == "BD").Value);
+            Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Symbol == "BI").Value);
 
             // output percentages should match input requests
             Assert.Equal(0.5, p.StockRatio);
@@ -265,9 +327,9 @@ namespace PortfolioPicker.Tests
             p = picker.Pick();
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
-            Assert.Equal(2, p.Positions.Count);
-            Assert.Equal(0.9m * dollars, p.Positions.First(x => x.Fund.Symbol == "SD").Value);
-            Assert.Equal(0.1m * dollars, p.Positions.First(x => x.Fund.Symbol == "BD").Value);
+            Assert.Equal(2, p.NumberOfPositions);
+            Assert.Equal(0.9m * dollars, p.Positions.First(x => x.Symbol == "SD").Value);
+            Assert.Equal(0.1m * dollars, p.Positions.First(x => x.Symbol == "BD").Value);
             Assert.Equal(0.9, p.StockRatio);
             Assert.Equal(0.1, p.BondRatio);
             Assert.Equal(1, p.DomesticRatio);
@@ -282,14 +344,14 @@ namespace PortfolioPicker.Tests
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
             Assert.Equal(4, p.Positions.Count);
-            Assert.Equal(s.StockRatio * s.StockDomesticRatio * dollars, 
-                         p.Positions.First(x => x.Fund.Symbol == "SD").Value);
+            Assert.Equal(s.StockRatio * s.StockDomesticRatio * dollars,
+                         p.Positions.First(x => x.Symbol == "SD").Value);
             Assert.Equal(s.StockRatio * s.StockInternationalRatio * dollars,
-                         p.Positions.First(x => x.Fund.Symbol == "SI").Value);
-            Assert.Equal(s.BondsRatio * s.BondsDomesticRatio * dollars, 
-                         p.Positions.First(x => x.Fund.Symbol == "BD").Value);
+                         p.Positions.First(x => x.Symbol == "SI").Value);
+            Assert.Equal(s.BondsRatio * s.BondsDomesticRatio * dollars,
+                         p.Positions.First(x => x.Symbol == "BD").Value);
             Assert.Equal(s.BondsRatio * s.BondsInternationalRatio * dollars,
-                         p.Positions.First(x => x.Fund.Symbol == "BI").Value);
+                         p.Positions.First(x => x.Symbol == "BI").Value);
             Assert.Equal(0.5, p.StockRatio);
             Assert.Equal(0.5, p.BondRatio);
             Assert.Equal(0.5, p.DomesticRatio);
@@ -325,10 +387,10 @@ namespace PortfolioPicker.Tests
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score); // perfect score
             Assert.Equal(4, p.Positions.Count);
-            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "SD").Value);
-            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "SI").Value);
-            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "BD").Value);
-            Assert.Equal(25m, p.Positions.First(x => x.Fund.Symbol == "BI").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Symbol == "SD").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Symbol == "SI").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Symbol == "BD").Value);
+            Assert.Equal(25m, p.Positions.First(x => x.Symbol == "BI").Value);
 
             // output percentages should match input requests
             Assert.Equal(0.5, p.StockRatio);
@@ -369,9 +431,8 @@ namespace PortfolioPicker.Tests
             foreach (var o in p.Positions)
             {
                 // one fund per account, spend all the money there
-                Assert.Equal(brokerageName, o.Fund.Brokerage);
-                Assert.Equal(symbolName, o.Fund.Symbol);
-                Assert.Equal(100m, o.Value); 
+                Assert.Equal(symbolName, o.Symbol);
+                Assert.Equal(100m, o.Value);
             }
 
             // output percentages should match input requests

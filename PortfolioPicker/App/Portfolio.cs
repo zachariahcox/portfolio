@@ -1,13 +1,38 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        public string Strategy { get; set; }
+        private IList<Account> _accounts;
+        private IList<PositionReference> _positions;
 
-        public IReadOnlyList<Position> Positions { get; set; }
+        public IList<Account> Accounts 
+        { 
+            get => _accounts;
+            set 
+            {
+                _accounts = value;
+                if (value != null)
+                {
+                    _positions = value.SelectMany(x => x.Positions).ToList();
+                }
+                else
+                {
+                    _positions = null;
+                }
+            } 
+        }
+
+        public IList<PositionReference> Positions => _positions;
+        
+        public int NumberOfPositions => _positions.Count;
+
+        public string Strategy { get; set; }
 
         public IList<string> Warnings { get; set; }
 
@@ -15,7 +40,6 @@ namespace PortfolioPicker.App
 
         public double Score { get; set; }
 
-        // Stats
         public decimal TotalValue { get; set; }
 
         public double ExpenseRatio { get; set; } = 0.0;
@@ -27,6 +51,8 @@ namespace PortfolioPicker.App
         public double DomesticRatio { get; set; }
 
         public double InternationalRatio { get; set; }
+
+        // SERIALIZATION
 
         public IList<string> ToMarkdownLines()
         {
@@ -53,14 +79,40 @@ namespace PortfolioPicker.App
             lines.Add("## positions");
             Draw("account", "fund", "value");
             Draw("---", "---", "---");
-            foreach(var o in Positions
-                .OrderBy(x => x.Account.Name)
-                .ThenBy(x => x.Fund.Symbol)
-                .ThenBy(x => x.Value))
+            foreach(var a in Accounts.OrderBy(x => x.Name))
             {
-                Draw(o.Account.Name, o.Fund.Symbol, string.Format("{0:c}", o.Value));
+                var name = a.Name;
+                foreach(var p in a.Positions)
+                {
+                    Draw(name, p.Symbol, string.Format("{0:c}", p.Value));
+                }
             }
             return lines;
+        }
+
+        public string ToYaml()
+        {
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+            return serializer.Serialize(this.Accounts);
+        }
+
+        public static Portfolio FromYaml(string yaml)
+        {
+            if (string.IsNullOrEmpty(yaml))
+            {
+                return null;
+            }
+
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+
+            return new Portfolio 
+            { 
+                Accounts = deserializer.Deserialize<IList<Account>>(yaml)
+            };
         }
     }
 }

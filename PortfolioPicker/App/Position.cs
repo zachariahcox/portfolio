@@ -7,30 +7,35 @@ namespace PortfolioPicker.App
     {
         public Guid Id { get; private set; }
 
-        public Account Account { get; set; }
-
         public Fund Fund { get; set; }
 
         public decimal Value { get; set; } = 0m;
 
         public Position(
-            Account account = null, 
             Fund fund = null, 
             decimal value = 0m)
         {
-            this.Account = account;
             this.Fund = fund;
             this.Value = value;
             this.Id = Guid.NewGuid();
         }
 
-        public override string ToString()
+        public PositionReference Reference()
         {
-            return string.Join(", ", new List<string> {
-                "Position",
-                (Account != null ? Account.Name : "null"),
-                (Fund != null ? Fund.Symbol : "null"),
-                string.Format("{0:c}", Convert.ToInt32(Value))});
+            return new PositionReference
+            {
+                Symbol = this.Fund.Symbol,
+                Value = this.Value
+            };
         }
+    }
+
+    public class PositionReference
+    {
+        public string Symbol { get; set; }
+        
+        public decimal Value { get; set; }
+
+        public bool Hold { get; set; }
     }
 }

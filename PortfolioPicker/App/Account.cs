@@ -8,6 +8,9 @@ namespace PortfolioPicker.App
     [DataContract]
     public class Account
     {
+        [IgnoreDataMember]
+        private IList<PositionReference> _positions;
+
         [DataMember(IsRequired = true)]
         public string Name { get; set; }
 
@@ -18,54 +21,36 @@ namespace PortfolioPicker.App
         public AccountType Type { get; set; } = AccountType.TAXABLE;
 
         [DataMember(IsRequired = true)]
-        public decimal Value { get; set; } = 0m;
+        public IList<PositionReference> Positions 
+        {
+            get
+            {
+                return _positions;
+            }
+            set
+            {
+                _positions = value;
+                if (value != null)
+                {
+                    _value = value.Sum(x => x.Value);
+                }
+            }
+        }
 
         [IgnoreDataMember]
-        internal IReadOnlyList<Fund> Funds { get; set; }
-
-        /// <summary>
-        /// Decide which funds to use from available
-        /// </summary>
-        internal void SelectFunds(IReadOnlyList<Fund> funds)
+        internal decimal Value => _value;
+        
+        [IgnoreDataMember]
+        private decimal _value;
+        
+        internal Account Clone()
         {
-            if (Funds == null && funds != null)
+            return new Account
             {
-                var matches = funds.Where(x => string.Equals(x.Brokerage, Brokerage, StringComparison.OrdinalIgnoreCase)).ToList();
-                matches.Sort((x, y) => x.Symbol.CompareTo(y.Symbol));
-                this.Funds = matches as IReadOnlyList<Fund>;
-            }
-        }
-
-        /// <summary>
-        /// Pick the best fund meeting the requirements from the list available to this account. 
-        /// A "better" fund has better ratios for the target exposure, or has the lowest expense ratio. 
-        /// </summary>
-        internal Fund GetFund(Exposure e)
-        {
-            var best = (Fund)null;
-            var bestCoverage = -1.0;
-            foreach (var f in Funds)
-            {
-                var coverageForThisExposure = f.Ratio(e);
-                if (coverageForThisExposure == 0.0)
-                    continue;
-
-                if (best == null)
-                {
-                    best = f;
-                    bestCoverage = coverageForThisExposure;
-                }
-                else if(coverageForThisExposure > bestCoverage || f.ExpenseRatio < best.ExpenseRatio)
-                {
-                    best = f;
-                }
-            }
-            return best;
-        }
-
-        public override string ToString()
-        {
-            return $"{Name}, value: {string.Format("{0:c}", Convert.ToInt32(Value))}, type: {Type}";
+                Name = this.Name,
+                Brokerage = this.Brokerage,
+                Type = this.Type,
+            };
         }
     }
 }
