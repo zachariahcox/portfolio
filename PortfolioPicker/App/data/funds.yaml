@@ -7,6 +7,16 @@
   stockRatio: 1
   exposure: total
   domesticRatio: 1
+
+- description: Vanguard Balanced Index Fund Admiral Shares
+  symbol: VBIAX
+  brokerage: Vanguard
+  url: https://investor.vanguard.com/mutual-funds/profile/vbiax
+  expenseRatio: 0.07
+  stockRatio: .6
+  exposure: total
+  domesticRatio: 1
+
 - description: Vanguard Total International Stock Index Fund
   symbol: VTIAX
   brokerage: Vanguard

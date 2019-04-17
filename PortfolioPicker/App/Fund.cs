@@ -1,4 +1,9 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using System.Runtime.Serialization;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace PortfolioPicker.App
 {
@@ -44,6 +49,32 @@ namespace PortfolioPicker.App
         public override string ToString()
         {
             return $"{Symbol}, er: {ExpenseRatio}, sr: {StockRatio}, dr: {DomesticRatio}";
+        }
+
+        public static IReadOnlyList<Fund> FromYaml(string yaml)
+        {
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+
+            return string.IsNullOrEmpty(yaml)
+                ? null
+                : deserializer.Deserialize<IList<Fund>>(yaml) as IReadOnlyList<Fund>;
+        }
+
+        public static IReadOnlyList<Fund> LoadDefaultFunds()
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = "PortfolioPicker.App.data.funds.yaml";
+            using (var stream = assembly.GetManifestResourceStream(resourceName))
+            using (var reader = new StreamReader(stream))
+            {
+                var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+
+                return deserializer.Deserialize<List<Fund>>(reader.ReadToEnd());
+            }
         }
     }
 }

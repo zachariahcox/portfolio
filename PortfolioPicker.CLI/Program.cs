@@ -19,7 +19,7 @@ namespace PortfolioPicker.CLI
                 accountsYaml: data, 
                 fundsYaml: null, 
                 strategyName: "FourFundStrategy");
-            var portfolio = p.Pick();
+            var portfolio = p.Rebalance();
             File.WriteAllLines(args[1], portfolio.ToMarkdownLines());
         }
     }

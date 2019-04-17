@@ -9,7 +9,7 @@ namespace PortfolioPicker.App
     public class Account
     {
         [IgnoreDataMember]
-        private IList<PositionReference> _positions;
+        private IList<Position> _positions;
 
         [DataMember(IsRequired = true)]
         public string Name { get; set; }
@@ -21,7 +21,7 @@ namespace PortfolioPicker.App
         public AccountType Type { get; set; } = AccountType.TAXABLE;
 
         [DataMember(IsRequired = true)]
-        public IList<PositionReference> Positions 
+        public IList<Position> Positions 
         {
             get
             {

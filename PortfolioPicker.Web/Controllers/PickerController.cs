@@ -16,7 +16,7 @@ namespace PortfolioPicker.Web.Controllers
             {
                 var yaml = reader.ReadToEnd();
                 var p = Picker.Create(yaml);
-                return p.Pick();
+                return p.Rebalance();
             }
         }
     }

@@ -21,9 +21,9 @@ namespace PortfolioPicker.Tests
                 Brokerage = brokerage,
                 Name = $"My {brokerage} account",
                 Type = type,
-                Positions = new List<PositionReference>
+                Positions = new List<Position>
                 {
-                    new PositionReference
+                    new Position
                     {
                         Symbol = symbol,
                         Value = value
@@ -96,9 +96,9 @@ namespace PortfolioPicker.Tests
                     Name ="roth",
                     Brokerage="Vanguard",
                     Type=AccountType.ROTH,
-                    Positions = new List<PositionReference>
+                    Positions = new List<Position>
                     {
-                        new PositionReference
+                        new Position
                         {
                             Symbol = "FZROX",
                             Value = 100
@@ -108,7 +108,7 @@ namespace PortfolioPicker.Tests
             };
 
             var p = Picker.Create(accounts);
-            var portfolio = p.Pick();
+            var portfolio = p.Rebalance();
             Assert.Equal(4, portfolio.NumberOfPositions);
             Assert.Equal(100, portfolio.TotalValue);
         }
@@ -123,9 +123,9 @@ namespace PortfolioPicker.Tests
                     Name ="taxable",
                     Brokerage="Fidelity",
                     Type=AccountType.TAXABLE,
-                    Positions = new List<PositionReference>
+                    Positions = new List<Position>
                     {
-                        new PositionReference
+                        new Position
                         {
                             Symbol = "FZROX",
                             Value = 100
@@ -136,9 +136,9 @@ namespace PortfolioPicker.Tests
                     Name ="401k",
                     Brokerage="Fidelity",
                     Type=AccountType.CORPORATE,
-                    Positions = new List<PositionReference>
+                    Positions = new List<Position>
                     {
-                        new PositionReference
+                        new Position
                         {
                             Symbol = "FXNAX",
                             Value = 100
@@ -150,7 +150,7 @@ namespace PortfolioPicker.Tests
                 .SelectMany(x => x.Positions)
                 .Sum(x => x.Value);
             var p = Picker.Create(accounts);
-            Assert.Null(p.Pick());
+            Assert.Null(p.Rebalance());
         }
 
         [Fact]
@@ -162,9 +162,9 @@ namespace PortfolioPicker.Tests
                     Name ="401k",
                     Brokerage="Fidelity",
                     Type=AccountType.CORPORATE,
-                    Positions = new List<PositionReference>
+                    Positions = new List<Position>
                     {
-                        new PositionReference
+                        new Position
                         {
                             Symbol = "FXNAX",
                             Value = 100
@@ -177,7 +177,7 @@ namespace PortfolioPicker.Tests
                 .SelectMany(x => x.Positions)
                 .Sum(a => a.Value);
             var p = Picker.Create(accounts);
-            Assert.Null(p.Pick());
+            Assert.Null(p.Rebalance());
         }
 
         [Fact]
@@ -195,7 +195,7 @@ namespace PortfolioPicker.Tests
       hold: true";
 
             var p = Picker.Create(yaml);
-            var portfolio = p.Pick();
+            var portfolio = p.Rebalance();
             Assert.Equal(4, portfolio.NumberOfPositions);
             var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(300, actualValue);
@@ -274,7 +274,7 @@ namespace PortfolioPicker.Tests
             var brokerages = CreateFundMap();
             var expectedTotal = accounts.Count * 10000m;
             var p = Picker.Create(accounts, brokerages);
-            var portfolio = p.Pick();
+            var portfolio = p.Rebalance();
             Assert.Equal(12, portfolio.NumberOfPositions);
             Assert.Equal(1.59, portfolio.ExpenseRatio);
             Assert.Equal(expectedTotal, portfolio.TotalValue);
@@ -302,7 +302,7 @@ namespace PortfolioPicker.Tests
                 BondsDomesticRatio = 0.5m
             };
             var picker = Picker.Create(accounts, funds, s);
-            var p = picker.Pick();
+            var p = picker.Rebalance();
 
             // funds should be equally split
             Assert.NotNull(p);
@@ -324,7 +324,7 @@ namespace PortfolioPicker.Tests
             s.StockRatio = 0.9m;
             s.StockDomesticRatio = 1m;
             s.BondsDomesticRatio = 1m;
-            p = picker.Pick();
+            p = picker.Rebalance();
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
             Assert.Equal(2, p.NumberOfPositions);
@@ -340,7 +340,7 @@ namespace PortfolioPicker.Tests
             s.StockRatio = 0.5m;
             s.StockDomesticRatio = 0.9m;
             s.BondsDomesticRatio = 0.1m;
-            p = picker.Pick();
+            p = picker.Rebalance();
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
             Assert.Equal(4, p.Positions.Count);
@@ -381,7 +381,7 @@ namespace PortfolioPicker.Tests
                 BondsDomesticRatio = 0.5m
             };
             var picker = Picker.Create(accounts, funds, s);
-            var p = picker.Pick();
+            var p = picker.Rebalance();
 
             // funds should be equally split
             Assert.NotNull(p);
@@ -421,7 +421,7 @@ namespace PortfolioPicker.Tests
                 BondsDomesticRatio = 0.5m
             };
             var picker = Picker.Create(accounts, funds, s);
-            var p = picker.Pick();
+            var p = picker.Rebalance();
 
             // assert portfolio correctness
             Assert.NotNull(p);

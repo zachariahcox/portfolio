@@ -8,28 +8,35 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        private IList<Account> _accounts;
-        private IList<PositionReference> _positions;
+        [IgnoreDataMember]
+        private IReadOnlyList<Account> _accounts;
 
-        public IList<Account> Accounts 
+        [IgnoreDataMember]
+        private IList<Position> _positions;
+
+        public IReadOnlyList<Account> Accounts 
         { 
             get => _accounts;
             set 
             {
-                _accounts = value;
-                if (value != null)
+                if (value is null)
                 {
-                    _positions = value.SelectMany(x => x.Positions).ToList();
+                    _accounts = null;
+                    _positions = null;
                 }
                 else
                 {
-                    _positions = null;
+                    _accounts = value.OrderBy(x => x.Name).ToList();
+                    _positions = value.SelectMany(x => x.Positions).ToList();
+                    TotalValue = _positions.Sum(x => x.Value);
                 }
             } 
         }
-
-        public IList<PositionReference> Positions => _positions;
         
+        [IgnoreDataMember]
+        public IList<Position> Positions => _positions;
+        
+        [IgnoreDataMember]
         public int NumberOfPositions => _positions.Count;
 
         public string Strategy { get; set; }
@@ -52,7 +59,30 @@ namespace PortfolioPicker.App
 
         public double InternationalRatio { get; set; }
 
-        // SERIALIZATION
+        public string ToYaml()
+        {
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+            return serializer.Serialize(this.Accounts);
+        }
+
+        public static Portfolio FromYaml(string yaml)
+        {
+            if (string.IsNullOrEmpty(yaml))
+            {
+                return null;
+            }
+
+            var deserializer = new DeserializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+
+            return new Portfolio 
+            { 
+                Accounts = deserializer.Deserialize<IList<Account>>(yaml) as IReadOnlyList<Account>
+            };
+        }
 
         public IList<string> ToMarkdownLines()
         {
@@ -79,40 +109,15 @@ namespace PortfolioPicker.App
             lines.Add("## positions");
             Draw("account", "fund", "value");
             Draw("---", "---", "---");
-            foreach(var a in Accounts.OrderBy(x => x.Name))
+            foreach (var a in Accounts.OrderBy(x => x.Name))
             {
                 var name = a.Name;
-                foreach(var p in a.Positions)
+                foreach (var p in a.Positions)
                 {
                     Draw(name, p.Symbol, string.Format("{0:c}", p.Value));
                 }
             }
             return lines;
-        }
-
-        public string ToYaml()
-        {
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(new CamelCaseNamingConvention())
-                .Build();
-            return serializer.Serialize(this.Accounts);
-        }
-
-        public static Portfolio FromYaml(string yaml)
-        {
-            if (string.IsNullOrEmpty(yaml))
-            {
-                return null;
-            }
-
-            var deserializer = new DeserializerBuilder()
-                .WithNamingConvention(new CamelCaseNamingConvention())
-                .Build();
-
-            return new Portfolio 
-            { 
-                Accounts = deserializer.Deserialize<IList<Account>>(yaml)
-            };
         }
     }
 }

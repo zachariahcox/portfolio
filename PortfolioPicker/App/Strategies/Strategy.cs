@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
 
 namespace PortfolioPicker.App
 {
@@ -16,8 +18,30 @@ namespace PortfolioPicker.App
 
         public decimal BondsInternationalRatio => 1m - BondsDomesticRatio;
 
-        public abstract Portfolio Perform(
-            IReadOnlyCollection<Account> accounts,
-            IReadOnlyList<Fund> funds);
+        /// <summary>
+        /// Available funds
+        /// </summary>
+        public IReadOnlyList<Fund> Funds 
+        { 
+            get
+            {
+                if (_funds is null)
+                {
+                    _funds = Fund.LoadDefaultFunds();
+                }
+                return _funds;
+            } 
+            set
+            {
+                _funds = value?.OrderBy(x => x.Symbol).ToList();
+            }
+        }
+        [IgnoreDataMember]
+        private IReadOnlyList<Fund> _funds;
+
+        /// <summary>
+        /// Apply strategy to produce a new portfolio. 
+        /// </summary>
+        public abstract Portfolio Rebalance(Portfolio p);
     }
 }
