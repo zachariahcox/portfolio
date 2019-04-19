@@ -51,7 +51,7 @@ namespace PortfolioPicker.App
             return $"{Symbol}, er: {ExpenseRatio}, sr: {StockRatio}, dr: {DomesticRatio}";
         }
 
-        public static IReadOnlyList<Fund> FromYaml(string yaml)
+        public static IList<Fund> FromYaml(string yaml)
         {
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(new CamelCaseNamingConvention())
@@ -59,10 +59,10 @@ namespace PortfolioPicker.App
 
             return string.IsNullOrEmpty(yaml)
                 ? null
-                : deserializer.Deserialize<IList<Fund>>(yaml) as IReadOnlyList<Fund>;
+                : deserializer.Deserialize<IList<Fund>>(yaml);
         }
 
-        public static IReadOnlyList<Fund> LoadDefaultFunds()
+        public static IList<Fund> LoadDefaultFunds()
         {
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "PortfolioPicker.App.data.funds.yaml";

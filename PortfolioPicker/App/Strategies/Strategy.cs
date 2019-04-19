@@ -21,7 +21,7 @@ namespace PortfolioPicker.App
         /// <summary>
         /// Available funds
         /// </summary>
-        public IReadOnlyList<Fund> Funds 
+        public IList<Fund> Funds 
         { 
             get
             {
@@ -37,7 +37,7 @@ namespace PortfolioPicker.App
             }
         }
         [IgnoreDataMember]
-        private IReadOnlyList<Fund> _funds;
+        private IList<Fund> _funds;
 
         /// <summary>
         /// Apply strategy to produce a new portfolio. 

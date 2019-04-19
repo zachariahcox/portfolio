@@ -12,8 +12,8 @@ namespace PortfolioPicker.App
         public Strategy Strategy { get; private set; }
 
         static public Picker Create(
-            IReadOnlyList<Account> accounts,
-            IReadOnlyList<Fund> funds = null,
+            IList<Account> accounts,
+            IList<Fund> funds = null,
             Strategy strategy = null)
         {
             var portfolio = new Portfolio { Accounts = accounts };

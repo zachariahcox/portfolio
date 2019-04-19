@@ -8,7 +8,7 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        public IReadOnlyList<Account> Accounts 
+        public IList<Account> Accounts 
         { 
             get => _accounts;
             set 
@@ -74,7 +74,7 @@ namespace PortfolioPicker.App
 
             return new Portfolio 
             { 
-                Accounts = deserializer.Deserialize<IList<Account>>(yaml) as IReadOnlyList<Account>
+                Accounts = deserializer.Deserialize<IList<Account>>(yaml)
             };
         }
 
@@ -84,6 +84,11 @@ namespace PortfolioPicker.App
             void Draw(params object[] values)
             {
                 lines.Add("|" + string.Join("|", values) + "|");
+            }
+
+            string Url(string _s)
+            {
+                return $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
             }
 
             lines.Add("# portfolio");
@@ -108,7 +113,7 @@ namespace PortfolioPicker.App
                 var name = a.Name;
                 foreach (var p in a.Positions)
                 {
-                    Draw(name, p.Symbol, string.Format("{0:c}", p.Value));
+                    Draw(name, Url(p.Symbol), string.Format("{0:c}", p.Value));
                 }
             }
 
@@ -122,7 +127,7 @@ namespace PortfolioPicker.App
                     .ThenBy(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
-                    Draw(o.AccountName, o.Action, o.Symbol, string.Format("{0:c}", o.Value));
+                    Draw(o.AccountName, o.Action, Url(o.Symbol), string.Format("{0:c}", o.Value));
                 }
             }
             
@@ -130,7 +135,7 @@ namespace PortfolioPicker.App
         }
 
         [IgnoreDataMember]
-        private IReadOnlyList<Account> _accounts;
+        private IList<Account> _accounts;
 
         [IgnoreDataMember]
         private IList<Position> _positions;

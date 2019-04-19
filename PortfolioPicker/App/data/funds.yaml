@@ -106,7 +106,7 @@
   exposure: total
   domesticRatio: 1
 - description: LifePath Dynamic 2050 Fund
-  symbol: BTC LP IDX 2050N
+  symbol: STLFX
   brokerage: Microsoft
   url: https://www.blackrock.com/investing/products/227823/blackrock-lifepath-2050-portfolioclass-i-fund
   expenseRatio: 0.08

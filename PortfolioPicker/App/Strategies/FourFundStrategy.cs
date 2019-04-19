@@ -144,7 +144,7 @@ namespace PortfolioPicker.App.Strategies
         }
 
         private Portfolio GeneratePortfolio(
-            IReadOnlyCollection<Account> accounts,
+            ICollection<Account> accounts,
             ICollection<Exposure> exposures)
         {
             // setup bookkeeping
@@ -157,7 +157,20 @@ namespace PortfolioPicker.App.Strategies
             void Buy(Account a, decimal value, string symbol = null, Fund fund = null)
             {
                 // resolve fund
-                fund = fund ?? this.Funds.First(x=> x.Symbol == symbol);
+                fund = fund ?? this.Funds.FirstOrDefault(x=> x.Symbol == symbol);
+                if (fund == null)
+                {
+                    // found new product apparently? 
+                    fund = new Fund
+                    {
+                        Symbol = symbol,
+                        StockRatio = 1,
+                        DomesticRatio = 1,
+                        ExpenseRatio = 0,
+
+                    };
+                    this.Funds.Add(fund);
+                }
 
                 // create position
                 positions.Add((
