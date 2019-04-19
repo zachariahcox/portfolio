@@ -8,12 +8,6 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        [IgnoreDataMember]
-        private IReadOnlyList<Account> _accounts;
-
-        [IgnoreDataMember]
-        private IList<Position> _positions;
-
         public IReadOnlyList<Account> Accounts 
         { 
             get => _accounts;
@@ -32,18 +26,8 @@ namespace PortfolioPicker.App
                 }
             } 
         }
-        
-        [IgnoreDataMember]
-        public IList<Position> Positions => _positions;
-        
-        [IgnoreDataMember]
-        public int NumberOfPositions => _positions.Count;
 
         public string Strategy { get; set; }
-
-        public IList<string> Warnings { get; set; }
-
-        public IList<string> Errors { get; set; }
 
         public double Score { get; set; }
 
@@ -58,6 +42,16 @@ namespace PortfolioPicker.App
         public double DomesticRatio { get; set; }
 
         public double InternationalRatio { get; set; }
+
+
+        [DataMember(EmitDefaultValue = false)]
+        public IList<Order> Orders { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public IList<string> Warnings { get; set; }
+
+        [DataMember(EmitDefaultValue = false)]
+        public IList<string> Errors { get; set; }
 
         public string ToYaml()
         {
@@ -96,7 +90,7 @@ namespace PortfolioPicker.App
             lines.Add("## stats");
             Draw("stat", "value");
             Draw("---", "---");
-            Draw("date", System.DateTime.Now.ToString("MM / dd / yyyy"));
+            Draw("date", System.DateTime.Now.ToString("MM/dd/yyyy"));
             Draw(nameof(TotalValue), string.Format("{0:c}", TotalValue));
             Draw(nameof(ExpenseRatio), string.Format("{0:0.0000}", ExpenseRatio));
             Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
@@ -107,8 +101,8 @@ namespace PortfolioPicker.App
             lines.Add("");
 
             lines.Add("## positions");
-            Draw("account", "fund", "value");
-            Draw("---", "---", "---");
+            Draw("account", "symbol", "value");
+            Draw("---", "---", "---:");
             foreach (var a in Accounts.OrderBy(x => x.Name))
             {
                 var name = a.Name;
@@ -117,7 +111,34 @@ namespace PortfolioPicker.App
                     Draw(name, p.Symbol, string.Format("{0:c}", p.Value));
                 }
             }
+
+            if (Orders != null)
+            {
+                lines.Add("## orders");
+                Draw("account", "action", "symbol", "value");
+                Draw("---", "---", "---", "---:");
+                foreach(var o in Orders
+                    .OrderBy(x => x.AccountName)
+                    .ThenBy(x => x.Action)
+                    .ThenBy(x => x.Symbol))
+                {
+                    Draw(o.AccountName, o.Action, o.Symbol, string.Format("{0:c}", o.Value));
+                }
+            }
+            
             return lines;
         }
+
+        [IgnoreDataMember]
+        private IReadOnlyList<Account> _accounts;
+
+        [IgnoreDataMember]
+        private IList<Position> _positions;
+
+        [IgnoreDataMember]
+        public IList<Position> Positions => _positions;
+
+        [IgnoreDataMember]
+        public int NumberOfPositions => _positions.Count;
     }
 }

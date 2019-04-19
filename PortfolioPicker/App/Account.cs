@@ -52,5 +52,43 @@ namespace PortfolioPicker.App
                 Type = this.Type,
             };
         }
+
+        public bool Equals(Account rhs)
+        {
+            if (rhs is null)
+                return false;
+
+            if (ReferenceEquals(this, rhs))
+                return true;
+
+            return this.Name == rhs.Name
+                && this.Brokerage == rhs.Brokerage
+                && this.Type == rhs.Type;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return this.Equals(obj as Account);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Name, Brokerage, Type);
+        }
+
+        public static bool operator ==(Account lhs, Account rhs)
+        {
+            if (lhs is null)
+            {
+                return rhs is null;
+            }
+
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(Account lhs, Account rhs)
+        {
+            return !(lhs == rhs);
+        }
     }
 }

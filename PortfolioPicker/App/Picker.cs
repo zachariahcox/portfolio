@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Reflection;
 using PortfolioPicker.App.Strategies;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
 
 namespace PortfolioPicker.App
 {
@@ -47,7 +43,50 @@ namespace PortfolioPicker.App
         /// </summary>
         public Portfolio Rebalance()
         {
-            return this.Strategy.Rebalance(Portfolio);
+            var result = Strategy.Rebalance(Portfolio);
+            result.Orders = ComputeOrders(Portfolio, result);
+            return result;
+        }
+
+        public IList<Order> ComputeOrders(
+            Portfolio original,
+            Portfolio balanced)
+        {
+            var orders = new List<Order>();
+            var accounts = original.Accounts.Union(balanced.Accounts);
+
+            foreach(var a in accounts)
+            {
+                var newA = balanced.Accounts.FirstOrDefault(x => x == a);
+                var oldA = original.Accounts.FirstOrDefault(x => x == a);
+
+                if (newA is null)
+                {
+                    // sell all
+                    orders.AddRange(oldA.Positions.Select(x => Order.Create(a.Name, x.Symbol, -x.Value)));
+                }
+                else if (oldA is null)
+                {
+                    // buy all
+                    orders.AddRange(newA.Positions.Select(x => Order.Create(a.Name, x.Symbol, x.Value)));
+                }
+                else
+                {
+                    // modify position
+                    var symbols = new HashSet<string>();
+                    foreach (var p in newA.Positions) { symbols.Add(p.Symbol);}
+                    foreach (var p in oldA.Positions) { symbols.Add(p.Symbol); }
+                    foreach(var s in symbols)
+                    {
+                        var newP = newA.Positions.FirstOrDefault(x => x.Symbol == s);
+                        var oldP = oldA.Positions.FirstOrDefault(x => x.Symbol == s);
+                        var difference = (newP == null ? 0m : newP.Value) - (oldP == null ? 0m : oldP.Value);
+                        orders.Add(Order.Create(a.Name, s, difference));
+                    }
+                }
+            }
+            
+            return orders.Where(x => x != null).ToList();
         }
 
         private Picker(
@@ -57,5 +96,34 @@ namespace PortfolioPicker.App
             this.Portfolio = portfolio;
             this.Strategy = strategy ?? new FourFundStrategy();
         }
+    }
+
+    public class Order
+    {
+        public static Order Create(
+            string accountName, 
+            string symbol, 
+            decimal value)
+        {
+            if (value == 0m)
+            {
+                return null;
+            }
+            return new Order
+            {
+                AccountName = accountName,
+                Symbol = symbol,
+                Value = Math.Abs(value),
+                Action = value < 0 ? "sell" : "buy",
+            };
+        }
+
+        public string AccountName { get; set; }
+
+        public string Symbol { get; set; }
+        
+        public decimal Value { get; set; }
+
+        public string Action { get; set; }
     }
 }
