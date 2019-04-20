@@ -1,20 +1,41 @@
 # Introduction
 A simple dotnet console application to recommend financial portfolio allocations based on various strategies. 
 
+Your current portfolio is described in a simple yaml syntax: 
+
+```yaml
+- description: Vanguard Total Stock Market Index Fund
+  symbol: VTSAX
+  brokerage: Vanguard # this is the arbitrary title you give to brokerages. It is used to preference which accounts hold which positions
+  url: https://investor.vanguard.com/mutual-funds/profile/VTSAX
+  expenseRatio: 0.04
+  stockRatio: 1    # 0-to-1 percentage of the holdings which are stocks
+  domesticRatio: 1 # 0-to-1 percentage of the holdings which are domestic
+
+- description: Vanguard Total International Stock Index Fund
+  symbol: VTIAX
+  brokerage: Vanguard
+  url: https://investor.vanguard.com/mutual-funds/profile/VTIAX
+  expenseRatio: 0.11
+  stockRatio: 1
+  domesticRatio: 0
+```
+
+The application parses the yaml and produces a ```Portfolio``` object. 
+This object supports rendering to markdown by default. 
+
+## Command line tool
+The command line tool supports two commands, ```load``` and ```rebalance```.
+Both require a path to an accounts.yaml file and an output directory. 
+
+The rebalance command runs the rebalancing logic and prints its recommendations. The load command simply reports on the portfolio you provide it.
+
 # Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+To run the command line tool you will need dotnet core installed. 
 
 # Build and Test
-TODO: Describe and show how to build your code and run the tests. 
-
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
-
-If you want to learn more about creating good readme files then refer the following [guidelines](https://www.visualstudio.com/en-us/docs/git/create-a-readme). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+```bash
+cd PortfolioPicker
+dotnet build
+dotnet test
+```
