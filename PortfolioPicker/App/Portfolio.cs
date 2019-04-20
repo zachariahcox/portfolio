@@ -91,7 +91,13 @@ namespace PortfolioPicker.App
                 return $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
             }
 
-            lines.Add("# portfolio");
+            // TITLE
+            var name = Strategy == null 
+                ? "Custom portfolio"
+                : Strategy + " portfolio";
+            lines.Add("# " + name);
+
+            // STATS
             lines.Add("## stats");
             Draw("stat", "value");
             Draw("---", "---");
@@ -103,11 +109,6 @@ namespace PortfolioPicker.App
             Draw(nameof(DomesticRatio), string.Format("{0:0.00}", DomesticRatio));
             Draw(nameof(InternationalRatio), string.Format("{0:0.00}", InternationalRatio));
             
-            if (Strategy != null)
-            {
-                Draw(nameof(Strategy), Strategy);
-            }
-            
             lines.Add("");
 
             // POSIITONS
@@ -118,10 +119,9 @@ namespace PortfolioPicker.App
                 Draw("---", "---", "---:");
                 foreach (var a in Accounts.OrderBy(x => x.Name))
                 {
-                    var name = a.Name;
                     foreach (var p in a.Positions)
                     {
-                        Draw(name, Url(p.Symbol), string.Format("{0:c}", p.Value));
+                        Draw(a.Name, Url(p.Symbol), string.Format("{0:c}", p.Value));
                     }
                 }
             }
