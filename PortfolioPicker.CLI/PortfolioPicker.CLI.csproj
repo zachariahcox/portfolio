@@ -3,7 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <AssemblyName>portfolio</AssemblyName>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.3.4" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PortfolioPicker\PortfolioPicker.csproj" />

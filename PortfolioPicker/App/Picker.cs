@@ -18,7 +18,7 @@ namespace PortfolioPicker.App
         {
             var portfolio = new Portfolio { Accounts = accounts };
             strategy = strategy ?? new FourFundStrategy();
-            strategy.Funds = funds;
+            Fund.AddRange(funds);
             return new Picker(portfolio, strategy);
         }
 
@@ -33,8 +33,7 @@ namespace PortfolioPicker.App
             strategyName = strategyName ?? "FourFundStrategy";
             var strategyType = Type.GetType("PortfolioPicker.App.Strategies." + strategyName);
             var strategy = Activator.CreateInstance(strategyType) as Strategy;
-            strategy.Funds = Fund.FromYaml(fundsYaml);
-
+            Fund.FromYaml(fundsYaml);
             return new Picker(portfolio, strategy);
         }
 
@@ -44,6 +43,9 @@ namespace PortfolioPicker.App
         public Portfolio Rebalance()
         {
             var result = Strategy.Rebalance(Portfolio);
+            if (result == null)
+                return null;
+
             result.Orders = ComputeOrders(Portfolio, result);
             return result;
         }

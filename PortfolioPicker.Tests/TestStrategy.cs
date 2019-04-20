@@ -53,7 +53,7 @@ namespace PortfolioPicker.Tests
         /// <summary>
         /// returns 3 accounts
         /// </summary>
-        private IReadOnlyList<Account> CreateAccounts()
+        private IList<Account> CreateAccounts()
         {
             var rc = new List<Account>();
             foreach (var t in new[] { AccountType.CORPORATE, AccountType.ROTH, AccountType.TAXABLE })
@@ -67,7 +67,7 @@ namespace PortfolioPicker.Tests
             return rc;
         }
 
-        private IReadOnlyList<Fund> CreateFundMap()
+        private IList<Fund> CreateFundMap()
         {
             List<Fund> makeList(string b)
             {
@@ -83,7 +83,7 @@ namespace PortfolioPicker.Tests
             rc.AddRange(makeList("a"));
             rc.AddRange(makeList("b"));
             rc.AddRange(makeList("c"));
-            return rc as IReadOnlyList<Fund>;
+            return rc;
         }
 
         [Fact]
@@ -173,9 +173,6 @@ namespace PortfolioPicker.Tests
                 }
             };
 
-            var total_value = accounts
-                .SelectMany(x => x.Positions)
-                .Sum(a => a.Value);
             var p = Picker.Create(accounts);
             Assert.Null(p.Rebalance());
         }
@@ -362,15 +359,15 @@ namespace PortfolioPicker.Tests
         public void OneAccountFourEqualFunds_IgnoreWorseER()
         {
             var accounts = new List<Account>{
-                CreateAccount("X", AccountType.TAXABLE, value: 100)
+                CreateAccount("Y", AccountType.TAXABLE, value: 100)
             };
             var funds = new List<Fund>{
-                CreateFund("X", "SD", .5, 1, 1), // should be ignored, worse ER
-                CreateFund("X", "ZZ_SD", 0, 1, 1), // should be ignored, alphabetically sorted
-                CreateFund("X", "SD", 0, 1, 1),
-                CreateFund("X", "SI", 0, 1, 0),
-                CreateFund("X", "BD", 0, 0, 1),
-                CreateFund("X", "BI", 0, 0, 0),
+                CreateFund("Y", "SD", .5, 1, 1), // should be ignored, worse ER
+                CreateFund("Y", "ZZ_SD", 0, 1, 1), // should be ignored, alphabetically sorted
+                CreateFund("Y", "SD", 0, 1, 1),
+                CreateFund("Y", "SI", 0, 1, 0),
+                CreateFund("Y", "BD", 0, 0, 1),
+                CreateFund("Y", "BI", 0, 0, 0),
             };
 
             // construct strategy

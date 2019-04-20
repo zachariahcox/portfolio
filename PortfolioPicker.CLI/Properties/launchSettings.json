@@ -2,7 +2,7 @@
   "profiles": {
     "PortfolioPicker.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "c:\\Users\\zacox\\Documents\\accounts.yaml c:\\users\\zacox\\Desktop\\portfolio.md"
+      "commandLineArgs": "load C:\\Users\\Zacox\\Documents\\accounts.yaml C:\\Users\\Zacox\\Desktop\\"
     }
   }
 }

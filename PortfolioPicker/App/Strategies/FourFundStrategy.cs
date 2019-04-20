@@ -17,110 +17,13 @@ namespace PortfolioPicker.App.Strategies
     /// </summary>
     public class FourFundStrategy : Strategy
     {
-        internal Exposure SD { get; } = new Exposure
-        {
-            Class = AssetClass.Stock,
-            Location = AssetLocation.Domestic,
-            AccountTypesPreference = new[] { AccountType.ROTH, AccountType.TAXABLE, AccountType.CORPORATE },
-        };
-
-        internal Exposure SI { get; } = new Exposure
-        {
-            Class = AssetClass.Stock,
-            Location = AssetLocation.International,
-            AccountTypesPreference = new[] { AccountType.TAXABLE, AccountType.ROTH, AccountType.CORPORATE }
-        };
-
-        internal Exposure BD { get; } = new Exposure
-        {
-            Class = AssetClass.Bond,
-            Location = AssetLocation.Domestic,
-            AccountTypesPreference = new[] { AccountType.CORPORATE, AccountType.ROTH, AccountType.TAXABLE }
-        };
-
-        internal Exposure BI { get; } = new Exposure
-        {
-            Class = AssetClass.Bond,
-            Location = AssetLocation.International,
-            AccountTypesPreference = new[] { AccountType.TAXABLE, AccountType.CORPORATE, AccountType.ROTH }
-        };
-
-        /// <summary>
-        /// Produce desired exposures based on ratios and total available money
-        /// </summary>
-        IList<Exposure> ComputeExposures(decimal totalValue)
-        {
-            var totalStock = totalValue * this.StockRatio;
-            var totalBonds = totalValue * this.BondsRatio;
-            SD.Target = totalStock * this.StockDomesticRatio;
-            SI.Target = totalStock * this.StockInternationalRatio;
-            BD.Target = totalBonds * this.BondsDomesticRatio;
-            BI.Target = totalBonds * this.BondsInternationalRatio;
-            return new List<Exposure> { SD, SI, BD, BI };
-        }
-
-        private static ICollection<ICollection<T>> Permutations<T>(ICollection<T> list)
-        {
-            var result = new List<ICollection<T>>();
-
-            // If only one possible permutation, add it and return it
-            if (list.Count == 1)
-            {
-                result.Add(list);
-                return result;
-            }
-
-            // For each element in that list
-            foreach (var element in list)
-            {
-                var remainingList = new List<T>(list);
-                remainingList.Remove(element); // Get a list containing everything except of chosen element
-
-                // Get all possible sub-permutations
-                foreach (var permutation in Permutations<T>(remainingList))
-                {
-                    // Add that element
-                    permutation.Add(element);
-                    result.Add(permutation);
-                }
-            }
-
-            return result;
-        }
-
-        private static double ComputeExpenseRatio(
-            IEnumerable<Position> positions,
-            IEnumerable<Fund> funds)
-        {
-            var weighted_sum = positions.Sum(p => funds.First(x => x.Symbol == p.Symbol).ExpenseRatio * (double)p.Value);
-            var weight = positions.Sum(x => (double)x.Value);
-            var er = weighted_sum / weight;
-            return er;
-        }
-
-        private Dictionary<string, IReadOnlyList<Fund>> _fundsByBrokerage = new Dictionary<string, IReadOnlyList<Fund>>();
-        private IReadOnlyList<Fund> GetFunds(string brokerage)
-        {
-            // use cache
-            if (!_fundsByBrokerage.TryGetValue(brokerage, out var fundsAtBrokerage))
-            {
-                fundsAtBrokerage = this.Funds?
-                    .Where(x => string.Equals(x.Brokerage, brokerage, StringComparison.OrdinalIgnoreCase))
-                    .OrderBy(x => x.Symbol)
-                    .ToList() as IReadOnlyList<Fund>;
-
-                _fundsByBrokerage[brokerage] = fundsAtBrokerage;
-            }
-            return fundsAtBrokerage;
-        }
-
         /// <summary>
         /// Pick the best fund meeting the requirements from the list available to this account. 
         /// A "better" fund has better ratios for the target exposure, or has the lowest expense ratio. 
         /// </summary>
         internal Fund PickBestFund(
             Exposure e,
-            IReadOnlyCollection<Fund> funds)
+            ICollection<Fund> funds)
         {
             var best = default(Fund);
             var bestCoverage = -1.0;
@@ -135,7 +38,8 @@ namespace PortfolioPicker.App.Strategies
                     best = f;
                     bestCoverage = coverageForThisExposure;
                 }
-                else if (coverageForThisExposure > bestCoverage || f.ExpenseRatio < best.ExpenseRatio)
+                else if (coverageForThisExposure > bestCoverage 
+                      || f.ExpenseRatio < best.ExpenseRatio)
                 {
                     best = f;
                 }
@@ -154,23 +58,11 @@ namespace PortfolioPicker.App.Strategies
             var accountRemainders = new Dictionary<Account, decimal>();
             var exposureRemainders = new Dictionary<Exposure, decimal>();
 
+            // function to allocate some resources
             void Buy(Account a, decimal value, string symbol = null, Fund fund = null)
             {
                 // resolve fund
-                fund = fund ?? this.Funds.FirstOrDefault(x=> x.Symbol == symbol);
-                if (fund == null)
-                {
-                    // found new product apparently? 
-                    fund = new Fund
-                    {
-                        Symbol = symbol,
-                        StockRatio = 1,
-                        DomesticRatio = 1,
-                        ExpenseRatio = 0,
-
-                    };
-                    this.Funds.Add(fund);
-                }
+                fund = fund ?? Fund.Get(symbol);
 
                 // create position
                 positions.Add((
@@ -227,7 +119,7 @@ namespace PortfolioPicker.App.Strategies
                 // find accounts with access to the right funds
                 var suitableAccounts = accounts
                     .Where(a => accountRemainders[a] > 0m)
-                    .Where(a => PickBestFund(e, GetFunds(a.Brokerage)) != null)
+                    .Where(a => PickBestFund(e, Fund.GetFunds(a.Brokerage)) != null)
                     .OrderByDescending(a => accountRemainders[a]);
 
                 if (!suitableAccounts.Any())
@@ -244,12 +136,12 @@ namespace PortfolioPicker.App.Strategies
                 {
                     var efficientAccounts = suitableAccounts
                         .Where(x => x.Type == t)
-                        .OrderByDescending(x => PickBestFund(e, GetFunds(x.Brokerage)).Ratio(e));
+                        .OrderByDescending(x => PickBestFund(e, Fund.GetFunds(x.Brokerage)).Ratio(e));
 
                     foreach (var a in efficientAccounts)
                     {
                         // pick best fund from account
-                        var f = PickBestFund(e, GetFunds(a.Brokerage));
+                        var f = PickBestFund(e, Fund.GetFunds(a.Brokerage));
 
                         // try to exhaust this exposure with this fund
                         var percentOfThisFundThatAppliesToThisExposureType = f.Ratio(e);
@@ -334,27 +226,24 @@ namespace PortfolioPicker.App.Strategies
             {
                 Accounts = newAccounts,
                 Score = score,
-                TotalValue = totalValue,
                 Strategy = this.GetType().Name,
                 Warnings = warnings,
                 Errors = errors,
-
-                // aggregate stats
-                ExpenseRatio = ComputeExpenseRatio(newAccounts.SelectMany(x => x.Positions), this.Funds), // TODO: compute this as we go
-                BondRatio = ComputePercentage(exposureRemainders, BD, BI, totalValue),
-                StockRatio = ComputePercentage(exposureRemainders, SD, SI, totalValue),
-                DomesticRatio = ComputePercentage(exposureRemainders, SD, BD, totalValue),
-                InternationalRatio = ComputePercentage(exposureRemainders, SI, BI, totalValue),
             };
         }
 
-        double ComputePercentage(
-            IDictionary<Exposure, decimal> remainders,
-            Exposure a,
-            Exposure b,
-            decimal total)
+        /// <summary>
+        /// Produce desired exposures based on ratios and total available money
+        /// </summary>
+        IList<Exposure> ComputeExposures(decimal totalValue)
         {
-            return (double)((a.Target - remainders[a] + b.Target - remainders[b]) / total);
+            var totalStock = totalValue * this.StockRatio;
+            var totalBonds = totalValue * this.BondsRatio;
+            SD.Target = totalStock * this.StockDomesticRatio;
+            SI.Target = totalStock * this.StockInternationalRatio;
+            BD.Target = totalBonds * this.BondsDomesticRatio;
+            BI.Target = totalBonds * this.BondsInternationalRatio;
+            return new List<Exposure> { SD, SI, BD, BI };
         }
 
         public override Portfolio Rebalance(Portfolio p)
@@ -376,5 +265,33 @@ namespace PortfolioPicker.App.Strategies
 
             return bestToWorst.FirstOrDefault();
         }
+
+        internal Exposure SD { get; } = new Exposure
+        {
+            Class = AssetClass.Stock,
+            Location = AssetLocation.Domestic,
+            AccountTypesPreference = new[] { AccountType.ROTH, AccountType.TAXABLE, AccountType.CORPORATE },
+        };
+
+        internal Exposure SI { get; } = new Exposure
+        {
+            Class = AssetClass.Stock,
+            Location = AssetLocation.International,
+            AccountTypesPreference = new[] { AccountType.TAXABLE, AccountType.ROTH, AccountType.CORPORATE }
+        };
+
+        internal Exposure BD { get; } = new Exposure
+        {
+            Class = AssetClass.Bond,
+            Location = AssetLocation.Domestic,
+            AccountTypesPreference = new[] { AccountType.CORPORATE, AccountType.ROTH, AccountType.TAXABLE }
+        };
+
+        internal Exposure BI { get; } = new Exposure
+        {
+            Class = AssetClass.Bond,
+            Location = AssetLocation.International,
+            AccountTypesPreference = new[] { AccountType.TAXABLE, AccountType.CORPORATE, AccountType.ROTH }
+        };
     }
 }

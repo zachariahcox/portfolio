@@ -22,7 +22,7 @@ namespace PortfolioPicker.App
                 {
                     _accounts = value.OrderBy(x => x.Name).ToList();
                     _positions = value.SelectMany(x => x.Positions).ToList();
-                    TotalValue = _positions.Sum(x => x.Value);
+                    ComputeStats();
                 }
             } 
         }
@@ -102,22 +102,32 @@ namespace PortfolioPicker.App
             Draw(nameof(StockRatio), string.Format("{0:0.00}", StockRatio));
             Draw(nameof(DomesticRatio), string.Format("{0:0.00}", DomesticRatio));
             Draw(nameof(InternationalRatio), string.Format("{0:0.00}", InternationalRatio));
-            Draw(nameof(Strategy), Strategy);
+            
+            if (Strategy != null)
+            {
+                Draw(nameof(Strategy), Strategy);
+            }
+            
             lines.Add("");
 
-            lines.Add("## positions");
-            Draw("account", "symbol", "value");
-            Draw("---", "---", "---:");
-            foreach (var a in Accounts.OrderBy(x => x.Name))
+            // POSIITONS
+            if (Positions?.Any() == true)
             {
-                var name = a.Name;
-                foreach (var p in a.Positions)
+                lines.Add("## positions");
+                Draw("account", "symbol", "value");
+                Draw("---", "---", "---:");
+                foreach (var a in Accounts.OrderBy(x => x.Name))
                 {
-                    Draw(name, Url(p.Symbol), string.Format("{0:c}", p.Value));
+                    var name = a.Name;
+                    foreach (var p in a.Positions)
+                    {
+                        Draw(name, Url(p.Symbol), string.Format("{0:c}", p.Value));
+                    }
                 }
             }
 
-            if (Orders != null)
+            // ORDERS
+            if (Orders?.Any() == true)
             {
                 lines.Add("## orders");
                 Draw("account", "action", "symbol", "value");
@@ -132,6 +142,27 @@ namespace PortfolioPicker.App
             }
             
             return lines;
+        }
+
+        private void ComputeStats()
+        {
+            var totalValue = TotalValue = _positions.Sum(x => x.Value);
+            var stockTotal = 0m;
+            var domesticTotal = 0m;
+            var weightedSum = 0.0;
+            foreach(var p in _positions)
+            {
+                var fund = Fund.Get(p.Symbol);
+                stockTotal += (decimal)(fund.StockRatio * (double)p.Value);
+                domesticTotal += (decimal)(fund.DomesticRatio * (double)p.Value);
+                weightedSum += fund.ExpenseRatio * (double)p.Value;
+            }
+
+            BondRatio = (double)(totalValue - stockTotal) / (double)totalValue;
+            StockRatio = (double)(stockTotal) / (double)totalValue;
+            DomesticRatio = (double)(domesticTotal) / (double)totalValue;
+            InternationalRatio = (double)(totalValue - domesticTotal) / (double)totalValue;
+            ExpenseRatio = weightedSum / (double)totalValue;
         }
 
         [IgnoreDataMember]
