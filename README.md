@@ -4,27 +4,33 @@ It's written in dotnet core for practice, but would make a much better python ap
 
 Your current portfolio is described in a simple yaml syntax: 
 ```yaml
-- name: My Roth Account
+- name: my roth account
   brokerage: Vanguard
   type: ROTH
   positions:
+  - symbol: VMMXX
+    value: 100
+  - symbol: VTIAX
+    value: 100
   - symbol: VTSAX
     value: 100
-- name: My 401k
+
+- name: my regular taxable
   brokerage: Vanguard
-  type: CORPORATE
-  positions:
-  - symbol: VTSAX
-    value: 100
-- name: My Regular
-  brokerage: Fidelity
   type: TAXABLE
   positions:
-  - symbol: FZROX
+  - symbol: AMZN
     value: 100
   - symbol: MSFT
     value: 100
-    hold: true # when set, "hold" indicates that you want to keep this position no matter what.
+    hold: true
+
+- name: my 401k
+  brokerage: Fidelity
+  type: ROTH
+  positions:
+  - symbol: FZROX
+    value: 100
 ```
 
 You can also provide a list of fund descriptions you want to be made available.
@@ -80,35 +86,12 @@ dotnet test
 
 ## Example
 There are other examples in the tests project. 
-```yaml
-- name: my roth account
-  brokerage: Vanguard
-  type: ROTH
-  positions:
-  - symbol: VMMXX
-    value: 100
-  - symbol: VTIAX
-    value: 100
-  - symbol: VTSAX
-    value: 100
-
-- name: my regular taxable
-  brokerage: Vanguard
-  type: TAXABLE
-  positions:
-  - symbol: AMZN
-    value: 100
-  - symbol: MSFT
-    value: 100
-    hold: true
-
-- name: my 401k
-  brokerage: Fidelity
-  type: ROTH
-  positions:
-  - symbol: FZROX
-    value: 100
+Using the ```example.yaml`` file from above, running this should produce the following report:
+```bash
+$ portfolio rebalance /path/to/example.yaml
 ```
+--- 
+
 # portfolio
 ## stats
 |stat|value|
@@ -143,3 +126,37 @@ There are other examples in the tests project.
 |my roth account|buy|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$34.00|
 |my roth account|buy|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$66.00|
 |my roth account|sell|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
+
+---
+
+Running this should produce the following report: 
+```bash
+portfolio load /path/to/example.yaml
+```
+
+---
+
+# Custom portfolio
+## stats
+|stat|value|
+|---|---|
+|date|04/21/2019|
+|TotalValue|$600.00|
+|ExpenseRatio|0.0250|
+|BondRatio|0.00|
+|StockRatio|1.00|
+|DomesticRatio|0.83|
+|InternationalRatio|0.17|
+
+## positions
+|account|symbol|value|
+|---|---|---:|
+|my 401k|[FZROX](https://finance.yahoo.com/quote/FZROX?p=FZROX)|$100.00|
+|my regular taxable|[AMZN](https://finance.yahoo.com/quote/AMZN?p=AMZN)|$100.00|
+|my regular taxable|[MSFT](https://finance.yahoo.com/quote/MSFT?p=MSFT)|$100.00|
+|my roth account|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
+|my roth account|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$100.00|
+|my roth account|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|
+
+---
+
