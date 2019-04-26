@@ -9,40 +9,46 @@ namespace PortfolioPicker.App
     {
         public Portfolio Portfolio { get; private set; }
 
-        public Strategy Strategy { get; private set; }
-
         static public Picker Create(
             IList<Account> accounts,
-            IList<Fund> funds = null,
-            Strategy strategy = null)
+            IList<Fund> funds = null)
         {
             var portfolio = new Portfolio { Accounts = accounts };
-            strategy = strategy ?? new FourFundStrategy();
             Fund.AddRange(funds);
-            return new Picker(portfolio, strategy);
+            return new Picker
+            {
+                Portfolio = portfolio
+            };
         }
 
         static public Picker Create(
             string accountsYaml = null,
-            string fundsYaml = null,
-            string strategyName = null)
+            string fundsYaml = null)
         {
-            var portfolio = Portfolio.FromYaml(accountsYaml);
-
-            // load strategy
-            strategyName = strategyName ?? "FourFundStrategy";
-            var strategyType = Type.GetType("PortfolioPicker.App.Strategies." + strategyName);
-            var strategy = Activator.CreateInstance(strategyType) as Strategy;
+            // add custom funds
             Fund.FromYaml(fundsYaml);
-            return new Picker(portfolio, strategy);
+            return new Picker
+            {
+                Portfolio = Portfolio.FromYaml(accountsYaml)
+            };
         }
 
         /// <summary>
         /// follow a strategy to produce positions
         /// </summary>
-        public Portfolio Rebalance()
+        public Portfolio Rebalance(
+            double stockRatio,
+            double domesticStockRatio,
+            double domesticBondRatio)
         {
-            var result = Strategy.Rebalance(Portfolio);
+            var strategy = new FourFundStrategy
+            {
+                StockRatio = (decimal)stockRatio,
+                StockDomesticRatio = (decimal)domesticStockRatio,
+                BondsDomesticRatio = (decimal)domesticBondRatio
+            };
+
+            var result = strategy.Rebalance(Portfolio);
             if (result == null)
                 return null;
 
@@ -89,14 +95,6 @@ namespace PortfolioPicker.App
             }
             
             return orders.Where(x => x != null).ToList();
-        }
-
-        private Picker(
-            Portfolio portfolio,
-            Strategy strategy)
-        {
-            this.Portfolio = portfolio;
-            this.Strategy = strategy ?? new FourFundStrategy();
         }
     }
 
