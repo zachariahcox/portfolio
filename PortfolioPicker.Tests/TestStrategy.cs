@@ -108,7 +108,7 @@ namespace PortfolioPicker.Tests
             };
 
             var p = Picker.Create(accounts);
-            var portfolio = p.Rebalance();
+            var portfolio = p.Rebalance(.9, .6, .7);
             Assert.Equal(4, portfolio.NumberOfPositions);
             Assert.Equal(100, portfolio.TotalValue);
         }
@@ -150,7 +150,7 @@ namespace PortfolioPicker.Tests
                 .SelectMany(x => x.Positions)
                 .Sum(x => x.Value);
             var p = Picker.Create(accounts);
-            Assert.Null(p.Rebalance());
+            Assert.Null(p.Rebalance(.9, .6, .7));
         }
 
         [Fact]
@@ -174,7 +174,7 @@ namespace PortfolioPicker.Tests
             };
 
             var p = Picker.Create(accounts);
-            Assert.Null(p.Rebalance());
+            Assert.Null(p.Rebalance(.9, .6, .7));
         }
 
         [Fact]
@@ -192,7 +192,7 @@ namespace PortfolioPicker.Tests
       hold: true";
 
             var p = Picker.Create(yaml);
-            var portfolio = p.Rebalance();
+            var portfolio = p.Rebalance(.9, .6, .7);
             Assert.Equal(4, portfolio.NumberOfPositions);
             var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(300, actualValue);
@@ -271,7 +271,7 @@ namespace PortfolioPicker.Tests
             var brokerages = CreateFundMap();
             var expectedTotal = accounts.Count * 10000m;
             var p = Picker.Create(accounts, brokerages);
-            var portfolio = p.Rebalance();
+            var portfolio = p.Rebalance(.9, .6, .7);
             Assert.Equal(12, portfolio.NumberOfPositions);
             Assert.Equal(1.59, portfolio.ExpenseRatio);
             Assert.Equal(expectedTotal, portfolio.TotalValue);
@@ -291,15 +291,8 @@ namespace PortfolioPicker.Tests
                 CreateFund("X", "BI", 0, 0, 0),
             };
 
-            // construct strategy
-            var s = new FourFundStrategy
-            {
-                StockRatio = 0.5m,
-                StockDomesticRatio = 0.5m,
-                BondsDomesticRatio = 0.5m
-            };
-            var picker = Picker.Create(accounts, funds, s);
-            var p = picker.Rebalance();
+            var picker = Picker.Create(accounts, funds);
+            var p = picker.Rebalance(.5, .5, .5);
 
             // funds should be equally split
             Assert.NotNull(p);
@@ -318,10 +311,7 @@ namespace PortfolioPicker.Tests
 
             // ==================================
             // Change stock ratio
-            s.StockRatio = 0.9m;
-            s.StockDomesticRatio = 1m;
-            s.BondsDomesticRatio = 1m;
-            p = picker.Rebalance();
+            p = picker.Rebalance(.9, 1, 1);
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
             Assert.Equal(2, p.NumberOfPositions);
@@ -334,20 +324,17 @@ namespace PortfolioPicker.Tests
 
             // ==================================
             // Change domestic ratio
-            s.StockRatio = 0.5m;
-            s.StockDomesticRatio = 0.9m;
-            s.BondsDomesticRatio = 0.1m;
-            p = picker.Rebalance();
+            p = picker.Rebalance(.5, .9, .1);
             Assert.NotNull(p);
             Assert.Equal(1.0, p.Score);
             Assert.Equal(4, p.Positions.Count);
-            Assert.Equal(s.StockRatio * s.StockDomesticRatio * dollars,
+            Assert.Equal(.5m * .9m * dollars,
                          p.Positions.First(x => x.Symbol == "SD").Value);
-            Assert.Equal(s.StockRatio * s.StockInternationalRatio * dollars,
+            Assert.Equal(.5m * .1m * dollars,
                          p.Positions.First(x => x.Symbol == "SI").Value);
-            Assert.Equal(s.BondsRatio * s.BondsDomesticRatio * dollars,
+            Assert.Equal(.5m * .1m * dollars,
                          p.Positions.First(x => x.Symbol == "BD").Value);
-            Assert.Equal(s.BondsRatio * s.BondsInternationalRatio * dollars,
+            Assert.Equal(.5m * .9m * dollars,
                          p.Positions.First(x => x.Symbol == "BI").Value);
             Assert.Equal(0.5, p.StockRatio);
             Assert.Equal(0.5, p.BondRatio);
@@ -370,15 +357,8 @@ namespace PortfolioPicker.Tests
                 CreateFund("Y", "BI", 0, 0, 0),
             };
 
-            // construct strategy
-            var s = new FourFundStrategy
-            {
-                StockRatio = 0.5m,
-                StockDomesticRatio = 0.5m,
-                BondsDomesticRatio = 0.5m
-            };
-            var picker = Picker.Create(accounts, funds, s);
-            var p = picker.Rebalance();
+            var picker = Picker.Create(accounts, funds);
+            var p = picker.Rebalance(.5, .5, .5);
 
             // funds should be equally split
             Assert.NotNull(p);
@@ -410,15 +390,8 @@ namespace PortfolioPicker.Tests
                 CreateFund(brokerageName, symbolName, 0, .5, .5),
             };
 
-            // construct strategy
-            var s = new FourFundStrategy
-            {
-                StockRatio = 0.5m,
-                StockDomesticRatio = 0.5m,
-                BondsDomesticRatio = 0.5m
-            };
-            var picker = Picker.Create(accounts, funds, s);
-            var p = picker.Rebalance();
+            var picker = Picker.Create(accounts, funds);
+            var p = picker.Rebalance(.5, .5, .5);
 
             // assert portfolio correctness
             Assert.NotNull(p);
@@ -433,8 +406,8 @@ namespace PortfolioPicker.Tests
             }
 
             // output percentages should match input requests
-            Assert.Equal((double)s.StockRatio, p.StockRatio);
-            Assert.Equal((double)s.BondsRatio, p.BondRatio);
+            Assert.Equal(.5, p.StockRatio);
+            Assert.Equal(.5, p.BondRatio);
             Assert.Equal(0.5, p.DomesticRatio);
             Assert.Equal(0.5, p.InternationalRatio);
         }
