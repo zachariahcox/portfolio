@@ -306,8 +306,8 @@ namespace PortfolioPicker.Tests
             // output percentages should match input requests
             Assert.Equal(0.5, p.StockRatio);
             Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticRatio);
-            Assert.Equal(0.5, p.InternationalRatio);
+            Assert.Equal(0.5, p.DomesticStockRatio);
+            Assert.Equal(0.5, p.DomesticBondRatio);
 
             // ==================================
             // Change stock ratio
@@ -319,8 +319,8 @@ namespace PortfolioPicker.Tests
             Assert.Equal(0.1m * dollars, p.Positions.First(x => x.Symbol == "BD").Value);
             Assert.Equal(0.9, p.StockRatio);
             Assert.Equal(0.1, p.BondRatio);
-            Assert.Equal(1, p.DomesticRatio);
-            Assert.Equal(0, p.InternationalRatio);
+            Assert.Equal(1, p.DomesticStockRatio);
+            Assert.Equal(1, p.DomesticBondRatio);
 
             // ==================================
             // Change domestic ratio
@@ -338,8 +338,8 @@ namespace PortfolioPicker.Tests
                          p.Positions.First(x => x.Symbol == "BI").Value);
             Assert.Equal(0.5, p.StockRatio);
             Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticRatio);
-            Assert.Equal(0.5, p.InternationalRatio);
+            Assert.Equal(0.9, p.DomesticStockRatio);
+            Assert.Equal(0.1, p.DomesticBondRatio);
         }
 
         [Fact]
@@ -372,8 +372,8 @@ namespace PortfolioPicker.Tests
             // output percentages should match input requests
             Assert.Equal(0.5, p.StockRatio);
             Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticRatio);
-            Assert.Equal(0.5, p.InternationalRatio);
+            Assert.Equal(0.5, p.DomesticStockRatio);
+            Assert.Equal(0.5, p.DomesticBondRatio);
         }
 
         [Fact]
@@ -408,8 +408,8 @@ namespace PortfolioPicker.Tests
             // output percentages should match input requests
             Assert.Equal(.5, p.StockRatio);
             Assert.Equal(.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticRatio);
-            Assert.Equal(0.5, p.InternationalRatio);
+            Assert.Equal(0.5, p.DomesticStockRatio);
+            Assert.Equal(0.5, p.DomesticBondRatio);
         }
     }
 }
