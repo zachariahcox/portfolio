@@ -387,11 +387,11 @@ namespace PortfolioPicker.Tests
                 CreateAccount(brokerageName, AccountType.CORPORATE, value: 100),
             };
             var funds = new List<Fund>{
-                CreateFund(brokerageName, symbolName, 0, .5, .5),
+                CreateFund(brokerageName, symbolName, 0, 0.5, 0.5),
             };
 
             var picker = Picker.Create(accounts, funds);
-            var p = picker.Rebalance(.5, .5, .5);
+            var p = picker.Rebalance(0.5, 0.5, 0.5);
 
             // assert portfolio correctness
             Assert.NotNull(p);
@@ -406,8 +406,8 @@ namespace PortfolioPicker.Tests
             }
 
             // output percentages should match input requests
-            Assert.Equal(.5, p.StockRatio);
-            Assert.Equal(.5, p.BondRatio);
+            Assert.Equal(0.5, p.StockRatio);
+            Assert.Equal(0.5, p.BondRatio);
             Assert.Equal(0.5, p.DomesticStockRatio);
             Assert.Equal(0.5, p.DomesticBondRatio);
         }

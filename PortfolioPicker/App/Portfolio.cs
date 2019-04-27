@@ -28,11 +28,21 @@ namespace PortfolioPicker.App
                 weightedSum += fund.ExpenseRatio * (double)p.Value;
             }
 
-            BondRatio = (double)(bondTotal) / (double)totalValue;
-            DomesticBondRatio = (double)(domesticBondTotal) / (double)bondTotal;
-            StockRatio = (double)(stockTotal) / (double)totalValue;
-            DomesticStockRatio = (double)(domesticStockTotal) / (double)stockTotal;
-            ExpenseRatio = weightedSum / (double)totalValue;
+            BondRatio = totalValue == 0
+                ? 0
+                : (double)(bondTotal) / (double)totalValue;
+            DomesticBondRatio = totalValue == 0
+                ? 0
+                : bondTotal == 0? 0: (double)(domesticBondTotal) / (double)bondTotal;
+            StockRatio = totalValue == 0
+                ? 0
+                : (double)(stockTotal) / (double)totalValue;
+            DomesticStockRatio = stockTotal == 0
+                ? 0
+                : (double)(domesticStockTotal) / (double)stockTotal;
+            ExpenseRatio = totalValue == 0
+                ? 
+                0: weightedSum / (double)totalValue;
         }
 
         public IList<Account> Accounts 
@@ -133,16 +143,16 @@ namespace PortfolioPicker.App
             lines.Add("");
 
             lines.Add("## composition");
-            Draw("class", "location", "actual:", "target:");
-            Draw("---", "---", "---:", "---:");
+            Draw("class", "location", "percentage");
+            Draw("---", "---", "---:");
             Draw("stock", "domestic", 
-                string.Format("{0:0}%", 100.0 * DomesticStockRatio));
+                string.Format("{0:0}%", 100.0 * DomesticStockRatio * StockRatio));
             Draw("stock", "international", 
-                string.Format("{0:0}%", 100.0 * (1.0 - DomesticStockRatio)));
+                string.Format("{0:0}%", 100.0 * (1.0 - DomesticStockRatio) * StockRatio));
             Draw("bonds", "domestic", 
-                string.Format("{0:0}%", 100.0 * DomesticBondRatio));
+                string.Format("{0:0}%", 100.0 * DomesticBondRatio * BondRatio));
             Draw("bonds", "international", 
-                string.Format("{0:0}%", 100.0*(1.0 - DomesticBondRatio)));
+                string.Format("{0:0}%", 100.0*(1.0 - DomesticBondRatio) * BondRatio));
             lines.Add("");
 
             // POSIITONS

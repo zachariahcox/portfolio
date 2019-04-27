@@ -10,7 +10,7 @@ namespace PortfolioPicker.CLI
     {
         public static int Main(string[] args)
         {
-            var app = new CommandLineApplication
+            var app = new CommandLineApplication(throwOnUnexpectedArg: false)
             {
                 Name = "PortfolioPicker",
                 Description = "Portfolio balance suggestion engine."
