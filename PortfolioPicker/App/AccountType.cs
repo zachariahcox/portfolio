@@ -2,8 +2,8 @@
 {
     public enum AccountType
     {
-        TAXABLE,
-        CORPORATE,
-        ROTH
+        TAXABLE, // everything is taxable
+        CORPORATE, // 401k, growth is taxable
+        ROTH // growth not taxable, includes HSA
     }
 }
