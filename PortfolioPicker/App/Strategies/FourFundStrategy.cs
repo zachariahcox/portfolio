@@ -257,13 +257,12 @@ namespace PortfolioPicker.App.Strategies
             var portfolios = Permutations(exposures)
                 .Select(x => GeneratePortfolio(accounts, x));
 
-            var bestToWorst = portfolios
+            return portfolios
                 .Where(x => x.Errors.Count == 0)       // no errors
                 .OrderByDescending(x => x.Score)       // best score
                 .ThenByDescending(x => x.ExpenseRatio) // lowest cost
-                .ThenBy(x => x.NumberOfPositions);     // fewest positions
-
-            return bestToWorst.FirstOrDefault();
+                .ThenBy(x => x.NumberOfPositions)      // fewest positions
+                .FirstOrDefault();  // take the best
         }
 
         internal Exposure SD { get; } = new Exposure

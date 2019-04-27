@@ -8,6 +8,33 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
+        private void ComputeStats()
+        {
+            var totalValue = TotalValue = _positions.Sum(x => x.Value);
+            var stockTotal = 0m;
+            var domesticStockTotal = 0m;
+            var bondTotal = 0m;
+            var domesticBondTotal = 0m;
+            var weightedSum = 0.0;
+            foreach(var p in _positions)
+            {
+                var fund = Fund.Get(p.Symbol);
+                stockTotal += (decimal)(fund.StockRatio * (double)p.Value);
+                domesticStockTotal += (decimal)(fund.StockRatio * fund.DomesticRatio * (double)p.Value);
+
+                bondTotal += (decimal)(fund.BondRatio * (double)p.Value);
+                domesticBondTotal += (decimal)(fund.BondRatio * fund.DomesticRatio * (double)p.Value);
+
+                weightedSum += fund.ExpenseRatio * (double)p.Value;
+            }
+
+            BondRatio = (double)(bondTotal) / (double)totalValue;
+            DomesticBondRatio = (double)(domesticBondTotal) / (double)bondTotal;
+            StockRatio = (double)(stockTotal) / (double)totalValue;
+            DomesticStockRatio = (double)(domesticStockTotal) / (double)stockTotal;
+            ExpenseRatio = weightedSum / (double)totalValue;
+        }
+
         public IList<Account> Accounts 
         { 
             get => _accounts;
@@ -33,16 +60,13 @@ namespace PortfolioPicker.App
 
         public decimal TotalValue { get; set; }
 
-        public double ExpenseRatio { get; set; } = 0.0;
+        public double ExpenseRatio { get; set; }
 
-        public double BondRatio { get; set; } = 0.0;
-
-        public double StockRatio { get; set; } = 0.0;
-
-        public double DomesticRatio { get; set; }
-
-        public double InternationalRatio { get; set; }
-
+        // These ratios are duplicated from Strategy
+        public double StockRatio { get; set; }
+        public double DomesticStockRatio { get; set; }
+        public double BondRatio { get; set; }
+        public double DomesticBondRatio {get; set;}
 
         [DataMember(EmitDefaultValue = false)]
         public IList<Order> Orders { get; set; }
@@ -104,11 +128,21 @@ namespace PortfolioPicker.App
             Draw("date", System.DateTime.Now.ToString("MM/dd/yyyy"));
             Draw(nameof(TotalValue), string.Format("{0:c}", TotalValue));
             Draw(nameof(ExpenseRatio), string.Format("{0:0.0000}", ExpenseRatio));
-            Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
             Draw(nameof(StockRatio), string.Format("{0:0.00}", StockRatio));
-            Draw(nameof(DomesticRatio), string.Format("{0:0.00}", DomesticRatio));
-            Draw(nameof(InternationalRatio), string.Format("{0:0.00}", InternationalRatio));
-            
+            Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
+            lines.Add("");
+
+            lines.Add("## composition");
+            Draw("class", "location", "actual:", "target:");
+            Draw("---", "---", "---:", "---:");
+            Draw("stock", "domestic", 
+                string.Format("{0:0}%", 100.0 * DomesticStockRatio));
+            Draw("stock", "international", 
+                string.Format("{0:0}%", 100.0 * (1.0 - DomesticStockRatio)));
+            Draw("bonds", "domestic", 
+                string.Format("{0:0}%", 100.0 * DomesticBondRatio));
+            Draw("bonds", "international", 
+                string.Format("{0:0}%", 100.0*(1.0 - DomesticBondRatio)));
             lines.Add("");
 
             // POSIITONS
@@ -142,27 +176,6 @@ namespace PortfolioPicker.App
             }
             
             return lines;
-        }
-
-        private void ComputeStats()
-        {
-            var totalValue = TotalValue = _positions.Sum(x => x.Value);
-            var stockTotal = 0m;
-            var domesticTotal = 0m;
-            var weightedSum = 0.0;
-            foreach(var p in _positions)
-            {
-                var fund = Fund.Get(p.Symbol);
-                stockTotal += (decimal)(fund.StockRatio * (double)p.Value);
-                domesticTotal += (decimal)(fund.DomesticRatio * (double)p.Value);
-                weightedSum += fund.ExpenseRatio * (double)p.Value;
-            }
-
-            BondRatio = (double)(totalValue - stockTotal) / (double)totalValue;
-            StockRatio = (double)(stockTotal) / (double)totalValue;
-            DomesticRatio = (double)(domesticTotal) / (double)totalValue;
-            InternationalRatio = (double)(totalValue - domesticTotal) / (double)totalValue;
-            ExpenseRatio = weightedSum / (double)totalValue;
         }
 
         [IgnoreDataMember]

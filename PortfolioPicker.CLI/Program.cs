@@ -19,7 +19,7 @@ namespace PortfolioPicker.CLI
             app.HelpOption(inherited: true);
 
             app.Command("load", cmd => {
-                
+
                 cmd.Description = "Creates current portfolio report";
 
                 var accounts = cmd.Argument("accounts", "Path to accounts file.")
@@ -27,11 +27,11 @@ namespace PortfolioPicker.CLI
                     .IsRequired();
 
                 var outputDir = cmd.Option(
-                    template: "-o|--output <directory>", 
-                    description: "Path to output directory. Defaults to directory containing accounts file.", 
+                    template: "-o|--output <directory>",
+                    description: "Path to output directory. Defaults to directory containing accounts file.",
                     optionType: CommandOptionType.SingleValue)
                     .Accepts(v => v.LegalFilePath());
-                
+
                 cmd.OnExecute(() =>
                 {
                     var data = File.ReadAllText(accounts.Value);
@@ -61,13 +61,13 @@ namespace PortfolioPicker.CLI
                     .Accepts(x => x.ExistingFile());
 
                 var stockPercent = cmd.Option<int>(
-                    "-s|--stockPercent <int>", 
+                    "-s|--stockPercent <int>",
                     "Target percent of TOTAL PORTFOLIO in stocks (remainder will be in bonds)",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.Range(0, 100));
 
                 var domesticStockPercent = cmd.Option<int>(
-                    "-ds|--domesticStockPercent <int>", 
+                    "-ds|--domesticStockPercent <int>",
                     "Target percent OF STOCKS to be domestic",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.Range(0, 100));
@@ -85,7 +85,7 @@ namespace PortfolioPicker.CLI
                         accountsYaml: data,
                         fundsYaml: funds.Value());
 
-                    var stockRatio = stockPercent.HasValue() 
+                    var stockRatio = stockPercent.HasValue()
                         ? double.Parse(stockPercent.Value()) / 100.0
                         : 0.9;
 
@@ -120,11 +120,11 @@ namespace PortfolioPicker.CLI
 
         private static string ReportPath(
             string title,
-            string accountsPath, 
+            string accountsPath,
             string customOutputPath)
         {
             var directory = customOutputPath == null
-                ? Path.GetDirectoryName(new FileInfo(accountsPath).Directory.FullName)
+                ? new FileInfo(accountsPath).DirectoryName
                 : customOutputPath;
             var today = DateTime.Now.ToString("MM_dd_yyyy");
             return Path.Combine(directory, $"portfolio_{title}_{today}.md");
