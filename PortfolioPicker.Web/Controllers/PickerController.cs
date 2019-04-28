@@ -16,7 +16,10 @@ namespace PortfolioPicker.Web.Controllers
             {
                 var yaml = reader.ReadToEnd();
                 var p = Picker.Create(yaml);
-                return p.Rebalance(.9, .6, .7);
+                return p.Rebalance(
+                    stockRatio: .9, 
+                    domesticStockRatio: .6, 
+                    domesticBondRatio: .7);
             }
         }
     }
