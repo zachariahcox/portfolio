@@ -127,8 +127,8 @@ namespace PortfolioPicker.App
 
             // TITLE
             var name = Strategy == null 
-                ? "Custom portfolio"
-                : Strategy + " portfolio";
+                ? "portfolio"
+                : "rebalanced portfolio";
             lines.Add("# " + name);
 
             // STATS
@@ -142,6 +142,7 @@ namespace PortfolioPicker.App
             Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
             lines.Add("");
 
+            // COMPOSITION
             lines.Add("## composition");
             Draw("class", "location", "percentage");
             Draw("---", "---", "---:");
