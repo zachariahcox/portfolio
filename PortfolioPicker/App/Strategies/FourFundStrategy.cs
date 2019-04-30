@@ -83,8 +83,8 @@ namespace PortfolioPicker.App.Strategies
                 Target = totalBonds * this.BondsDomesticRatio,
                 AccountTypesPreference = new[] { 
                     AccountType.CORPORATE, 
+                    AccountType.TAXABLE,
                     AccountType.ROTH, 
-                    AccountType.TAXABLE 
                 },
             };
 

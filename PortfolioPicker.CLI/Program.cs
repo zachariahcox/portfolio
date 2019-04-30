@@ -17,6 +17,12 @@ namespace PortfolioPicker.CLI
             };
 
             app.HelpOption(inherited: true);
+            app.OnExecute(() =>
+            {
+                Console.WriteLine("Specify a subcommand");
+                app.ShowHelp();
+                return 1;
+            });
 
             app.Command("load", cmd => {
 
@@ -36,7 +42,11 @@ namespace PortfolioPicker.CLI
                 {
                     var data = File.ReadAllText(accounts.Value);
                     var portfolio = Portfolio.FromYaml(data);
-                    var reportPath = ReportPath(cmd.Name, accounts.Value, outputDir.Value());
+                    var d = outputDir.HasValue()
+                        ? outputDir.Value()
+                        : new FileInfo(accounts.Value).DirectoryName;
+                    var today = DateTime.Now.ToString("d");
+                    var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdownLines());
                 });
@@ -102,32 +112,22 @@ namespace PortfolioPicker.CLI
                         domesticStockRatio: domesticStockRatio,
                         domesticBondRatio: domesticBondRatio);
 
-                    var reportPath = ReportPath(cmd.Name, accounts.Value, outputDir.Value());
+                    var d = outputDir.HasValue()
+                        ? outputDir.Value()
+                        : new FileInfo(accounts.Value).DirectoryName;
+
+                    var today = DateTime.Now.ToString("d");
+
+                    var balancedPortfolioPath = Path.Combine(d, $"portfolio_{today}.yaml");
+                    Console.WriteLine("new portfolio: " + balancedPortfolioPath);
+                    File.WriteAllText(balancedPortfolioPath, portfolio.ToYaml());
+
+                    var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdownLines());
                 }));
             }));
-
-            // handle default case
-            app.OnExecute(() =>
-            {
-                Console.WriteLine("Specify a subcommand");
-                app.ShowHelp();
-                return 1;
-            });
             return app.Execute(args);
-        }
-
-        private static string ReportPath(
-            string title,
-            string accountsPath,
-            string customOutputPath)
-        {
-            var directory = customOutputPath == null
-                ? new FileInfo(accountsPath).DirectoryName
-                : customOutputPath;
-            var today = DateTime.Now.ToString("MM_dd_yyyy");
-            return Path.Combine(directory, $"portfolio_{title}_{today}.md");
         }
     }
 }
