@@ -44,9 +44,9 @@ namespace PortfolioPicker.App
             //   and return the product with the highest score
             var targetRatios = new ExposureRatios
             {
-                StockRatio = stockRatio,
-                DomesticStockRatio = domesticStockRatio,
-                DomesticBondRatio = domesticBondRatio
+                Stock = stockRatio,
+                DomesticStock = domesticStockRatio,
+                DomesticBond = domesticBondRatio
             };
             var exposures = ComputeExposures(targetRatios, Portfolio.TotalValue);
             var result = Permutations(exposures)
@@ -162,14 +162,14 @@ namespace PortfolioPicker.App
             ExposureRatios target,
             decimal totalValue)
         {
-            var totalStock = totalValue * (decimal)target.StockRatio;
-            var totalBonds = totalValue * (decimal)target.BondRatio;
+            var totalStock = totalValue * (decimal)target.Stock;
+            var totalBonds = totalValue * (decimal)target.Bond;
 
             var SD = new Exposure
             {
                 Class = AssetClass.Stock,
                 Location = AssetLocation.Domestic,
-                Target = totalStock * (decimal)target.DomesticStockRatio,
+                Target = totalStock * (decimal)target.DomesticStock,
                 AccountTypesPreference = new[] {
                     AccountType.ROTH,
                     AccountType.TAXABLE,
@@ -181,7 +181,7 @@ namespace PortfolioPicker.App
             {
                 Class = AssetClass.Stock,
                 Location = AssetLocation.International,
-                Target = totalStock * (decimal)target.InternationalStockRatio,
+                Target = totalStock * (decimal)target.InternationalStock,
                 AccountTypesPreference = new[] {
                     AccountType.TAXABLE,
                     AccountType.ROTH,
@@ -193,7 +193,7 @@ namespace PortfolioPicker.App
             {
                 Class = AssetClass.Bond,
                 Location = AssetLocation.Domestic,
-                Target = totalBonds * (decimal)target.DomesticBondRatio,
+                Target = totalBonds * (decimal)target.DomesticBond,
                 AccountTypesPreference = new[] {
                     AccountType.CORPORATE,
                     AccountType.TAXABLE,
@@ -205,7 +205,7 @@ namespace PortfolioPicker.App
             {
                 Class = AssetClass.Bond,
                 Location = AssetLocation.International,
-                Target = totalBonds * (decimal)target.InternationalBondRatio,
+                Target = totalBonds * (decimal)target.InternationalBond,
                 AccountTypesPreference = new[] {
                     AccountType.TAXABLE,
                     AccountType.CORPORATE,

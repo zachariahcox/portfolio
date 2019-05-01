@@ -95,8 +95,8 @@ namespace PortfolioPicker.App
             Draw("date", System.DateTime.Now.ToString("MM/dd/yyyy"));
             Draw("total value of assets", string.Format("{0:c}", TotalValue));
             Draw("expense ratio", string.Format("{0:0.0000}", ExpenseRatio));
-            Draw("percent stocks", string.Format("{0:0.0}%", 100.0 * ExposureRatios.StockRatio));
-            Draw("percent bonds", string.Format("{0:0.0}%", 100.0 * ExposureRatios.BondRatio));
+            Draw("percent stocks", string.Format("{0:0.0}%", 100.0 * ExposureRatios.Stock));
+            Draw("percent bonds", string.Format("{0:0.0}%", 100.0 * ExposureRatios.Bond));
             lines.Add("");
 
             // COMPOSITION
@@ -104,13 +104,13 @@ namespace PortfolioPicker.App
             Draw("class", "location", "percentage");
             Draw("---", "---", "---:");
             Draw("stock", "domestic", 
-                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticStockRatio * ExposureRatios.StockRatio));
+                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticStock * ExposureRatios.Stock));
             Draw("stock", "international", 
-                string.Format("{0:0}%", 100.0 * (1.0 - ExposureRatios.DomesticStockRatio) * ExposureRatios.StockRatio));
+                string.Format("{0:0}%", 100.0 * (1.0 - ExposureRatios.DomesticStock) * ExposureRatios.Stock));
             Draw("bonds", "domestic", 
-                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticBondRatio * ExposureRatios.BondRatio));
+                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticBond * ExposureRatios.Bond));
             Draw("bonds", "international", 
-                string.Format("{0:0}%", 100.0*(1.0 - ExposureRatios.DomesticBondRatio) * ExposureRatios.BondRatio));
+                string.Format("{0:0}%", 100.0*(1.0 - ExposureRatios.DomesticBond) * ExposureRatios.Bond));
             lines.Add("");
 
             // POSIITONS
@@ -172,13 +172,13 @@ namespace PortfolioPicker.App
 
             ExposureRatios = new ExposureRatios
             {
-                StockRatio = totalValue == 0
+                Stock = totalValue == 0
                     ? 0
                     : (double)stockTotal / (double)totalValue,
-                DomesticStockRatio = stockTotal == 0
+                DomesticStock = stockTotal == 0
                     ? 0
                     : (double)domesticStockTotal / (double)stockTotal,
-                DomesticBondRatio = bondTotal == 0
+                DomesticBond = bondTotal == 0
                     ? 0
                     : (double)domesticBondTotal / (double)bondTotal,
             };
@@ -187,16 +187,16 @@ namespace PortfolioPicker.App
 
     public class ExposureRatios
     {
-        public double StockRatio { get; set; }
+        public double Stock { get; set; }
 
-        public double DomesticStockRatio { get; set; }
+        public double DomesticStock { get; set; }
 
-        public double DomesticBondRatio {get; set; }
+        public double DomesticBond {get; set; }
 
-        public double BondRatio => Math.Round(1.0 - StockRatio, 5);
+        public double Bond => Math.Round(1.0 - Stock, 5);
 
-        public double InternationalStockRatio => Math.Round(1.0 - DomesticStockRatio, 5);
+        public double InternationalStock => Math.Round(1.0 - DomesticStock, 5);
 
-        public double InternationalBondRatio => Math.Round(1.0 - DomesticBondRatio, 5);
+        public double InternationalBond => Math.Round(1.0 - DomesticBond, 5);
     }
 }
