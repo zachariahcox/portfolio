@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using YamlDotNet.Serialization;
@@ -8,43 +9,6 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        private void ComputeStats()
-        {
-            var totalValue = TotalValue = _positions.Sum(x => x.Value);
-            var stockTotal = 0m;
-            var domesticStockTotal = 0m;
-            var bondTotal = 0m;
-            var domesticBondTotal = 0m;
-            var weightedSum = 0.0;
-            foreach(var p in _positions)
-            {
-                var fund = Fund.Get(p.Symbol);
-                stockTotal += (decimal)(fund.StockRatio * (double)p.Value);
-                domesticStockTotal += (decimal)(fund.StockRatio * fund.DomesticRatio * (double)p.Value);
-
-                bondTotal += (decimal)(fund.BondRatio * (double)p.Value);
-                domesticBondTotal += (decimal)(fund.BondRatio * fund.DomesticRatio * (double)p.Value);
-
-                weightedSum += fund.ExpenseRatio * (double)p.Value;
-            }
-
-            BondRatio = totalValue == 0
-                ? 0
-                : (double)(bondTotal) / (double)totalValue;
-            DomesticBondRatio = totalValue == 0
-                ? 0
-                : bondTotal == 0? 0: (double)(domesticBondTotal) / (double)bondTotal;
-            StockRatio = totalValue == 0
-                ? 0
-                : (double)(stockTotal) / (double)totalValue;
-            DomesticStockRatio = stockTotal == 0
-                ? 0
-                : (double)(domesticStockTotal) / (double)stockTotal;
-            ExpenseRatio = totalValue == 0
-                ? 
-                0: weightedSum / (double)totalValue;
-        }
-
         public IList<Account> Accounts 
         { 
             get => _accounts;
@@ -53,18 +17,17 @@ namespace PortfolioPicker.App
                 if (value is null)
                 {
                     _accounts = null;
-                    _positions = null;
+                    Positions = null;
                 }
                 else
                 {
                     _accounts = value.OrderBy(x => x.Name).ToList();
-                    _positions = value.SelectMany(x => x.Positions).ToList();
+                    Positions = value.SelectMany(x => x.Positions).ToList();
                     ComputeStats();
                 }
             } 
         }
-
-        public string Strategy { get; set; }
+        private IList<Account> _accounts;
 
         public double Score { get; set; }
 
@@ -72,20 +35,17 @@ namespace PortfolioPicker.App
 
         public double ExpenseRatio { get; set; }
 
-        // These ratios are duplicated from Strategy
-        public double StockRatio { get; set; }
-        public double DomesticStockRatio { get; set; }
-        public double BondRatio { get; set; }
-        public double DomesticBondRatio {get; set;}
+        public ExposureRatios ExposureRatios {get; set; }
 
-        [DataMember(EmitDefaultValue = false)]
         public IList<Order> Orders { get; set; }
 
-        [DataMember(EmitDefaultValue = false)]
         public IList<string> Warnings { get; set; }
 
-        [DataMember(EmitDefaultValue = false)]
         public IList<string> Errors { get; set; }
+
+        public IList<Position> Positions { get; set; }
+
+        public int NumberOfPositions => Positions.Count;
 
         public string ToYaml()
         {
@@ -126,20 +86,17 @@ namespace PortfolioPicker.App
             }
 
             // TITLE
-            var name = Strategy == null 
-                ? "portfolio"
-                : "rebalanced portfolio";
-            lines.Add("# " + name);
+            lines.Add("# portfolio");
 
             // STATS
             lines.Add("## stats");
             Draw("stat", "value");
             Draw("---", "---");
             Draw("date", System.DateTime.Now.ToString("MM/dd/yyyy"));
-            Draw(nameof(TotalValue), string.Format("{0:c}", TotalValue));
-            Draw(nameof(ExpenseRatio), string.Format("{0:0.0000}", ExpenseRatio));
-            Draw(nameof(StockRatio), string.Format("{0:0.00}", StockRatio));
-            Draw(nameof(BondRatio), string.Format("{0:0.00}", BondRatio));
+            Draw("total value of assets", string.Format("{0:c}", TotalValue));
+            Draw("expense ratio", string.Format("{0:0.0000}", ExpenseRatio));
+            Draw("percent stocks", string.Format("{0:0.0}%", 100.0 * ExposureRatios.StockRatio));
+            Draw("percent bonds", string.Format("{0:0.0}%", 100.0 * ExposureRatios.BondRatio));
             lines.Add("");
 
             // COMPOSITION
@@ -147,13 +104,13 @@ namespace PortfolioPicker.App
             Draw("class", "location", "percentage");
             Draw("---", "---", "---:");
             Draw("stock", "domestic", 
-                string.Format("{0:0}%", 100.0 * DomesticStockRatio * StockRatio));
+                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticStockRatio * ExposureRatios.StockRatio));
             Draw("stock", "international", 
-                string.Format("{0:0}%", 100.0 * (1.0 - DomesticStockRatio) * StockRatio));
+                string.Format("{0:0}%", 100.0 * (1.0 - ExposureRatios.DomesticStockRatio) * ExposureRatios.StockRatio));
             Draw("bonds", "domestic", 
-                string.Format("{0:0}%", 100.0 * DomesticBondRatio * BondRatio));
+                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticBondRatio * ExposureRatios.BondRatio));
             Draw("bonds", "international", 
-                string.Format("{0:0}%", 100.0*(1.0 - DomesticBondRatio) * BondRatio));
+                string.Format("{0:0}%", 100.0*(1.0 - ExposureRatios.DomesticBondRatio) * ExposureRatios.BondRatio));
             lines.Add("");
 
             // POSIITONS
@@ -189,16 +146,57 @@ namespace PortfolioPicker.App
             return lines;
         }
 
-        [IgnoreDataMember]
-        private IList<Account> _accounts;
+        private void ComputeStats()
+        {
+            var totalValue = TotalValue = Positions.Sum(x => x.Value);
+            var stockTotal = 0m;
+            var domesticStockTotal = 0m;
+            var bondTotal = 0m;
+            var domesticBondTotal = 0m;
+            var weightedSum = 0.0;
+            foreach (var p in Positions)
+            {
+                var fund = Fund.Get(p.Symbol);
+                stockTotal += (decimal)(fund.StockRatio * (double)p.Value);
+                domesticStockTotal += (decimal)(fund.StockRatio * fund.DomesticRatio * (double)p.Value);
 
-        [IgnoreDataMember]
-        private IList<Position> _positions;
+                bondTotal += (decimal)(fund.BondRatio * (double)p.Value);
+                domesticBondTotal += (decimal)(fund.BondRatio * fund.DomesticRatio * (double)p.Value);
 
-        [IgnoreDataMember]
-        public IList<Position> Positions => _positions;
+                weightedSum += fund.ExpenseRatio * (double)p.Value;
+            }
 
-        [IgnoreDataMember]
-        public int NumberOfPositions => _positions.Count;
+            ExpenseRatio = totalValue == 0
+                ?
+                0 : weightedSum / (double)totalValue;
+
+            ExposureRatios = new ExposureRatios
+            {
+                StockRatio = totalValue == 0
+                    ? 0
+                    : (double)stockTotal / (double)totalValue,
+                DomesticStockRatio = stockTotal == 0
+                    ? 0
+                    : (double)domesticStockTotal / (double)stockTotal,
+                DomesticBondRatio = bondTotal == 0
+                    ? 0
+                    : (double)domesticBondTotal / (double)bondTotal,
+            };
+        }
+    }
+
+    public class ExposureRatios
+    {
+        public double StockRatio { get; set; }
+
+        public double DomesticStockRatio { get; set; }
+
+        public double DomesticBondRatio {get; set; }
+
+        public double BondRatio => Math.Round(1.0 - StockRatio, 5);
+
+        public double InternationalStockRatio => Math.Round(1.0 - DomesticStockRatio, 5);
+
+        public double InternationalBondRatio => Math.Round(1.0 - DomesticBondRatio, 5);
     }
 }

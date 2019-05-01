@@ -45,7 +45,7 @@ namespace PortfolioPicker.CLI
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
                         : new FileInfo(accounts.Value).DirectoryName;
-                    var today = DateTime.Now.ToString("d");
+                    var today = DateTime.Now.ToString("MMddyyyy");
                     var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdownLines());
@@ -116,7 +116,7 @@ namespace PortfolioPicker.CLI
                         ? outputDir.Value()
                         : new FileInfo(accounts.Value).DirectoryName;
 
-                    var today = DateTime.Now.ToString("d");
+                    var today = DateTime.Now.ToString("MMddyyyy");
 
                     var balancedPortfolioPath = Path.Combine(d, $"portfolio_{today}.yaml");
                     Console.WriteLine("new portfolio: " + balancedPortfolioPath);

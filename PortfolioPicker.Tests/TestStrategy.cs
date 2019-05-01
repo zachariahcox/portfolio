@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using PortfolioPicker.App;
-using PortfolioPicker.App.Strategies;
 using Xunit;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -304,10 +303,10 @@ namespace PortfolioPicker.Tests
             Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Symbol == "BI").Value);
 
             // output percentages should match input requests
-            Assert.Equal(0.5, p.StockRatio);
-            Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticStockRatio);
-            Assert.Equal(0.5, p.DomesticBondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.StockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.BondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.DomesticStockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.DomesticBondRatio);
 
             // ==================================
             // Change stock ratio
@@ -317,10 +316,10 @@ namespace PortfolioPicker.Tests
             Assert.Equal(2, p.NumberOfPositions);
             Assert.Equal(0.9m * dollars, p.Positions.First(x => x.Symbol == "SD").Value);
             Assert.Equal(0.1m * dollars, p.Positions.First(x => x.Symbol == "BD").Value);
-            Assert.Equal(0.9, p.StockRatio);
-            Assert.Equal(0.1, p.BondRatio);
-            Assert.Equal(1, p.DomesticStockRatio);
-            Assert.Equal(1, p.DomesticBondRatio);
+            Assert.Equal(0.9, p.ExposureRatios.StockRatio);
+            Assert.Equal(0.1, p.ExposureRatios.BondRatio);
+            Assert.Equal(1, p.ExposureRatios.DomesticStockRatio);
+            Assert.Equal(1, p.ExposureRatios.DomesticBondRatio);
 
             // ==================================
             // Change domestic ratio
@@ -336,10 +335,10 @@ namespace PortfolioPicker.Tests
                          p.Positions.First(x => x.Symbol == "BD").Value);
             Assert.Equal(.5m * .9m * dollars,
                          p.Positions.First(x => x.Symbol == "BI").Value);
-            Assert.Equal(0.5, p.StockRatio);
-            Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.9, p.DomesticStockRatio);
-            Assert.Equal(0.1, p.DomesticBondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.StockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.BondRatio);
+            Assert.Equal(0.9, p.ExposureRatios.DomesticStockRatio);
+            Assert.Equal(0.1, p.ExposureRatios.DomesticBondRatio);
         }
 
         [Fact]
@@ -370,10 +369,10 @@ namespace PortfolioPicker.Tests
             Assert.Equal(25m, p.Positions.First(x => x.Symbol == "BI").Value);
 
             // output percentages should match input requests
-            Assert.Equal(0.5, p.StockRatio);
-            Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticStockRatio);
-            Assert.Equal(0.5, p.DomesticBondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.StockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.BondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.DomesticStockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.DomesticBondRatio);
         }
 
         [Fact]
@@ -406,10 +405,10 @@ namespace PortfolioPicker.Tests
             }
 
             // output percentages should match input requests
-            Assert.Equal(0.5, p.StockRatio);
-            Assert.Equal(0.5, p.BondRatio);
-            Assert.Equal(0.5, p.DomesticStockRatio);
-            Assert.Equal(0.5, p.DomesticBondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.StockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.BondRatio);
+            Assert.Equal(0.5, p.ExposureRatios.DomesticStockRatio);
+            Assert.Equal(0.5, p.ExposureRatios.DomesticBondRatio);
         }
     }
 }

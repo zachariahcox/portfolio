@@ -99,3 +99,23 @@
   expenseRatio: 0.08
   stockRatio: 0.8
   domesticRatio: 1
+
+# Microsoft HSA
+- description: "Schwab S&P 500 Index Fund"
+  symbol: SWPPX
+  brokerage: ms_hsa
+  expenseRatio: 0.02
+  stockRatio: 1
+  domesticRatio: 1
+- description: Vanguard Growth Index Fund Institutional Shares
+  symbol: VIGIX
+  brokerage: ms_hsa
+  expenseRatio: 0.04
+  stockRatio: 1 
+  domesticRatio: 1
+- description: Vanguard Balanced Index Fund Institutional Shares
+  symbol: VBAIX
+  brokerage: ms_hsa
+  expenseRatio: 0.06
+  stockRatio: .6
+  domesticRatio: 1
