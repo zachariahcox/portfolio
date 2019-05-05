@@ -29,19 +29,11 @@ namespace PortfolioPicker.App
         }
         private IList<Account> _accounts;
 
-        public double Score { get; set; }
-
         public decimal TotalValue { get; set; }
 
         public double ExpenseRatio { get; set; }
 
-        public ExposureRatios ExposureRatios {get; set; }
-
-        public IList<Order> Orders { get; set; }
-
-        public IList<string> Warnings { get; set; }
-
-        public IList<string> Errors { get; set; }
+        public IList<ExposureRatio> ExposureRatios {get; set; }
 
         public IList<Position> Positions { get; set; }
 
@@ -72,74 +64,60 @@ namespace PortfolioPicker.App
             };
         }
 
-        public IList<string> ToMarkdownLines()
+
+        protected string Row(params object[] values)
+        {
+            return "|" + string.Join("|", values) + "|";
+        }
+
+        protected string Url(string _s)
+        {
+            return $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
+        }
+
+        public virtual IList<string> ToMarkdown()
         {
             var lines = new List<string>();
-            void Draw(params object[] values)
-            {
-                lines.Add("|" + string.Join("|", values) + "|");
-            }
-
-            string Url(string _s)
-            {
-                return $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
-            }
 
             // TITLE
-            lines.Add("# portfolio");
+            lines.Add($"# portfolio");
 
             // STATS
             lines.Add("## stats");
-            Draw("stat", "value");
-            Draw("---", "---");
-            Draw("date", System.DateTime.Now.ToString("MM/dd/yyyy"));
-            Draw("total value of assets", string.Format("{0:c}", TotalValue));
-            Draw("expense ratio", string.Format("{0:0.0000}", ExpenseRatio));
-            Draw("percent stocks", string.Format("{0:0.0}%", 100.0 * ExposureRatios.Stock));
-            Draw("percent bonds", string.Format("{0:0.0}%", 100.0 * ExposureRatios.Bond));
+            lines.Add(Row("stat", "value"));
+            lines.Add(Row("---", "---"));
+            lines.Add(Row("total value of assets", string.Format("{0:c}", TotalValue)));
+            lines.Add(Row("expense ratio", string.Format("{0:0.0000}", ExpenseRatio)));
+            lines.Add(Row("percent stocks", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Stock))));
+            lines.Add(Row("percent bonds", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Bond))));
             lines.Add("");
 
             // COMPOSITION
             lines.Add("## composition");
-            Draw("class", "location", "percentage");
-            Draw("---", "---", "---:");
-            Draw("stock", "domestic", 
-                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticStock * ExposureRatios.Stock));
-            Draw("stock", "international", 
-                string.Format("{0:0}%", 100.0 * (1.0 - ExposureRatios.DomesticStock) * ExposureRatios.Stock));
-            Draw("bonds", "domestic", 
-                string.Format("{0:0}%", 100.0 * ExposureRatios.DomesticBond * ExposureRatios.Bond));
-            Draw("bonds", "international", 
-                string.Format("{0:0}%", 100.0*(1.0 - ExposureRatios.DomesticBond) * ExposureRatios.Bond));
+            lines.Add(Row( "class", "location", "percentage"));
+            lines.Add(Row( "---", "---", "---:"));
+            foreach(var er in ExposureRatios)
+            {
+                lines.Add(Row(
+                    er.Class.ToString().ToLower(), 
+                    er.Location.ToString().ToLower(),
+                    string.Format("{0:0}%", 100 * er.Ratio)));
+            }
             lines.Add("");
 
             // POSIITONS
             if (Positions?.Any() == true)
             {
                 lines.Add("## positions");
-                Draw("account", "symbol", "value");
-                Draw("---", "---", "---:");
+                lines.Add(Row("account", "symbol", "value", "description"));
+                lines.Add(Row("---", "---", "---:", "---"));
                 foreach (var a in Accounts.OrderBy(x => x.Name))
                 {
-                    foreach (var p in a.Positions)
+                    foreach (var p in a.Positions.OrderByDescending(x => x.Value))
                     {
-                        Draw(a.Name, Url(p.Symbol), string.Format("{0:c}", p.Value));
+                        var f = Fund.Get(p.Symbol);
+                        lines.Add(Row(a.Name, Url(p.Symbol), string.Format("{0:c}", p.Value, f.Description)));
                     }
-                }
-            }
-
-            // ORDERS
-            if (Orders?.Any() == true)
-            {
-                lines.Add("## orders");
-                Draw("account", "action", "symbol", "value");
-                Draw("---", "---", "---", "---:");
-                foreach(var o in Orders
-                    .OrderBy(x => x.AccountName)
-                    .ThenBy(x => x.Action)
-                    .ThenBy(x => x.Symbol))
-                {
-                    Draw(o.AccountName, o.Action, Url(o.Symbol), string.Format("{0:c}", o.Value));
                 }
             }
             
@@ -170,33 +148,25 @@ namespace PortfolioPicker.App
                 ?
                 0 : weightedSum / (double)totalValue;
 
-            ExposureRatios = new ExposureRatios
+            ExposureRatios = new List<ExposureRatio>
             {
-                Stock = totalValue == 0
-                    ? 0
-                    : (double)stockTotal / (double)totalValue,
-                DomesticStock = stockTotal == 0
-                    ? 0
-                    : (double)domesticStockTotal / (double)stockTotal,
-                DomesticBond = bondTotal == 0
-                    ? 0
-                    : (double)domesticBondTotal / (double)bondTotal,
+                new ExposureRatio(
+                    AssetClass.Stock, 
+                    AssetLocation.Domestic, 
+                    (double)domesticStockTotal / (double)totalValue),
+                new ExposureRatio(
+                    AssetClass.Stock,
+                    AssetLocation.International,
+                    (double)(stockTotal - domesticStockTotal) / (double)totalValue),
+                new ExposureRatio(
+                    AssetClass.Bond,
+                    AssetLocation.Domestic,
+                    (double)domesticBondTotal / (double)totalValue),
+                new ExposureRatio(
+                    AssetClass.Bond,
+                    AssetLocation.International,
+                    (double)(bondTotal - domesticBondTotal) / (double)totalValue),
             };
         }
-    }
-
-    public class ExposureRatios
-    {
-        public double Stock { get; set; }
-
-        public double DomesticStock { get; set; }
-
-        public double DomesticBond {get; set; }
-
-        public double Bond => Math.Round(1.0 - Stock, 5);
-
-        public double InternationalStock => Math.Round(1.0 - DomesticStock, 5);
-
-        public double InternationalBond => Math.Round(1.0 - DomesticBond, 5);
     }
 }

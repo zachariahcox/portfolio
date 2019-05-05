@@ -2,8 +2,8 @@
 {
     public enum AccountType
     {
-        TAXABLE, // everything is taxable
-        CORPORATE, // 401k, growth is taxable
-        ROTH // growth not taxable, includes HSA
+        BROKERAGE, // contributions are after-tax, capital gains on sale.
+        IRA, // 401k, contributions are pre-tax, growth is taxable
+        ROTH // contributions are after-tax, growth not taxable, includes HSA
     }
 }

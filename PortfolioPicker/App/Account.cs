@@ -18,7 +18,7 @@ namespace PortfolioPicker.App
         public string Brokerage { get; set; }
 
         [DataMember(IsRequired = true)]
-        public AccountType Type { get; set; } = AccountType.TAXABLE;
+        public AccountType Type { get; set; } = AccountType.BROKERAGE;
 
         [DataMember(IsRequired = true)]
         public IList<Position> Positions 

@@ -39,7 +39,7 @@ namespace PortfolioPicker.App
         [IgnoreDataMember]
         public double BondRatio => 1.0 - StockRatio;
 
-        internal double Ratio(Exposure e) => Ratio(e.Class) * Ratio(e.Location);
+        internal double Ratio(ExposureTarget e) => Ratio(e.Class) * Ratio(e.Location);
 
         internal double Ratio(AssetClass c) => AssetClass.Stock == c ? StockRatio : BondRatio;
 

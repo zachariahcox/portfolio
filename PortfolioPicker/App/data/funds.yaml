@@ -1,101 +1,92 @@
 ﻿---
+
+# Vanguard
 - description: Vanguard Total Stock Market Index Fund
   symbol: VTSAX
   brokerage: Vanguard
-  url: https://investor.vanguard.com/mutual-funds/profile/VTSAX
   expenseRatio: 0.04
   stockRatio: 1
   domesticRatio: 1
-
 - description: Vanguard Balanced Index Fund Admiral Shares
   symbol: VBIAX
   brokerage: Vanguard
-  url: https://investor.vanguard.com/mutual-funds/profile/vbiax
   expenseRatio: 0.07
   stockRatio: .6
   domesticRatio: 1
-
 - description: Vanguard Total International Stock Index Fund
   symbol: VTIAX
   brokerage: Vanguard
-  url: https://investor.vanguard.com/mutual-funds/profile/VTIAX
   expenseRatio: 0.11
   stockRatio: 1
   domesticRatio: 0
 - description: Vanguard Total Bond Market Index Fund
   symbol: VBTLX
   brokerage: Vanguard
-  url: https://investor.vanguard.com/mutual-funds/profile/VBTLX
   expenseRatio: 0.05
   stockRatio: 0
   domesticRatio: 1
 - description: Vanguard Total International Bond Index Fund
   symbol: VTABX
   brokerage: Vanguard
-  url: https://investor.vanguard.com/mutual-funds/profile/VTABX
   expenseRatio: 0.11
   stockRatio: 0
   domesticRatio: 0
 - description: Vanguard Institutional Index Fund Institutional Plus Shares
   symbol: VIIIX
   brokerage: SAS
-  url: https://investor.vanguard.com/mutual-funds/profile/portfolio/viiix
   expenseRatio: 0.02
   stockRatio: 1
   domesticRatio: 1
 - description: Vanguard Mid-Cap Index Fund Institutional Shares
   symbol: VMCIX
   brokerage: SAS
-  url: https://investor.vanguard.com/mutual-funds/profile/portfolio/VMCIX
   expenseRatio: 0.04
   stockRatio: 1
   domesticRatio: 1
 - description: Vanguard Small-Cap Index Fund Institutional Shares
   symbol: VSCIX
   brokerage: SAS
-  url: https://investor.vanguard.com/mutual-funds/profile/portfolio/VSCIX
   expenseRatio: 0.04
   stockRatio: 1
   domesticRatio: 1
 - description: Vanguard Developed Markets Index Fund Institutional Shares
   symbol: VTMNX
   brokerage: SAS
-  url: https://investor.vanguard.com/mutual-funds/profile/portfolio/vtmnx
   expenseRatio: 0.06
   stockRatio: 1
   domesticRatio: 0
 - description: Vanguard Total Bond Market Index Fund
   symbol: VBTIX
   brokerage: SAS
-  url: https://investor.vanguard.com/mutual-funds/profile/VBTIX
   expenseRatio: 0.04
   stockRatio: 0
   domesticRatio: 1
+
+# Fidelity
 - description: Fidelity ZERO Total Market Index Fund
   symbol: FZROX
   brokerage: Fidelity
-  url: https://fundresearch.fidelity.com/mutual-funds/summary/31635T708
   expenseRatio: 0
   stockRatio: 1
   domesticRatio: 1
 - description: Fidelity ZERO International Index Fund
   symbol: FZILX
   brokerage: Fidelity
-  url: https://fundresearch.fidelity.com/mutual-funds/summary/31635T609
   expenseRatio: 0
   stockRatio: 1
   domesticRatio: 0
 - description: Fidelity U.S. Bond Index Fund
   symbol: FXNAX
   brokerage: Fidelity
-  url: https://fundresearch.fidelity.com/mutual-funds/summary/316146356
   expenseRatio: 0.025
   stockRatio: 0
   domesticRatio: 1
+
+
+  # Microsoft
 - description: LifePath Dynamic 2050 Fund
   symbol: STLFX
   brokerage: Microsoft
-  url: https://www.blackrock.com/investing/products/227823/blackrock-lifepath-2050-portfolioclass-i-fund
   expenseRatio: 0.08
   stockRatio: 0.8
   domesticRatio: 1

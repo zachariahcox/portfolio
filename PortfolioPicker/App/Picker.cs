@@ -35,19 +35,14 @@ namespace PortfolioPicker.App
         /// <summary>
         /// follow a strategy to produce positions
         /// </summary>
-        public Portfolio Rebalance(
+        public RebalancedPortfolio Rebalance(
             double stockRatio,
             double domesticStockRatio,
             double domesticBondRatio)
         {
             // compute all possible orders of exposure priorities
             //   and return the product with the highest score
-            var targetRatios = new ExposureRatios
-            {
-                Stock = stockRatio,
-                DomesticStock = domesticStockRatio,
-                DomesticBond = domesticBondRatio
-            };
+            var targetRatios = ComputeRatios(stockRatio, domesticStockRatio, domesticBondRatio);
             var exposures = ComputeExposures(targetRatios, Portfolio.TotalValue);
             var result = Permutations(exposures)
                 .Select(x => GeneratePortfolio(Portfolio.Accounts, x))
@@ -137,91 +132,49 @@ namespace PortfolioPicker.App
             return result;
         }
 
-        /// <summary>
-        /// Based on the target exposures and total money, compute target dollar-value per exposure type.
-        ///  Strategy: 
-        ///  * accounts prefer funds sponsored by their brokerage
-        ///    * Helps avoid fees?
-        ///
-        ///  * roth accounts should prioritize stocks over bonds
-        ///    * Growth is not taxable, prioritize high-growth potential products.
-        ///
-        ///  * taxable accounts should prioritize international assets over domestic
-        ///    * foreign income tax credit
-        /// 
-        ///  * 401k accounts should prioritize bonds and avoid international assets
-        ///    Because growth is taxable, prioritize low-growth products
-        ///
-        /// This basically works out to the following exposure-to-account type prioritization list:
-        ///  dom stocks -> roth, tax, 401k
-        ///  int stocks -> tax, roth, 401k
-        ///  dom bonds  -> 401k, roth, tax
-        ///  int bonds  -> tax, 401k, roth
-        /// </summary>
-        private IList<Exposure> ComputeExposures(
-            ExposureRatios target,
+        public IList<ExposureRatio> ComputeRatios(
+            double stockRatio,
+            double domesticStockRatio,
+            double domesticBondRatio)
+        {
+            return new List<ExposureRatio>
+            {
+                new ExposureRatio(
+                    AssetClass.Stock, 
+                    AssetLocation.Domestic, 
+                    stockRatio * domesticStockRatio),
+                new ExposureRatio(
+                    AssetClass.Stock, 
+                    AssetLocation.International, 
+                    stockRatio * (1.0 - domesticStockRatio)),
+                new ExposureRatio(
+                    AssetClass.Bond,
+                    AssetLocation.Domestic,
+                    (1.0 - stockRatio) * domesticBondRatio),
+                new ExposureRatio(
+                    AssetClass.Bond, 
+                    AssetLocation.International,
+                    (1.0 - stockRatio) * (1.0 - domesticBondRatio)),
+            };
+        }
+        
+        private IList<ExposureTarget> ComputeExposures(
+            IList<ExposureRatio> ratios,
             decimal totalValue)
         {
-            var totalStock = totalValue * (decimal)target.Stock;
-            var totalBonds = totalValue * (decimal)target.Bond;
-
-            var SD = new Exposure
-            {
-                Class = AssetClass.Stock,
-                Location = AssetLocation.Domestic,
-                Target = totalStock * (decimal)target.DomesticStock,
-                AccountTypesPreference = new[] {
-                    AccountType.ROTH,
-                    AccountType.TAXABLE,
-                    AccountType.CORPORATE
-                },
-            };
-
-            var SI = new Exposure
-            {
-                Class = AssetClass.Stock,
-                Location = AssetLocation.International,
-                Target = totalStock * (decimal)target.InternationalStock,
-                AccountTypesPreference = new[] {
-                    AccountType.TAXABLE,
-                    AccountType.ROTH,
-                    AccountType.CORPORATE
-                },
-            };
-
-            var BD = new Exposure
-            {
-                Class = AssetClass.Bond,
-                Location = AssetLocation.Domestic,
-                Target = totalBonds * (decimal)target.DomesticBond,
-                AccountTypesPreference = new[] {
-                    AccountType.CORPORATE,
-                    AccountType.TAXABLE,
-                    AccountType.ROTH,
-                },
-            };
-
-            var BI = new Exposure
-            {
-                Class = AssetClass.Bond,
-                Location = AssetLocation.International,
-                Target = totalBonds * (decimal)target.InternationalBond,
-                AccountTypesPreference = new[] {
-                    AccountType.TAXABLE,
-                    AccountType.CORPORATE,
-                    AccountType.ROTH
-                },
-            };
-
-            return new List<Exposure> { SD, SI, BD, BI };
+            return ratios.Select(x => new ExposureTarget(
+                x.Class, 
+                x.Location, 
+                totalValue * (decimal)x.Ratio))
+                .ToList();
         }
 
         /// <summary>
         /// Pick the best fund meeting the requirements from the list available to this account. 
         /// A "better" fund has better ratios for the target exposure, or has the lowest expense ratio. 
         /// </summary>
-        private Fund PickBestFund(
-            Exposure e,
+        private static Fund PickBestFund(
+            ExposureTarget e,
             ICollection<Fund> funds)
         {
             var best = default(Fund);
@@ -246,16 +199,16 @@ namespace PortfolioPicker.App
             return best;
         }
 
-        private Portfolio GeneratePortfolio(
+        private static RebalancedPortfolio GeneratePortfolio(
             ICollection<Account> accounts,
-            ICollection<Exposure> exposures)
+            ICollection<ExposureTarget> exposures)
         {
             // setup bookkeeping
             var positions = new List<(Account, Position)>();
             var warnings = new List<string>();
             var errors = new List<string>();
             var accountRemainders = new Dictionary<Account, decimal>();
-            var exposureRemainders = new Dictionary<Exposure, decimal>();
+            var exposureRemainders = new Dictionary<ExposureTarget, decimal>();
 
             // function to allocate some resources
             void Buy(Account a, decimal value, string symbol = null, Fund fund = null)
@@ -331,7 +284,7 @@ namespace PortfolioPicker.App
                 }
 
                 // buy as much as possible from prefered accounts, in order
-                foreach (var t in e.AccountTypesPreference)
+                foreach (var t in ExposureTarget.AssetPreference(e.Class, e.Location))
                 {
                     var efficientAccounts = suitableAccounts
                         .Where(x => x.Type == t)
@@ -369,7 +322,7 @@ namespace PortfolioPicker.App
             // SCORE THE PORTFOLIO (bigger is better)
             var score = 0.0;
             var bestScorePerCategory = 1.0;
-            var bestTotalScore = (double)(accounts.Count + exposures.Count);
+            var perfectScore = (double)(accounts.Count + exposures.Count);
             foreach (var e in exposures)
             {
                 var r = exposureRemainders[e];
@@ -407,7 +360,7 @@ namespace PortfolioPicker.App
             }
 
             // compute final score
-            score /= bestTotalScore;
+            score /= perfectScore;
 
             // RESULT
             var newAccounts = positions.GroupBy(
@@ -421,7 +374,7 @@ namespace PortfolioPicker.App
                 })
                 .ToList();
 
-            return new Portfolio
+            return new RebalancedPortfolio
             {
                 Accounts = newAccounts,
                 Score = score,

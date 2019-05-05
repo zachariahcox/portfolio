@@ -48,7 +48,7 @@ namespace PortfolioPicker.CLI
                     var today = DateTime.Now.ToString("MMddyyyy");
                     var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
                     Console.WriteLine("report: " + reportPath);
-                    File.WriteAllLines(reportPath, portfolio.ToMarkdownLines());
+                    File.WriteAllLines(reportPath, portfolio.ToMarkdown());
                 });
             });
 
@@ -124,7 +124,7 @@ namespace PortfolioPicker.CLI
 
                     var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
                     Console.WriteLine("report: " + reportPath);
-                    File.WriteAllLines(reportPath, portfolio.ToMarkdownLines());
+                    File.WriteAllLines(reportPath, portfolio.ToMarkdown());
                 }));
             }));
             return app.Execute(args);
