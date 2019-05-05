@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations;
 using System.IO;
 using McMaster.Extensions.CommandLineUtils;
 using PortfolioPicker.App;
@@ -24,7 +23,8 @@ namespace PortfolioPicker.CLI
                 return 1;
             });
 
-            app.Command("load", cmd => {
+            app.Command("load", cmd =>
+            {
 
                 cmd.Description = "Creates current portfolio report";
 
@@ -52,7 +52,7 @@ namespace PortfolioPicker.CLI
                 });
             });
 
-            app.Command("rebalance", (Action<CommandLineApplication>)(cmd =>
+            app.Command("rebalance", cmd =>
             {
                 cmd.Description = "Attempts to balance portfolio based on a strategy";
                 var accounts = cmd.Argument("accounts", "Path to accounts file.")
@@ -88,7 +88,7 @@ namespace PortfolioPicker.CLI
                    CommandOptionType.SingleValue)
                    .Accepts(x => x.Range(0, 100));
 
-                cmd.OnExecute((Action)(() =>
+                cmd.OnExecute(() =>
                 {
                     var data = File.ReadAllText(accounts.Value);
                     var picker = Picker.Create(
@@ -125,8 +125,8 @@ namespace PortfolioPicker.CLI
                     var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdown());
-                }));
-            }));
+                });
+            });
             return app.Execute(args);
         }
     }

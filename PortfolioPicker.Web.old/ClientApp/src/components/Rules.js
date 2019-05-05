@@ -6,8 +6,7 @@ export class Rules extends Component {
     render() {
         return (
             <div>
-                <h1>Portfolio Picker</h1>
-                <p>Rules behind the four-fund strategy:</p>
+                <h1>Rules behind the four-fund strategy</h1>
                 <ol>
                     <li>Accounts prefer funds sponsored by their brokerage</li>
                     <li>Roth accounts should prioritize stocks over bonds</li>

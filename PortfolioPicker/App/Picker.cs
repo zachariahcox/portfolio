@@ -8,7 +8,7 @@ namespace PortfolioPicker.App
     {
         private Portfolio Portfolio { get; set; }
 
-        static public Picker Create(
+        public static Picker Create(
             IList<Account> accounts,
             IList<Fund> funds = null)
         {
@@ -20,7 +20,7 @@ namespace PortfolioPicker.App
             };
         }
 
-        static public Picker Create(
+        public static Picker Create(
             string accountsYaml = null,
             string fundsYaml = null)
         {
@@ -40,6 +40,11 @@ namespace PortfolioPicker.App
             double domesticStockRatio,
             double domesticBondRatio)
         {
+            if (Portfolio == null)
+            {
+                return null;
+            }
+
             // compute all possible orders of exposure priorities
             //   and return the product with the highest score
             var targetRatios = ComputeRatios(stockRatio, domesticStockRatio, domesticBondRatio);
@@ -53,7 +58,9 @@ namespace PortfolioPicker.App
                 .FirstOrDefault();                     // take the best
 
             if (result == null)
+            {
                 return null;
+            }
 
             result.Orders = ComputeOrders(Portfolio, result);
             return result;
@@ -66,7 +73,7 @@ namespace PortfolioPicker.App
             var orders = new List<Order>();
             var accounts = original.Accounts.Union(balanced.Accounts);
 
-            foreach(var a in accounts)
+            foreach (var a in accounts)
             {
                 var newA = balanced.Accounts.FirstOrDefault(x => x == a);
                 var oldA = original.Accounts.FirstOrDefault(x => x == a);
@@ -87,7 +94,7 @@ namespace PortfolioPicker.App
                     var symbols = new HashSet<string>();
                     foreach (var p in oldA.Positions) { symbols.Add(p.Symbol); }
                     foreach (var p in newA.Positions) { symbols.Add(p.Symbol); }
-                    foreach(var s in symbols)
+                    foreach (var s in symbols)
                     {
                         var newP = newA.Positions.FirstOrDefault(x => x.Symbol == s);
                         var oldP = oldA.Positions.FirstOrDefault(x => x.Symbol == s);
@@ -96,7 +103,7 @@ namespace PortfolioPicker.App
                     }
                 }
             }
-            
+
             return orders.Where(x => x != null).ToList();
         }
 
@@ -140,31 +147,31 @@ namespace PortfolioPicker.App
             return new List<ExposureRatio>
             {
                 new ExposureRatio(
-                    AssetClass.Stock, 
-                    AssetLocation.Domestic, 
+                    AssetClass.Stock,
+                    AssetLocation.Domestic,
                     stockRatio * domesticStockRatio),
                 new ExposureRatio(
-                    AssetClass.Stock, 
-                    AssetLocation.International, 
+                    AssetClass.Stock,
+                    AssetLocation.International,
                     stockRatio * (1.0 - domesticStockRatio)),
                 new ExposureRatio(
                     AssetClass.Bond,
                     AssetLocation.Domestic,
                     (1.0 - stockRatio) * domesticBondRatio),
                 new ExposureRatio(
-                    AssetClass.Bond, 
+                    AssetClass.Bond,
                     AssetLocation.International,
                     (1.0 - stockRatio) * (1.0 - domesticBondRatio)),
             };
         }
-        
+
         private IList<ExposureTarget> ComputeExposures(
             IList<ExposureRatio> ratios,
             decimal totalValue)
         {
             return ratios.Select(x => new ExposureTarget(
-                x.Class, 
-                x.Location, 
+                x.Class,
+                x.Location,
                 totalValue * (decimal)x.Ratio))
                 .ToList();
         }
@@ -284,7 +291,7 @@ namespace PortfolioPicker.App
                 }
 
                 // buy as much as possible from prefered accounts, in order
-                foreach (var t in ExposureTarget.AssetPreference(e.Class, e.Location))
+                foreach (var t in ExposureTarget.AccountPreferences(e.Class, e.Location))
                 {
                     var efficientAccounts = suitableAccounts
                         .Where(x => x.Type == t)

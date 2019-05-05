@@ -1,15 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27703.2047
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28824.287
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortfolioPicker", "PortfolioPicker\PortfolioPicker.csproj", "{73CCF5E4-5FE0-490A-A923-B220F1352C1A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortfolioPicker.Tests", "PortfolioPicker.Tests\PortfolioPicker.Tests.csproj", "{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortfolioPicker.Web", "PortfolioPicker.Web\PortfolioPicker.Web.csproj", "{0169F25C-F5EA-4F3A-80EC-DCAA85177CC6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PortfolioPicker.CLI", "PortfolioPicker.CLI\PortfolioPicker.CLI.csproj", "{854016A1-BCB0-4581-902D-D23DE0AE2E79}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PortfolioPicker.CLI", "PortfolioPicker.CLI\PortfolioPicker.CLI.csproj", "{854016A1-BCB0-4581-902D-D23DE0AE2E79}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Web", "Web\Web.csproj", "{F1449801-AA73-4605-97A5-B30D7D533F4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -25,14 +25,14 @@ Global
 		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0D2BEFD5-F1FC-4F2D-8263-91C5D73F47E8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0169F25C-F5EA-4F3A-80EC-DCAA85177CC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0169F25C-F5EA-4F3A-80EC-DCAA85177CC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0169F25C-F5EA-4F3A-80EC-DCAA85177CC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0169F25C-F5EA-4F3A-80EC-DCAA85177CC6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{854016A1-BCB0-4581-902D-D23DE0AE2E79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{854016A1-BCB0-4581-902D-D23DE0AE2E79}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{854016A1-BCB0-4581-902D-D23DE0AE2E79}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{854016A1-BCB0-4581-902D-D23DE0AE2E79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F1449801-AA73-4605-97A5-B30D7D533F4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1449801-AA73-4605-97A5-B30D7D533F4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1449801-AA73-4605-97A5-B30D7D533F4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1449801-AA73-4605-97A5-B30D7D533F4E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

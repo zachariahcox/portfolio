@@ -66,9 +66,9 @@ module.exports = {
     extensions: ['.mjs', '.js', '.jsx']
   },
   devServer: {
-    contentBase: './dist',
-    inline: true,
-    port: 3000,
+    //contentBase: './dist',
+    //inline: true,
+    //port: 3000,
     hot: true
   },
   // Some libraries import Node modules but don't use them in the browser.

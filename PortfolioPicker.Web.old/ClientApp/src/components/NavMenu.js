@@ -23,13 +23,6 @@ export class NavMenu extends Component {
               <Glyphicon glyph='th-list' /> Rules
               </NavItem>
             </LinkContainer>
-
-            <LinkContainer to={'/schema'}>
-              <NavItem>
-                <Glyphicon glyph='education' /> Schema
-              </NavItem>
-            </LinkContainer>
-
             <LinkContainer to={'/editor'}>
                 <NavItem>
                 <Glyphicon glyph='pencil' /> Editor

@@ -10,7 +10,7 @@ namespace PortfolioPicker.Tests
 {
     public class TestStrategy
     {
-        Account CreateAccount(
+        private Account CreateAccount(
                 string brokerage,
                 AccountType type,
                 string symbol = "VTSAX",
@@ -32,7 +32,7 @@ namespace PortfolioPicker.Tests
             };
         }
 
-        Fund CreateFund(
+        private Fund CreateFund(
             string brokerage,
             string symbol,
             double er,
@@ -60,7 +60,7 @@ namespace PortfolioPicker.Tests
             {
                 foreach (var name in new[] { "a", "b", "c" })
                 {
-                    rc.Add(CreateAccount(name, t, value:10000m));
+                    rc.Add(CreateAccount(name, t, value: 10000m));
                 }
             }
 

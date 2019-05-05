@@ -21,12 +21,9 @@ namespace PortfolioPicker.App
         public AccountType Type { get; set; } = AccountType.BROKERAGE;
 
         [DataMember(IsRequired = true)]
-        public IList<Position> Positions 
+        public IList<Position> Positions
         {
-            get
-            {
-                return _positions;
-            }
+            get => _positions;
             set
             {
                 _positions = value;
@@ -39,36 +36,40 @@ namespace PortfolioPicker.App
 
         [IgnoreDataMember]
         internal decimal Value => _value;
-        
+
         [IgnoreDataMember]
         private decimal _value;
-        
+
         internal Account Clone()
         {
             return new Account
             {
-                Name = this.Name,
-                Brokerage = this.Brokerage,
-                Type = this.Type,
+                Name = Name,
+                Brokerage = Brokerage,
+                Type = Type,
             };
         }
 
         public bool Equals(Account rhs)
         {
             if (rhs is null)
+            {
                 return false;
+            }
 
             if (ReferenceEquals(this, rhs))
+            {
                 return true;
+            }
 
-            return this.Name == rhs.Name
-                && this.Brokerage == rhs.Brokerage
-                && this.Type == rhs.Type;
+            return Name == rhs.Name
+                && Brokerage == rhs.Brokerage
+                && Type == rhs.Type;
         }
 
         public override bool Equals(object obj)
         {
-            return this.Equals(obj as Account);
+            return Equals(obj as Account);
         }
 
         public override int GetHashCode()

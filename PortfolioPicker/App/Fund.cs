@@ -12,13 +12,13 @@ namespace PortfolioPicker.App
     [DataContract]
     public class Fund
     {
-        [DataMember(IsRequired =true)]
+        [DataMember(IsRequired = true)]
         public string Symbol { get; set; }
 
         [DataMember(IsRequired = true)]
         public string Description { get; set; }
 
-        [DataMember(IsRequired = false, EmitDefaultValue =false)]
+        [DataMember(IsRequired = false, EmitDefaultValue = false)]
         public string Brokerage { get; set; }
 
         [DataMember(IsRequired = true)]
@@ -39,11 +39,20 @@ namespace PortfolioPicker.App
         [IgnoreDataMember]
         public double BondRatio => 1.0 - StockRatio;
 
-        internal double Ratio(ExposureTarget e) => Ratio(e.Class) * Ratio(e.Location);
+        internal double Ratio(ExposureTarget e)
+        {
+            return Ratio(e.Class) * Ratio(e.Location);
+        }
 
-        internal double Ratio(AssetClass c) => AssetClass.Stock == c ? StockRatio : BondRatio;
+        internal double Ratio(AssetClass c)
+        {
+            return AssetClass.Stock == c ? StockRatio : BondRatio;
+        }
 
-        internal double Ratio(AssetLocation l) => AssetLocation.Domestic == l ? DomesticRatio: InternationalRatio;
+        internal double Ratio(AssetLocation l)
+        {
+            return AssetLocation.Domestic == l ? DomesticRatio : InternationalRatio;
+        }
 
         public override string ToString()
         {
@@ -53,14 +62,18 @@ namespace PortfolioPicker.App
         public static IList<Fund> FromYaml(string yaml)
         {
             if (string.IsNullOrEmpty(yaml))
+            {
                 return null;
+            }
 
             var deserializer = new DeserializerBuilder()
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
 
             foreach (var f in deserializer.Deserialize<IList<Fund>>(yaml))
+            {
                 Add(f);
+            }
 
             return Cache;
         }
@@ -117,7 +130,9 @@ namespace PortfolioPicker.App
         public static void Add(Fund f)
         {
             if (!Cache.Contains(f))
+            {
                 Cache.Add(f);
+            }
         }
 
         public static void AddRange(IEnumerable<Fund> funds)
@@ -131,14 +146,14 @@ namespace PortfolioPicker.App
             }
         }
 
-        public static IList<Fund> Cache 
-        { 
-            get; 
+        public static IList<Fund> Cache
+        {
+            get;
         } = LoadDefaultFunds();
 
-        public static Dictionary<string, IList<Fund>> CacheByBrokerage 
+        public static Dictionary<string, IList<Fund>> CacheByBrokerage
         {
-            get; 
+            get;
         } = new Dictionary<string, IList<Fund>>();
     }
 }

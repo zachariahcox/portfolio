@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -9,10 +7,10 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        public IList<Account> Accounts 
-        { 
+        public IList<Account> Accounts
+        {
             get => _accounts;
-            set 
+            set
             {
                 if (value is null)
                 {
@@ -25,7 +23,7 @@ namespace PortfolioPicker.App
                     Positions = value.SelectMany(x => x.Positions).ToList();
                     ComputeStats();
                 }
-            } 
+            }
         }
         private IList<Account> _accounts;
 
@@ -33,7 +31,7 @@ namespace PortfolioPicker.App
 
         public double ExpenseRatio { get; set; }
 
-        public IList<ExposureRatio> ExposureRatios {get; set; }
+        public IList<ExposureRatio> ExposureRatios { get; set; }
 
         public IList<Position> Positions { get; set; }
 
@@ -44,7 +42,7 @@ namespace PortfolioPicker.App
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
-            return serializer.Serialize(this.Accounts);
+            return serializer.Serialize(Accounts);
         }
 
         public static Portfolio FromYaml(string yaml)
@@ -58,8 +56,8 @@ namespace PortfolioPicker.App
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
 
-            return new Portfolio 
-            { 
+            return new Portfolio
+            {
                 Accounts = deserializer.Deserialize<IList<Account>>(yaml)
             };
         }
@@ -77,29 +75,31 @@ namespace PortfolioPicker.App
 
         public virtual IList<string> ToMarkdown()
         {
-            var lines = new List<string>();
+            var lines = new List<string>
+            {
 
-            // TITLE
-            lines.Add($"# portfolio");
+                // TITLE
+                $"# portfolio",
 
-            // STATS
-            lines.Add("## stats");
-            lines.Add(Row("stat", "value"));
-            lines.Add(Row("---", "---"));
-            lines.Add(Row("total value of assets", string.Format("{0:c}", TotalValue)));
-            lines.Add(Row("expense ratio", string.Format("{0:0.0000}", ExpenseRatio)));
-            lines.Add(Row("percent stocks", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Stock))));
-            lines.Add(Row("percent bonds", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Bond))));
-            lines.Add("");
+                // STATS
+                "## stats",
+                Row("stat", "value"),
+                Row("---", "---"),
+                Row("total value of assets", string.Format("{0:c}", TotalValue)),
+                Row("expense ratio", string.Format("{0:0.0000}", ExpenseRatio)),
+                Row("percent stocks", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Stock))),
+                Row("percent bonds", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Bond))),
+                "",
 
-            // COMPOSITION
-            lines.Add("## composition");
-            lines.Add(Row( "class", "location", "percentage"));
-            lines.Add(Row( "---", "---", "---:"));
-            foreach(var er in ExposureRatios)
+                // COMPOSITION
+                "## composition",
+                Row("class", "location", "percentage"),
+                Row("---", "---", "---:")
+            };
+            foreach (var er in ExposureRatios)
             {
                 lines.Add(Row(
-                    er.Class.ToString().ToLower(), 
+                    er.Class.ToString().ToLower(),
                     er.Location.ToString().ToLower(),
                     string.Format("{0:0}%", 100 * er.Ratio)));
             }
@@ -120,7 +120,7 @@ namespace PortfolioPicker.App
                     }
                 }
             }
-            
+
             return lines;
         }
 
@@ -151,8 +151,8 @@ namespace PortfolioPicker.App
             ExposureRatios = new List<ExposureRatio>
             {
                 new ExposureRatio(
-                    AssetClass.Stock, 
-                    AssetLocation.Domestic, 
+                    AssetClass.Stock,
+                    AssetLocation.Domestic,
                     (double)domesticStockTotal / (double)totalValue),
                 new ExposureRatio(
                     AssetClass.Stock,

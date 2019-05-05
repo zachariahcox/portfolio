@@ -28,7 +28,7 @@ namespace PortfolioPicker.App
     public class Exposure
     {
         public Exposure(AssetClass c, AssetLocation l)
-        { 
+        {
             Class = c;
             Location = l;
         }
@@ -37,8 +37,8 @@ namespace PortfolioPicker.App
 
         public AssetLocation Location { get; set; }
 
-        static ExposureAccountPreference[] _preferences;
-        public static AccountType[] AssetPreference(
+        private static ExposureAccountPreference[] _preferences;
+        public static AccountType[] AccountPreferences(
             AssetClass c,
             AssetLocation l)
         {
@@ -105,8 +105,8 @@ namespace PortfolioPicker.App
     public class ExposureAccountPreference : Exposure
     {
         public ExposureAccountPreference(
-            AssetClass c, 
-            AssetLocation l, 
+            AssetClass c,
+            AssetLocation l,
             AccountType[] types)
             : base(c, l)
         {
@@ -125,7 +125,9 @@ namespace PortfolioPicker.App
             : base(c, l)
         {
             if (double.IsNaN(r))
+            {
                 r = 0.0;
+            }
 
             Ratio = Math.Max(0, r);
         }

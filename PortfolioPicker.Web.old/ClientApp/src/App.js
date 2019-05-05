@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import { Route } from 'react-router';
 import { Layout } from './components/Layout';
 import { Rules } from './components/Rules';
-import { Schema } from './components/Schema';
 import { Portfolio } from './components/Portfolio';
-import { Editor } from './components/Editor';
+import { Editor, DataReference } from './components/Editor';
+
+import { DataLayout } from './components/DataLayout';
 
 export default class App extends Component {
     displayName = App.name
@@ -70,22 +71,26 @@ export default class App extends Component {
     }
 
     render() {
+        // required data files
+        var references = [
+            new DataReference("Accounts", this.state.accountsYaml, this.cacheAccounts),
+            new DataReference("Funds", this.state.fundsYaml, this.cacheFunds),
+        ];
+
         return (
             <Layout>
                 <Route exact path='/' component={Rules} />
-                <Route path='/schema' component={Schema} />
-                <Route path='/portfolio' component={() => <Portfolio
+                <Route path='/portfolio' component={() =>
+                    <Portfolio
                     accountsYaml={this.state.accountsYaml}
                     fundsYaml={this.state.fundsYaml}
                     portfolio={this.state.portfolio}
                     cachePortfolio={this.cachePortfolio}
-                    />} />
-                <Route path='/editor' component={() => <Editor
-                    accountsYaml={this.state.accountsYaml}
-                    fundsYaml={this.state.fundsYaml}
-                    cacheAccounts={this.cacheAccounts}
-                    cacheFunds={this.cacheFunds}
-                    />} />
+                    />
+                }/>
+                <Route path='/editor' render={() =>
+                    <DataLayout dataReferences={references} />
+                }/>
             </Layout>
         );
     }

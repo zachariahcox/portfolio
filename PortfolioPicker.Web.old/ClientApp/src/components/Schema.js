@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import MonacoEditor from 'react-monaco-editor';
 
 export class Schema extends Component {
     displayName = Schema.name
@@ -34,13 +35,30 @@ export class Schema extends Component {
   stockRatio: 1
   domesticRatio: 0`;
 
+        const options = {
+            selectOnLineNumbers: true,
+            readOnly: true
+        };
+
         return (
             <div>
-                <em>Account data</em>
-                <pre>{accountsYaml}</pre>
+                <h1>Account data</h1>
+                <MonacoEditor
+                    height="300"
+                    language="yaml"
+                    theme="vs-dark"
+                    value={accountsYaml}
+                    options={options}
+                />
 
-                <em>Funds data</em>
-                <pre>{fundsYaml}</pre>
+                <h1>Funds data</h1>
+                <MonacoEditor
+                    height="300"
+                    language="yaml"
+                    theme="vs-dark"
+                    value={fundsYaml}
+                    options={options}
+                />
             </div>
         );
     }
