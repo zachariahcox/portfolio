@@ -81,7 +81,7 @@ namespace PortfolioPicker.App
         public static IList<Fund> LoadDefaultFunds()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "PortfolioPicker.App.data.funds.yaml";
+            var resourceName = "App.App.data.funds.yaml";
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             using (var reader = new StreamReader(stream))
             {
