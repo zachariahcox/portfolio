@@ -309,15 +309,16 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void OneAccountFourPerfectFunds()
         {
+            var brokerage = "OneAccountFourPerfectFunds";
             var dollars = 100m;
             var accounts = new List<Account>{
-                CreateAccount("X", AccountType.BROKERAGE, value: dollars)
+                CreateAccount(brokerage, AccountType.BROKERAGE, value: dollars)
             };
             var funds = new List<Fund>{
-                CreateFund("X", "SD", 0, 1, 1),
-                CreateFund("X", "SI", 0, 1, 0),
-                CreateFund("X", "BD", 0, 0, 1),
-                CreateFund("X", "BI", 0, 0, 0),
+                CreateFund(brokerage, "SD", 0, 1, 1),
+                CreateFund(brokerage, "SI", 0, 1, 0),
+                CreateFund(brokerage, "BD", 0, 0, 1),
+                CreateFund(brokerage, "BI", 0, 0, 0),
             };
 
             var picker = Picker.Create(accounts, funds);
@@ -374,16 +375,17 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void OneAccountFourEqualFunds_IgnoreWorseER()
         {
+            var brokerageName = "OneAccountFourEqualFunds_IgnoreWorseER";
             var accounts = new List<Account>{
-                CreateAccount("Y", AccountType.BROKERAGE, value: 100)
+                CreateAccount(brokerageName, AccountType.BROKERAGE, value: 100)
             };
             var funds = new List<Fund>{
-                CreateFund("Y", "SD", .5, 1, 1), // should be ignored, worse ER
-                CreateFund("Y", "ZZ_SD", 0, 1, 1), // should be ignored, alphabetically sorted
-                CreateFund("Y", "SD", 0, 1, 1),
-                CreateFund("Y", "SI", 0, 1, 0),
-                CreateFund("Y", "BD", 0, 0, 1),
-                CreateFund("Y", "BI", 0, 0, 0),
+                CreateFund(brokerageName, "SD", .5, 1, 1), // should be ignored, worse ER
+                CreateFund(brokerageName, "ZZ_SD", 0, 1, 1), // should be ignored, alphabetically sorted
+                CreateFund(brokerageName, "SD", 0, 1, 1),
+                CreateFund(brokerageName, "SI", 0, 1, 0),
+                CreateFund(brokerageName, "BD", 0, 0, 1),
+                CreateFund(brokerageName, "BI", 0, 0, 0),
             };
 
             var picker = Picker.Create(accounts, funds);
@@ -408,15 +410,15 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void ThreeAccountsOneFund()
         {
-            var brokerageName = "x";
+            var b = "ThreeAccountsOneFund";
             var symbolName = "Generic";
             var accounts = new List<Account>{
-                CreateAccount(brokerageName, AccountType.BROKERAGE, value: 100),
-                CreateAccount(brokerageName, AccountType.ROTH, value: 100),
-                CreateAccount(brokerageName, AccountType.IRA, value: 100),
+                CreateAccount(b, AccountType.BROKERAGE, value: 100),
+                CreateAccount(b, AccountType.ROTH, value: 100),
+                CreateAccount(b, AccountType.IRA, value: 100),
             };
             var funds = new List<Fund>{
-                CreateFund(brokerageName, symbolName, 0, 0.5, 0.5),
+                CreateFund(b, symbolName, 0, 0.5, 0.5),
             };
 
             var picker = Picker.Create(accounts, funds);
@@ -435,12 +437,19 @@ namespace PortfolioPicker.Tests
             }
 
             // output percentages should match input requests
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Stock));
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Bond));
-            Assert.Equal(25, p.ExposureRatios.Percent(AssetClass.Stock, AssetLocation.Domestic));
-            Assert.Equal(25, p.ExposureRatios.Percent(AssetClass.Stock, AssetLocation.International));
-            Assert.Equal(25, p.ExposureRatios.Percent(AssetClass.Bond, AssetLocation.Domestic));
-            Assert.Equal(25, p.ExposureRatios.Percent(AssetClass.Bond, AssetLocation.International));
+            foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
+                Assert.Equal(50, p.ExposureRatios.Percent(c));
+
+            foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                Assert.Equal(50, p.ExposureRatios.Percent(l));
+
+            foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
+            {
+                foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                {
+                    Assert.Equal(25, p.ExposureRatios.Percent(c, l));
+                }
+            }
 
         }
     }
