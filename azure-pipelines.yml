@@ -13,7 +13,8 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
-- script: dotnet test -c $(buildconfiguration) --logger trx
+- script: dotnet build -c $(buildconfiguration) --logger trx
+- script: dotnet test --no-build --no-restore -c $(buildconfiguration) --logger trx
 - script: dotnet publish **/Web.csproj -c $(buildconfiguration) -o $(build.artifactstagingdirectory)/www
 - script: dotnet publish **/CLI.csproj --runtime win10-x64 -c $(buildconfiguration) -o $(build.artifactstagingdirectory)/win 
 - script: dotnet publish **/CLI.csproj --runtime osx-x64 -c $(buildconfiguration) -o $(build.artifactstagingdirectory)/osx
