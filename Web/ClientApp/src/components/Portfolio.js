@@ -1,11 +1,11 @@
 ﻿import React, { Component } from 'react';
 
 export class Portfolio extends Component {
-    displayName = Portfolio.name
+    static displayName = Portfolio.name;
 
     componentDidMount() {
         // call web service with code from editor
-        if (this.props.portfolio != null) {
+        if (this.props.portfolio.data != null) {
             return; // just re-render the cached result
         }
 
@@ -13,11 +13,11 @@ export class Portfolio extends Component {
         fetch('api/balance', {
             method: 'POST',
             headers: { 'Content-type': 'text/plain' },
-            body: this.props.accountsYaml
+            body: this.props.accounts.data
         })
         .then(r => r.json())
         .then(portfolio => {
-            this.props.cachePortfolio(portfolio);
+            this.props.portfolio.save(portfolio);
         })
         .catch(data => {
             console.log(data);
@@ -46,32 +46,15 @@ export class Portfolio extends Component {
     static renderTable(portfolio) {
         const expenseRatio = portfolio.expenseRatio;
         const totalValue = portfolio.totalValue;
-        const strategy = portfolio.strategy;
-        const stockPercent = 100.0 * portfolio.stockRatio;
-        const bondPercent = 100.0 * portfolio.bondRatio;
-        const positions = portfolio.positions.map(o => {
-            var rc = {
-                id: o.id,
-                fund: o.fund,
-                account: o.account.name,
-                value: o.value,
-                symbol: "",
-                url: "",
-                description: "",
-                stock: 100,
-                domestic: 100
-            };
-
-            const f = o.fund;
-            if (f) {
-                rc.symbol = f.symbol;
-                rc.url = f.url;
-                rc.description = f.description;
-                rc.domestic = 100.0 * f.domesticRatio;
-                rc.stock = 100.0 * f.stockRatio;
-            }
-            return rc;
-        });
+        //const positions = portfolio.accounts.map(o => {
+        //    var rc = {
+        //        id: o.id,
+        //        symbol: o.symbol,
+        //        value: o.value,
+        //        hold: o.hold,
+        //    };
+        //    return rc;
+        //});
 
 
         return (
@@ -85,11 +68,8 @@ export class Portfolio extends Component {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Strategy</td><td>{strategy}</td></tr>
                         <tr><td>Effective Expense Ratio</td><td>{expenseRatio.toFixed(3)}</td></tr>
                         <tr><td>Total Value</td><td>{Portfolio.formatMoney(totalValue)}</td></tr>
-                        <tr><td>Stock</td><td>%{stockPercent.toFixed(1)}</td></tr>
-                        <tr><td>Bonds</td> <td>%{bondPercent.toFixed(1)}</td></tr>
                     </tbody>
                 </table>
 
@@ -99,25 +79,18 @@ export class Portfolio extends Component {
                         <tr>
                             <th>Account</th>
                             <th>Symbol</th>
-                            <th>Stock</th>
-                            <th>Bond</th>
-                            <th>Domestic</th>
-                            <th>International</th>
                             <th>Value (USD)</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {positions.map(o =>
-                            <tr key={o.id}>
-                                <td>{o.account}</td>
-                                <td><a href={o.url}>{o.symbol}</a></td>
-                                <td>%{o.stock.toFixed(1)}</td>
-                                <td>%{(100.0 - o.stock).toFixed(1)}</td>
-                                <td>%{o.domestic.toFixed(1)}</td>
-                                <td>%{(100.0 - o.domestic).toFixed(1)}</td>
-                                <td>{Portfolio.formatMoney(o.value)}</td>
-                            </tr>
-                        )}
+                        {portfolio.accounts.map(a => 
+                            a.positions.map(p =>
+                                <tr key={p.id}>
+                                    <td>{a.name}</td>
+                                    <td>{p.symbol}</td>
+                                    <td>{Portfolio.formatMoney(p.value)}</td>
+                                </tr>
+                             ))}
                     </tbody>
                 </table>
             </div>
@@ -125,9 +98,9 @@ export class Portfolio extends Component {
     }
 
     render() {
-        let results = this.props.portfolio == null
+        let results = this.props.portfolio.data == null
             ? <p>Please enter account information</p>
-            : Portfolio.renderTable(this.props.portfolio);
+            : Portfolio.renderTable(this.props.portfolio.data);
 
         return (
             <div>

@@ -22,6 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="ClientApp\src\components\RebalanceInput.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\App\App.csproj" />
   </ItemGroup>
 
