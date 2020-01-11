@@ -1,3 +1,5 @@
+# pr pipeline
+
 trigger: none
 
 pool:
@@ -7,9 +9,20 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: UseDotNet@2 
+  displayName: "install .NET Core 3.1.x"
+  inputs:
+    version: '3.1.x'
+    packageType: sdk
+
 - script: dotnet build -c $(buildconfiguration)
+  displayName: build
+
 - script: dotnet test --no-build --no-restore -c $(buildconfiguration) --logger trx
+  displayName: test
+
 - task: PublishTestResults@2
+  displayName: upload test results
   condition: succeededOrFailed()
   inputs:
     testResultsFormat: VSTest
