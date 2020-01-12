@@ -140,7 +140,8 @@ namespace PortfolioPicker.App
             var domesticStockTotal = 0m;
             var bondTotal = 0m;
             var domesticBondTotal = 0m;
-            var weightedSum = 0.0;
+            var erWeightedSum = 0.0;
+
             foreach (var p in Positions)
             {
                 var fund = Fund.Get(p.Symbol);
@@ -150,12 +151,10 @@ namespace PortfolioPicker.App
                 bondTotal += (decimal)(fund.BondRatio * (double)p.Value);
                 domesticBondTotal += (decimal)(fund.BondRatio * fund.DomesticRatio * (double)p.Value);
 
-                weightedSum += fund.ExpenseRatio * (double)p.Value;
+                erWeightedSum += fund.ExpenseRatio * (double)p.Value;
             }
 
-            ExpenseRatio = totalValue == 0
-                ? 0 
-                : weightedSum / (double)totalValue;
+            ExpenseRatio = totalValue == 0 ? 0 : erWeightedSum / (double)totalValue;
 
             ExposureRatios = new List<ExposureRatio>
             {

@@ -5,7 +5,6 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <AssemblyName>portfolio</AssemblyName>
     <PublishTrimmed>true</PublishTrimmed>
-    <PublishSingleFile>true</PublishSingleFile>
   </PropertyGroup>
 
   <ItemGroup>

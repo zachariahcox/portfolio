@@ -33,87 +33,79 @@ namespace PortfolioPicker.App
             Location = l;
         }
 
-        public AssetClass Class { get; set; }
+        public AssetClass Class { get; private set; }
 
-        public AssetLocation Location { get; set; }
-
-        private static ExposureAccountPreference[] _preferences;
-        public static AccountType[] AccountPreferences(
-            AssetClass c,
-            AssetLocation l)
-        {
-            if (_preferences == null)
-            {
-                _preferences = new[]
-                {
-                    new ExposureAccountPreference (
-                        AssetClass.Stock,
-                        AssetLocation.Domestic,
-                        new AccountType[] {
-                            AccountType.ROTH,
-                            AccountType.BROKERAGE,
-                            AccountType.IRA
-                        }
-                    ),
-
-                    new ExposureAccountPreference (
-                        AssetClass.Stock,
-                        AssetLocation.International,
-                        new AccountType[] {
-                            AccountType.BROKERAGE,
-                            AccountType.ROTH,
-                            AccountType.IRA
-                        }
-                        ),
-
-                    new ExposureAccountPreference (
-                        AssetClass.Bond,
-                        AssetLocation.Domestic,
-                        new AccountType[] {
-                            AccountType.IRA,
-                            AccountType.BROKERAGE,
-                            AccountType.ROTH,
-                        }),
-
-                    new ExposureAccountPreference (
-                        AssetClass.Bond,
-                        AssetLocation.International,
-                        new AccountType[] {
-                            AccountType.BROKERAGE,
-                            AccountType.IRA,
-                            AccountType.ROTH
-                        }),
-                };
-            }
-
-            return _preferences
-                .FirstOrDefault(x => c == x.Class && l == x.Location)
-                ?.Types;
-        }
+        public AssetLocation Location { get; private set; }
     }
 
+    /// <summary>
+    /// target value allocated to a given class / location combo
+    /// </summary>
     public class ExposureTarget : Exposure
     {
-        public ExposureTarget(AssetClass c, AssetLocation l, decimal target)
+        public ExposureTarget(
+            AssetClass c, 
+            AssetLocation l, 
+            decimal target) 
             : base(c, l)
         {
+            // save target
             Target = target;
-        }
-        public decimal Target { get; set; }
-    }
 
-    public class ExposureAccountPreference : Exposure
-    {
-        public ExposureAccountPreference(
-            AssetClass c,
-            AssetLocation l,
-            AccountType[] types)
-            : base(c, l)
-        {
-            Types = types;
+            // generate type preferences
+            if (c == AssetClass.Stock)
+            {
+                if (l == AssetLocation.Domestic)
+                {
+                    // stock, domestic
+                    Types = new AccountType[] {
+                        AccountType.ROTH,
+                        AccountType.BROKERAGE,
+                        AccountType.IRA
+                    };
+                }
+                else 
+                {
+                    // stock, international
+                    Types = new AccountType[] {
+                        AccountType.BROKERAGE,
+                        AccountType.ROTH,
+                        AccountType.IRA
+                    };
+                }
+            }
+            else 
+            {
+                if (l == AssetLocation.Domestic)
+                {
+                    // bond, domestic
+                    Types = new AccountType[] {
+                        AccountType.IRA,
+                        AccountType.BROKERAGE,
+                        AccountType.ROTH,
+                    };
+                }
+                else 
+                {
+                    // bond, international
+                    Types = new AccountType[] {
+                        AccountType.BROKERAGE,
+                        AccountType.IRA,
+                        AccountType.ROTH
+                    };
+                }
+            }
         }
 
-        public AccountType[] Types { get; set; }
+        /// <summary> 
+        /// final value goal
+        /// </summary>
+        public decimal Target { get; private set; }
+
+        /// <summary>
+        /// ordered type preferences for this combination of class and location
+        /// </summary>
+        public AccountType[] Types { get; private set; }
     }
 
     public class ExposureRatio : Exposure
@@ -135,6 +127,9 @@ namespace PortfolioPicker.App
         public double Ratio { get; set; }
     }
 
+    /// <summary>
+    /// Add some functionality to lists of ExposureRatio
+    /// </summary>
     public static class ExposureExtensions
     {
         public static double Percent(

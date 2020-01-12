@@ -91,7 +91,7 @@ namespace PortfolioPicker.CLI
                 {
                     var data = File.ReadAllText(portfolioPath.Value);
                     var picker = Picker.Create(
-                        accountsYaml: data,
+                        portfolioYaml: data,
                         fundsYaml: funds.Value());
 
                     var stockRatio = stockPercent.HasValue()

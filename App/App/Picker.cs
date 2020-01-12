@@ -21,14 +21,13 @@ namespace PortfolioPicker.App
         }
 
         public static Picker Create(
-            string accountsYaml = null,
+            string portfolioYaml = null,
             string fundsYaml = null)
         {
-            // add custom funds
             Fund.FromYaml(fundsYaml);
             return new Picker
             {
-                Portfolio = Portfolio.FromYaml(accountsYaml)
+                Portfolio = Portfolio.FromYaml(portfolioYaml)
             };
         }
 
@@ -47,7 +46,7 @@ namespace PortfolioPicker.App
 
             // compute all possible orders of exposure priorities
             //   and return the product with the highest score
-            var targetRatios = ComputeRatios(stockRatio, domesticStockRatio, domesticBondRatio);
+            var targetRatios = ComputeTargetRatios(stockRatio, domesticStockRatio, domesticBondRatio);
             var exposures = ComputeExposures(targetRatios, Portfolio.TotalValue);
             var result = Permutations(exposures)
                 .Select(x => GeneratePortfolio(Portfolio.Accounts, x))
@@ -66,7 +65,10 @@ namespace PortfolioPicker.App
             return result;
         }
 
-        public IList<Order> ComputeOrders(
+        /// <summary>
+        /// produce orders required to move from original portfolio to new one
+        /// </summary>
+        private IList<Order> ComputeOrders(
             Portfolio original,
             Portfolio balanced)
         {
@@ -139,7 +141,10 @@ namespace PortfolioPicker.App
             return result;
         }
 
-        public IList<ExposureRatio> ComputeRatios(
+        /// <summary>
+        /// create list of <class>ExposureRatio</class>s given three stats.
+        /// </summary>
+        private IList<ExposureRatio> ComputeTargetRatios(
             double stockRatio,
             double domesticStockRatio,
             double domesticBondRatio)
@@ -297,7 +302,7 @@ namespace PortfolioPicker.App
                 }
 
                 // buy as much as possible from prefered accounts, in order
-                foreach (var t in ExposureTarget.AccountPreferences(e.Class, e.Location))
+                foreach (var t in e.Types)
                 {
                     var efficientAccounts = suitableAccounts
                         .Where(x => x.Type == t)
