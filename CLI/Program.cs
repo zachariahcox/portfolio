@@ -25,10 +25,9 @@ namespace PortfolioPicker.CLI
 
             app.Command("load", cmd =>
             {
+                cmd.Description = "Creates a report for a given portfolio.";
 
-                cmd.Description = "Creates current portfolio report";
-
-                var accounts = cmd.Argument("accounts", "Path to accounts file.")
+                var portfolioPath = cmd.Argument("current_portfolio", "Path to portfolio file.")
                     .Accepts(v => v.ExistingFile())
                     .IsRequired();
 
@@ -40,13 +39,13 @@ namespace PortfolioPicker.CLI
 
                 cmd.OnExecute(() =>
                 {
-                    var data = File.ReadAllText(accounts.Value);
+                    var data = File.ReadAllText(portfolioPath.Value);
                     var portfolio = Portfolio.FromYaml(data);
+                    var portfolioFile = new FileInfo(portfolioPath.Value);
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
-                        : new FileInfo(accounts.Value).DirectoryName;
-                    var today = DateTime.Now.ToString("MMddyyyy");
-                    var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
+                        : portfolioFile.DirectoryName;
+                    var reportPath = Path.Combine(d, $"{Path.GetFileNameWithoutExtension(portfolioFile.Name)}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdown());
                 });

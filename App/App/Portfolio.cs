@@ -77,7 +77,6 @@ namespace PortfolioPicker.App
         {
             var lines = new List<string>
             {
-
                 // TITLE
                 $"# portfolio",
 
@@ -85,14 +84,14 @@ namespace PortfolioPicker.App
                 "## stats",
                 Row("stat", "value"),
                 Row("---", "---"),
-                Row("total value of assets", string.Format("${0:0.00}", TotalValue)),
-                Row("expense ratio", string.Format("{0:0.0000}", ExpenseRatio)),
+                Row("total value of assets", string.Format("${0:n2}", TotalValue)),
+                Row("total expense ratio", string.Format("{0:0.0000}", ExpenseRatio)),
                 Row("percent stocks", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Stock))),
                 Row("percent bonds", string.Format("{0:0.0}%", ExposureRatios.Percent(AssetClass.Bond))),
                 "",
 
                 // COMPOSITION
-                "## composition",
+                "## composition (percent of total in various buckets)",
                 Row("class", "location", "percentage"),
                 Row("---", "---", "---:")
             };
@@ -116,7 +115,7 @@ namespace PortfolioPicker.App
                     foreach (var p in a.Positions.OrderByDescending(x => x.Value))
                     {
                         var f = Fund.Get(p.Symbol);
-                        lines.Add(Row(a.Name, Url(p.Symbol), string.Format("${0:0.00}", p.Value), f.Description));
+                        lines.Add(Row(a.Name, Url(p.Symbol), string.Format("${0:n2}", p.Value), f.Description));
                     }
                 }
             }
@@ -145,8 +144,8 @@ namespace PortfolioPicker.App
             }
 
             ExpenseRatio = totalValue == 0
-                ?
-                0 : weightedSum / (double)totalValue;
+                ? 0 
+                : weightedSum / (double)totalValue;
 
             ExposureRatios = new List<ExposureRatio>
             {

@@ -197,9 +197,9 @@ namespace PortfolioPicker.Tests
             var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(300, actualValue);
         }
-
+        
         [Fact]
-        public void PortfolioSerialization()
+        public void YamlSerialization()
         {
             var expected = @"- name: Roth
   brokerage: Vanguard
@@ -212,22 +212,34 @@ namespace PortfolioPicker.Tests
     hold: true
 ";
             var p = Portfolio.FromYaml(expected);
-            {
-                var actual = p.ToYaml();
-                Assert.Equal(expected, actual);
-            }
+            var actual = p.ToYaml();
+            Assert.Equal(expected, actual);
+        }
 
-            {
-                var md = @"# portfolio
+        [Fact]
+        public void MarkdownSerialization()
+        {
+            var yaml = @"- name: Roth
+  brokerage: Vanguard
+  type: ROTH
+  positions:
+  - symbol: VTSAX
+    value: 100
+  - symbol: VTIAX
+    value: 200
+    hold: true
+";
+            var p = Portfolio.FromYaml(yaml);
+            var expected = @"# portfolio
 ## stats
 |stat|value|
 |---|---|
 |total value of assets|$300.00|
-|expense ratio|0.0867|
+|total expense ratio|0.0867|
 |percent stocks|100.0%|
 |percent bonds|0.0%|
 
-## composition
+## composition (percent of total in various buckets)
 |class|location|percentage|
 |---|---|---:|
 |stock|domestic|33%|
@@ -241,9 +253,8 @@ namespace PortfolioPicker.Tests
 |Roth|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$200.00|Vanguard Total International Stock Index Fund|
 |Roth|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|Vanguard Total Stock Market Index Fund|";
 
-                var actual = string.Join(Environment.NewLine, p.ToMarkdown());
-                Assert.Equal(md, actual);
-            }
+            var actual = string.Join(Environment.NewLine, p.ToMarkdown());
+            Assert.Equal(expected, actual);
         }
 
         [Fact]

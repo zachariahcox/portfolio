@@ -103,6 +103,7 @@ namespace PortfolioPicker.App
                     StockRatio = 1,
                     DomesticRatio = 1,
                     ExpenseRatio = 0,
+                    Description = "<unknown, assuming domestic stock>"
                 };
                 Cache.Add(result);
             }
