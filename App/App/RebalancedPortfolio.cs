@@ -21,14 +21,14 @@ namespace PortfolioPicker.App
             if (Orders?.Any() == true)
             {
                 lines.Add("## orders");
-                lines.Add(Row(lines, "account", "action", "symbol", "value"));
-                lines.Add(Row(lines, "---", "---", "---", "---:"));
+                lines.Add(Row("account", "action", "symbol", "value"));
+                lines.Add(Row("---", "---", "---", "---:"));
                 foreach (var o in Orders
                     .OrderBy(x => x.AccountName)
                     .ThenByDescending(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
-                    lines.Add(Row(lines, o.AccountName, o.Action, Url(o.Symbol), string.Format("{0:c}", o.Value)));
+                    lines.Add(Row(o.AccountName, o.Action, Url(o.Symbol), string.Format("{0:c}", o.Value)));
                 }
             }
             return lines;

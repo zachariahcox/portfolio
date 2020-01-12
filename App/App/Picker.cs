@@ -13,7 +13,7 @@ namespace PortfolioPicker.App
             IList<Fund> funds = null)
         {
             var portfolio = new Portfolio { Accounts = accounts };
-            Fund.AddRange(funds);
+            Fund.Add(funds);
             return new Picker
             {
                 Portfolio = portfolio
@@ -218,7 +218,12 @@ namespace PortfolioPicker.App
             var exposureRemainders = new Dictionary<ExposureTarget, decimal>();
 
             // function to allocate some resources
-            void Buy(Account a, decimal value, string symbol = null, Fund fund = null)
+            void Buy(
+                Account a, 
+                decimal value, 
+                string symbol = null, 
+                Fund fund = null, 
+                bool hold = false)
             {
                 // resolve fund
                 fund = fund ?? Fund.Get(symbol);
@@ -230,6 +235,7 @@ namespace PortfolioPicker.App
                     {
                         Symbol = fund.Symbol,
                         Value = value,
+                        Hold = hold
                     }
                 ));
 
@@ -262,7 +268,7 @@ namespace PortfolioPicker.App
                 // pre "buy" all positions we are asked to hold
                 foreach (var p in a.Positions.Where(x => x.Hold))
                 {
-                    Buy(a, p.Value, symbol: p.Symbol);
+                    Buy(a, p.Value, symbol: p.Symbol, hold: true);
                 }
             }
 

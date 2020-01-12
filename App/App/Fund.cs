@@ -70,10 +70,7 @@ namespace PortfolioPicker.App
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
 
-            foreach (var f in deserializer.Deserialize<IList<Fund>>(yaml))
-            {
-                Add(f);
-            }
+            Add(deserializer.Deserialize<IList<Fund>>(yaml));
 
             return Cache;
         }
@@ -135,7 +132,7 @@ namespace PortfolioPicker.App
             }
         }
 
-        public static void AddRange(IEnumerable<Fund> funds)
+        public static void Add(IEnumerable<Fund> funds)
         {
             if (funds != null)
             {

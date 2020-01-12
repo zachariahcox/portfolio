@@ -238,10 +238,11 @@ namespace PortfolioPicker.Tests
 ## positions
 |account|symbol|value|description|
 |---|---|---:|---|
-|Roth|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$200.00|
-|Roth|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|";
+|Roth|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$200.00|Vanguard Total International Stock Index Fund|
+|Roth|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|Vanguard Total Stock Market Index Fund|";
 
-                Assert.Equal(md, string.Join(Environment.NewLine, p.ToMarkdown()));
+                var actual = string.Join(Environment.NewLine, p.ToMarkdown());
+                Assert.Equal(md, actual);
             }
         }
 
