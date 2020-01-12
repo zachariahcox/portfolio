@@ -27,7 +27,7 @@ namespace PortfolioPicker.CLI
             {
                 cmd.Description = "Creates a report for a given portfolio.";
 
-                var portfolioPath = cmd.Argument("current_portfolio", "Path to portfolio file.")
+                var portfolioPath = cmd.Argument("currentPortfolio", "Path to portfolio file.")
                     .Accepts(v => v.ExistingFile())
                     .IsRequired();
 
@@ -54,7 +54,7 @@ namespace PortfolioPicker.CLI
             app.Command("rebalance", cmd =>
             {
                 cmd.Description = "Attempts to balance portfolio based on a strategy";
-                var accounts = cmd.Argument("accounts", "Path to accounts file.")
+                var portfolioPath = cmd.Argument("currentPortfolio", "Path to portfolio file.")
                     .Accepts(v => v.ExistingFile())
                     .IsRequired();
 
@@ -65,38 +65,38 @@ namespace PortfolioPicker.CLI
                     .Accepts(v => v.LegalFilePath());
 
                 var funds = cmd.Option("-f|--funds <PATH>",
-                    "Path to funds yaml.",
+                    "Path to custom funds yaml.",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.ExistingFile());
 
                 var stockPercent = cmd.Option<int>(
                     "-s|--stockPercent <int>",
-                    "Target percent of TOTAL PORTFOLIO in stocks (remainder will be in bonds)",
+                    "Target percent of TOTAL PORTFOLIO in stocks, remainder will be in bonds (default is 90)",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.Range(0, 100));
 
                 var domesticStockPercent = cmd.Option<int>(
                     "-ds|--domesticStockPercent <int>",
-                    "Target percent OF STOCKS to be domestic",
+                    "Target percent OF STOCKS to be domestic (default is 6)",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.Range(0, 100));
 
                 var domesticBondPercent = cmd.Option<int>(
                    "-db|--domesticBondPercent <int>",
-                   "Target percent OF BONDS to be domestic",
+                   "Target percent OF BONDS to be domestic (default is 70)",
                    CommandOptionType.SingleValue)
                    .Accepts(x => x.Range(0, 100));
 
                 cmd.OnExecute(() =>
                 {
-                    var data = File.ReadAllText(accounts.Value);
+                    var data = File.ReadAllText(portfolioPath.Value);
                     var picker = Picker.Create(
                         accountsYaml: data,
                         fundsYaml: funds.Value());
 
                     var stockRatio = stockPercent.HasValue()
                         ? double.Parse(stockPercent.Value()) / 100.0
-                        : 0.9;
+                        : 0.9; // default to 90% stocks
 
                     var domesticStockRatio = domesticStockPercent.HasValue()
                         ? double.Parse(domesticStockPercent.Value()) / 100.0
@@ -113,7 +113,7 @@ namespace PortfolioPicker.CLI
 
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
-                        : new FileInfo(accounts.Value).DirectoryName;
+                        : new FileInfo(portfolioPath.Value).DirectoryName;
 
                     var today = DateTime.Now.ToString("MMddyyyy");
 

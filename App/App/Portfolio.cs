@@ -27,16 +27,22 @@ namespace PortfolioPicker.App
         }
         private IList<Account> _accounts;
 
-        public decimal TotalValue { get; set; }
+        public decimal TotalValue { get; private set; }
 
-        public double ExpenseRatio { get; set; }
+        public double ExpenseRatio { get; private set; }
 
-        public IList<ExposureRatio> ExposureRatios { get; set; }
+        public IList<ExposureRatio> ExposureRatios { get; private set; }
 
-        public IList<Position> Positions { get; set; }
+        /// <summary>
+        /// collection of all positions from all accounts
+        /// </summary>
+        public IList<Position> Positions { get; private set; }
 
         public int NumberOfPositions => Positions.Count;
 
+        /// <summary>
+        /// portfolios are serialized as a list of accounts.
+        /// </summary>
         public string ToYaml()
         {
             var serializer = new SerializerBuilder()
@@ -45,6 +51,9 @@ namespace PortfolioPicker.App
             return serializer.Serialize(Accounts);
         }
 
+        /// <summary>
+        /// portfolios are serialized as a list of accounts.
+        /// </summary>
         public static Portfolio FromYaml(string yaml)
         {
             if (string.IsNullOrEmpty(yaml))
@@ -56,10 +65,8 @@ namespace PortfolioPicker.App
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
 
-            return new Portfolio
-            {
-                Accounts = deserializer.Deserialize<IList<Account>>(yaml)
-            };
+            var accounts = deserializer.Deserialize<IList<Account>>(yaml);
+            return new Portfolio { Accounts = accounts };
         }
 
 
@@ -123,6 +130,9 @@ namespace PortfolioPicker.App
             return lines;
         }
 
+        /// <summary>
+        /// automatically called when `Accounts` is set.
+        /// </summary>
         private void ComputeStats()
         {
             var totalValue = TotalValue = Positions.Sum(x => x.Value);

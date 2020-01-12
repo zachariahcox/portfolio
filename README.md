@@ -8,29 +8,32 @@ Your current portfolio is described in a simple yaml syntax:
   brokerage: Vanguard
   type: ROTH
   positions:
-  - symbol: VMMXX
-    value: 100
-  - symbol: VTIAX
-    value: 100
   - symbol: VTSAX
+    value: 100
+
+- name: my 401k
+  brokerage: Fidelity
+  type: IRA
+  positions:
+  - symbol: FZROX
+    value: 100
+
+- name: my HSA
+  brokerage: Fidelity
+  type: ROTH
+  positions:
+  - symbol: FZROX
     value: 100
 
 - name: my regular taxable
   brokerage: Vanguard
-  type: TAXABLE
+  type: BROKERAGE
   positions:
   - symbol: AMZN
     value: 100
   - symbol: MSFT
     value: 100
     hold: true
-
-- name: my 401k
-  brokerage: Fidelity
-  type: ROTH
-  positions:
-  - symbol: FZROX
-    value: 100
 ```
 
 You can also provide a list of fund descriptions you want to be made available.
@@ -56,26 +59,16 @@ There is a common set loaded by [default](https://zachariahcox.visualstudio.com/
 
 The application parses the yaml and produces a ```Portfolio``` object. 
 This object supports rendering markdown reports. 
-[vscode](https://code.visualstudio.com/) is a great crossplatform editor for markdown documents. 
 
 ## Command line tool
 The command line tool supports two commands, ```load``` and ```rebalance```.
-Both require a path to an ```accounts.yaml``` file and an output directory. 
+Both require a path to an ```portfolio.yaml``` file and an output directory. 
 
-The rebalance command runs the rebalancing logic and prints its recommendations. The load command simply reports on the portfolio you provide it.
-
-This will produce an analysis of your current portfolio:
-```bash
-dotnet picker load /path/to/your/accounts.yml ~/Desktop
-```
-
-This will produce a suggested rebalance of your current portfolio.
-```bash
-dotnet picker rebalance /path/to/your/accounts.yml ~/Desktop
-```
+The rebalance command runs the rebalancing logic and prints its recommendations. 
+The load command simply reports on the portfolio you provide it.
 
 # Getting Started
-To run the command line tool you will need [dotnet core installed](https://code.visualstudio.com/docs/languages/dotnet) (it's kind of like the python interpreter). 
+To build the project you will need [dotnet core 3.1 or greater](https://code.visualstudio.com/docs/languages/dotnet). 
 
 # Build and Test
 ```bash
@@ -87,6 +80,35 @@ dotnet test
 ## Example
 There are other examples in the tests project. 
 Using the ```example.yaml`` file from above, running this should produce the following report:
+
+```bash
+portfolio load /path/to/example.yaml
+```
+---
+# Custom portfolio
+## stats
+|stat|value|
+|---|---|
+|date|04/21/2019|
+|TotalValue|$600.00|
+|ExpenseRatio|0.0250|
+|BondRatio|0.00|
+|StockRatio|1.00|
+|DomesticRatio|0.83|
+|InternationalRatio|0.17|
+
+## positions
+|account|symbol|value|
+|---|---|---:|
+|my 401k|[FZROX](https://finance.yahoo.com/quote/FZROX?p=FZROX)|$100.00|
+|my regular taxable|[AMZN](https://finance.yahoo.com/quote/AMZN?p=AMZN)|$100.00|
+|my regular taxable|[MSFT](https://finance.yahoo.com/quote/MSFT?p=MSFT)|$100.00|
+|my roth account|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
+|my roth account|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$100.00|
+|my roth account|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|
+---
+
+Running this should produce the following report: 
 ```bash
 $ portfolio rebalance /path/to/example.yaml
 ```
@@ -126,37 +148,4 @@ $ portfolio rebalance /path/to/example.yaml
 |my roth account|buy|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$34.00|
 |my roth account|buy|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$66.00|
 |my roth account|sell|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
-
 ---
-
-Running this should produce the following report: 
-```bash
-portfolio load /path/to/example.yaml
-```
-
----
-
-# Custom portfolio
-## stats
-|stat|value|
-|---|---|
-|date|04/21/2019|
-|TotalValue|$600.00|
-|ExpenseRatio|0.0250|
-|BondRatio|0.00|
-|StockRatio|1.00|
-|DomesticRatio|0.83|
-|InternationalRatio|0.17|
-
-## positions
-|account|symbol|value|
-|---|---|---:|
-|my 401k|[FZROX](https://finance.yahoo.com/quote/FZROX?p=FZROX)|$100.00|
-|my regular taxable|[AMZN](https://finance.yahoo.com/quote/AMZN?p=AMZN)|$100.00|
-|my regular taxable|[MSFT](https://finance.yahoo.com/quote/MSFT?p=MSFT)|$100.00|
-|my roth account|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
-|my roth account|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$100.00|
-|my roth account|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|
-
----
-

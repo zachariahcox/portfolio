@@ -178,7 +178,7 @@ namespace PortfolioPicker.Tests
         }
 
         [Fact]
-        public void AccountsFromYaml()
+        public void RebalanceDoesNotChangeTotalValue()
         {
             var yaml = @"
 - name: Roth
@@ -260,7 +260,7 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void FromYaml()
         {
-            var yaml = @"
+            var fundsYaml = @"
 - description: Vanguard Total Stock Market Index Fund
   symbol: VTSAX
   brokerage: Vanguard
@@ -295,7 +295,7 @@ namespace PortfolioPicker.Tests
             .WithNamingConvention(new CamelCaseNamingConvention())
             .Build();
 
-            var funds = deserializer.Deserialize<IList<Fund>>(yaml);
+            var funds = deserializer.Deserialize<IList<Fund>>(fundsYaml);
             Assert.Equal(2, funds.Count);
 
             var accounts = deserializer.Deserialize<IList<Account>>(accountsYaml);
@@ -303,6 +303,22 @@ namespace PortfolioPicker.Tests
 
             var p = Portfolio.FromYaml(accountsYaml);
             Assert.NotNull(p);
+        }
+
+        [Fact]
+        public void FromYaml_duplicate_position()
+        {
+            // this yaml has two positions with the same symbol
+            var accountsYaml = @"
+- name: test account
+  brokerage: Vanguard
+  type: ROTH
+  positions:
+  - symbol: VTSAX
+    value: 100
+  - symbol: VTSAX
+    value: 100 ";
+            Assert.ThrowsAny<Exception>(() => Portfolio.FromYaml(accountsYaml));
         }
 
         [Fact]

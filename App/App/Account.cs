@@ -27,18 +27,40 @@ namespace PortfolioPicker.App
             set
             {
                 _positions = value;
-                if (value != null)
+                if (value is null)
                 {
-                    _value = value.Sum(x => x.Value);
+                    return;
                 }
+
+                // check for accidental duplicate positions
+                var dedup = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var duplicatedSymbols = new List<string>();
+                foreach(var p in _positions)
+                {
+                    if (dedup.Contains(p.Symbol))
+                    {
+                        duplicatedSymbols.Add(p.Symbol);
+                    }
+                    else
+                    {
+                        dedup.Add(p.Symbol);
+                    }
+                }
+                if (duplicatedSymbols.Count > 0)
+                {
+                    throw new ArgumentException($"Invalid portfolio: \"{this.Name}\" has multiple positions for {string.Join(", ", duplicatedSymbols)}");
+                }
+                
+                // positions are ok, sum up thier total value
+                Value = value.Sum(x => x.Value);
             }
         }
 
+        /// <summary>
+        /// sum of values of all positions
+        /// </summary>
         [IgnoreDataMember]
-        internal decimal Value => _value;
-
-        [IgnoreDataMember]
-        private decimal _value;
+        internal decimal Value { get; private set; }
 
         internal Account Clone()
         {
