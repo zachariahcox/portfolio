@@ -11,5 +11,7 @@ namespace PortfolioPicker.App
         public decimal Value { get; set; }
 
         public bool Hold { get; set; }
+
+        public override string ToString() => $"{Symbol}@{Value}";
     }
 }

@@ -62,6 +62,8 @@ namespace PortfolioPicker.App
         [IgnoreDataMember]
         internal decimal Value { get; private set; }
 
+        public override string ToString() => $"{Name}@{Brokerage}";
+
         internal Account Clone()
         {
             return new Account

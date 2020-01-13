@@ -233,16 +233,25 @@ namespace PortfolioPicker.App
                 // resolve fund
                 fund = fund ?? Fund.Get(symbol);
 
-                // create position
-                positions.Add((
-                    a,
-                    new Position
+                // check if we already have a position for this
+                var pair = positions.Find(x => x.Item1 == a && x.Item2.Symbol == fund.Symbol);
+                var p = pair.Item2;
+                if (p is null)
+                {
+                    // create new position
+                    p = new Position
                     {
                         Symbol = fund.Symbol,
                         Value = value,
                         Hold = hold
-                    }
-                ));
+                    };
+                    positions.Add((a, p));
+                } 
+                else 
+                {
+                    // increase previous position
+                    p.Value += value;
+                }
 
                 // reduce account remainders
                 accountRemainders[a] -= value;

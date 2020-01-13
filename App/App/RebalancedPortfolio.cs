@@ -28,7 +28,7 @@ namespace PortfolioPicker.App
                     .ThenByDescending(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
-                    lines.Add(Row(o.AccountName, o.Action, Url(o.Symbol), string.Format("{0:c}", o.Value)));
+                    lines.Add(Row(o.AccountName, o.Action, Url(o.Symbol), string.Format("${0:n2}", o.Value)));
                 }
             }
             return lines;

@@ -5,19 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "PortfolioPicker Debug",
+            "name": "load",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/PortfolioPicker/bin/Debug/netcoreapp2.0/PortfolioPicker.dll",
-            "args": ["C:/code/demo_finance_data/data.json"],
-            "cwd": "${workspaceFolder}",
+            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
+            "args": ["load /Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml -o /Users/zacox/work/build/"],
+            "cwd": "${workspaceFolder}/CLI",
             "console": "internalConsole",
-            "logging": {
-                "moduleLoad": false
-             },
-            "stopAtEntry": false,
-            "internalConsoleOptions": "openOnSessionStart"
+            "stopAtEntry": false
+        },
+        {
+            "name": "rebalance",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
+            "args": ["rebalance","/Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml", "-o", "/Users/zacox/work/build/"],
+            "cwd": "${workspaceFolder}/CLI",
+            "console": "internalConsole",
+            "stopAtEntry": false
         },
         {
             "name": ".NET Core Attach",
