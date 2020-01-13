@@ -142,42 +142,42 @@ namespace PortfolioPicker.App
         }
 
         /// <summary>
-        /// create list of <class>ExposureRatio</class>s given three stats.
+        /// create list of <class>Exposure</class>s given three stats.
         /// </summary>
-        private IList<ExposureRatio> ComputeTargetRatios(
+        private IList<Exposure> ComputeTargetRatios(
             double stockRatio,
             double domesticStockRatio,
             double domesticBondRatio)
         {
-            return new List<ExposureRatio>
+            return new List<Exposure>
             {
-                new ExposureRatio(
+                new Exposure(
                     AssetClass.Stock,
                     AssetLocation.Domestic,
                     stockRatio * domesticStockRatio),
-                new ExposureRatio(
+                new Exposure(
                     AssetClass.Stock,
                     AssetLocation.International,
                     stockRatio * (1.0 - domesticStockRatio)),
-                new ExposureRatio(
+                new Exposure(
                     AssetClass.Bond,
                     AssetLocation.Domestic,
                     (1.0 - stockRatio) * domesticBondRatio),
-                new ExposureRatio(
+                new Exposure(
                     AssetClass.Bond,
                     AssetLocation.International,
                     (1.0 - stockRatio) * (1.0 - domesticBondRatio)),
             };
         }
 
-        private IList<ExposureTarget> ComputeExposures(
-            IList<ExposureRatio> ratios,
+        private IList<Exposure> ComputeExposures(
+            IList<Exposure> ratios,
             decimal totalValue)
         {
-            return ratios.Select(x => new ExposureTarget(
+            return ratios.Select(x => new Exposure(
                 x.Class,
                 x.Location,
-                totalValue * (decimal)x.Ratio))
+                (double)totalValue * x.Value))
                 .ToList();
         }
 
@@ -186,7 +186,7 @@ namespace PortfolioPicker.App
         /// A "better" fund has better ratios for the target exposure, or has the lowest expense ratio. 
         /// </summary>
         private static Fund PickBestFund(
-            ExposureTarget e,
+            Exposure e,
             ICollection<Fund> funds)
         {
             var best = default(Fund);
@@ -213,14 +213,14 @@ namespace PortfolioPicker.App
 
         private static RebalancedPortfolio GeneratePortfolio(
             ICollection<Account> accounts,
-            ICollection<ExposureTarget> exposures)
+            ICollection<Exposure> exposures)
         {
             // setup bookkeeping
             var positions = new List<(Account, Position)>();
             var warnings = new List<string>();
             var errors = new List<string>();
             var accountRemainders = new Dictionary<Account, decimal>();
-            var exposureRemainders = new Dictionary<ExposureTarget, decimal>();
+            var exposureRemainders = new Dictionary<Exposure, decimal>();
 
             // function to allocate some resources
             void Buy(
@@ -262,9 +262,10 @@ namespace PortfolioPicker.App
                 }
             }
 
+            // initialize remainders 
             foreach (var e in exposures)
             {
-                exposureRemainders[e] = e.Target;
+                exposureRemainders[e] = (decimal)e.Value;
             }
             foreach (var a in accounts)
             {
@@ -302,7 +303,7 @@ namespace PortfolioPicker.App
                 }
 
                 // buy as much as possible from prefered accounts, in order
-                foreach (var t in e.Types)
+                foreach (var t in Exposure.GetPreferences(e.Class, e.Location))
                 {
                     var efficientAccounts = suitableAccounts
                         .Where(x => x.Type == t)
@@ -351,7 +352,7 @@ namespace PortfolioPicker.App
                 }
 
                 warnings.Add($"Warning: Imbalance: {e}, remainder: {r}");
-                score += bestScorePerCategory - (double)Math.Abs(r) / (double)e.Target;
+                score += bestScorePerCategory - (double)Math.Abs(r) / e.Value;
             }
 
             var totalValue = 0m;

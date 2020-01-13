@@ -230,22 +230,31 @@ namespace PortfolioPicker.Tests
     hold: true
 ";
             var p = Portfolio.FromYaml(yaml);
-            var expected = @"# portfolio
-## stats
+            var expected = @"## highlights
 |stat|value|
 |---|---|
 |total value of assets|$300.00|
 |total expense ratio|0.0867|
-|percent stocks|100.0%|
-|percent bonds|0.0%|
+|percent of stocks are domestic|33.3%|
+|percent of bonds are domestic|0.0%|
 
-## composition (percent of total in various buckets)
-|class|location|percentage|
-|---|---|---:|
-|stock|domestic|33%|
-|stock|international|67%|
-|bond|domestic|0%|
-|bond|international|0%|
+## position composition
+|class|location|percentage|value|
+|---|---|---:|---:|
+|stock|*|100.0%|$300.00|
+|stock|domestic|33.3%|$100.00|
+|stock|international|66.7%|$200.00|
+|bond|*|0.0%|$0.00|
+|bond|domestic|0.0%|$0.00|
+|bond|international|0.0%|$0.00|
+
+## account composition
+|class|location|brokerage|ira|roth|
+|---|---|---:|---:|---:|
+|stock|domestic|0.0%|0.0%|33.3%|
+|stock|international|0.0%|0.0%|66.7%|
+|bond|domestic|0.0%|0.0%|0.0%|
+|bond|international|0.0%|0.0%|0.0%|
 
 ## positions
 |account|symbol|value|description|
@@ -362,10 +371,10 @@ namespace PortfolioPicker.Tests
             Assert.Equal(0.25m * dollars, p.Positions.First(x => x.Symbol == "BI").Value);
 
             // output percentages should match input requests
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Stock));
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Bond));
-            Assert.Equal(25, p.ExposureRatios.Percent(AssetClass.Stock, AssetLocation.Domestic));
-            Assert.Equal(25, p.ExposureRatios.Percent(AssetClass.Bond, AssetLocation.Domestic));
+            Assert.Equal(50, p.Exposures.Percent(AssetClass.Stock));
+            Assert.Equal(50, p.Exposures.Percent(AssetClass.Bond));
+            Assert.Equal(25, p.Exposures.Percent(AssetClass.Stock, AssetLocation.Domestic));
+            Assert.Equal(25, p.Exposures.Percent(AssetClass.Bond, AssetLocation.Domestic));
 
             // ==================================
             // Change stock ratio
@@ -375,10 +384,10 @@ namespace PortfolioPicker.Tests
             Assert.Equal(2, p.NumberOfPositions);
             Assert.Equal(0.9m * dollars, p.Positions.First(x => x.Symbol == "SD").Value);
             Assert.Equal(0.1m * dollars, p.Positions.First(x => x.Symbol == "BD").Value);
-            Assert.Equal(90, p.ExposureRatios.Percent(AssetClass.Stock));
-            Assert.Equal(10, p.ExposureRatios.Percent(AssetClass.Bond));
-            Assert.Equal(90, p.ExposureRatios.Percent(AssetClass.Stock, AssetLocation.Domestic));
-            Assert.Equal(10, p.ExposureRatios.Percent(AssetClass.Bond, AssetLocation.Domestic));
+            Assert.Equal(90, p.Exposures.Percent(AssetClass.Stock));
+            Assert.Equal(10, p.Exposures.Percent(AssetClass.Bond));
+            Assert.Equal(90, p.Exposures.Percent(AssetClass.Stock, AssetLocation.Domestic));
+            Assert.Equal(10, p.Exposures.Percent(AssetClass.Bond, AssetLocation.Domestic));
 
             // ==================================
             // Change domestic ratio
@@ -394,10 +403,10 @@ namespace PortfolioPicker.Tests
                          p.Positions.First(x => x.Symbol == "BD").Value);
             Assert.Equal(.5m * .9m * dollars,
                          p.Positions.First(x => x.Symbol == "BI").Value);
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Stock));
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Bond));
-            Assert.Equal(45, p.ExposureRatios.Percent(AssetClass.Stock, AssetLocation.Domestic));
-            Assert.Equal(5, p.ExposureRatios.Percent(AssetClass.Bond, AssetLocation.Domestic));
+            Assert.Equal(50, p.Exposures.Percent(AssetClass.Stock));
+            Assert.Equal(50, p.Exposures.Percent(AssetClass.Bond));
+            Assert.Equal(45, p.Exposures.Percent(AssetClass.Stock, AssetLocation.Domestic));
+            Assert.Equal(5, p.Exposures.Percent(AssetClass.Bond, AssetLocation.Domestic));
         }
 
         [Fact]
@@ -429,10 +438,10 @@ namespace PortfolioPicker.Tests
             Assert.Equal(25m, p.Positions.First(x => x.Symbol == "BI").Value);
 
             // output percentages should match input requests
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Stock));
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetClass.Bond));
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetLocation.Domestic));
-            Assert.Equal(50, p.ExposureRatios.Percent(AssetLocation.Domestic));
+            Assert.Equal(50, p.Exposures.Percent(AssetClass.Stock));
+            Assert.Equal(50, p.Exposures.Percent(AssetClass.Bond));
+            Assert.Equal(50, p.Exposures.Percent(AssetLocation.Domestic));
+            Assert.Equal(50, p.Exposures.Percent(AssetLocation.Domestic));
         }
 
         [Fact]
@@ -466,19 +475,18 @@ namespace PortfolioPicker.Tests
 
             // output percentages should match input requests
             foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                Assert.Equal(50, p.ExposureRatios.Percent(c));
+                Assert.Equal(50, p.Exposures.Percent(c));
 
             foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                Assert.Equal(50, p.ExposureRatios.Percent(l));
+                Assert.Equal(50, p.Exposures.Percent(l));
 
             foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
             {
                 foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                 {
-                    Assert.Equal(25, p.ExposureRatios.Percent(c, l));
+                    Assert.Equal(25, p.Exposures.Percent(c, l));
                 }
             }
-
         }
     }
 }

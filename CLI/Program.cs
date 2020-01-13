@@ -121,8 +121,8 @@ namespace PortfolioPicker.CLI
                     Console.WriteLine("new portfolio: " + balancedPortfolioPath);
                     File.WriteAllText(balancedPortfolioPath, portfolio.ToYaml());
 
-                    var reportPath = Path.Combine(d, $"portfolio_{today}_report.md");
-                    Console.WriteLine("report: " + reportPath);
+                    var reportPath = Path.Combine(d, $"portfolio_{today}_orders.md");
+                    Console.WriteLine("orders: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdown());
                 });
             });

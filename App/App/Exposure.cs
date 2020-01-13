@@ -27,38 +27,37 @@ namespace PortfolioPicker.App
     /// </summary>
     public class Exposure
     {
-        public Exposure(AssetClass c, AssetLocation l)
-        {
-            Class = c;
-            Location = l;
-        }
-
         public AssetClass Class { get; private set; }
 
         public AssetLocation Location { get; private set; }
-    }
 
-    /// <summary>
-    /// target value allocated to a given class / location combo
-    /// </summary>
-    public class ExposureTarget : Exposure
-    {
-        public ExposureTarget(
+        public double Value { get; set; }
+
+        public Exposure(
             AssetClass c, 
-            AssetLocation l, 
-            decimal target) 
-            : base(c, l)
+            AssetLocation l,
+            double value = 0.0)
         {
-            // save target
-            Target = target;
+            Class = c;
+            Location = l;
 
+            if (double.IsNaN(value))
+                value = 0.0;
+
+            Value = value;
+        }
+
+        public static AccountType[] GetPreferences(
+            AssetClass c,
+            AssetLocation l)
+        {
             // generate type preferences
             if (c == AssetClass.Stock)
             {
                 if (l == AssetLocation.Domestic)
                 {
                     // stock, domestic
-                    Types = new AccountType[] {
+                    return new AccountType[] {
                         AccountType.ROTH,
                         AccountType.BROKERAGE,
                         AccountType.IRA
@@ -67,7 +66,7 @@ namespace PortfolioPicker.App
                 else 
                 {
                     // stock, international
-                    Types = new AccountType[] {
+                    return new AccountType[] {
                         AccountType.BROKERAGE,
                         AccountType.ROTH,
                         AccountType.IRA
@@ -79,7 +78,7 @@ namespace PortfolioPicker.App
                 if (l == AssetLocation.Domestic)
                 {
                     // bond, domestic
-                    Types = new AccountType[] {
+                    return new AccountType[] {
                         AccountType.IRA,
                         AccountType.BROKERAGE,
                         AccountType.ROTH,
@@ -88,7 +87,7 @@ namespace PortfolioPicker.App
                 else 
                 {
                     // bond, international
-                    Types = new AccountType[] {
+                    return new AccountType[] {
                         AccountType.BROKERAGE,
                         AccountType.IRA,
                         AccountType.ROTH
@@ -96,36 +95,30 @@ namespace PortfolioPicker.App
                 }
             }
         }
-
-        /// <summary> 
-        /// final value goal
-        /// </summary>
-        public decimal Target { get; private set; }
-
-        /// <summary>
-        /// ordered type preferences for this combination of class and location
-        /// </summary>
-        public AccountType[] Types { get; private set; }
     }
 
-    public class ExposureRatio : Exposure
-    {
-        public ExposureRatio(
-            AssetClass c,
-            AssetLocation l,
-            double r)
-            : base(c, l)
-        {
-            if (double.IsNaN(r))
-            {
-                r = 0.0;
-            }
 
-            Ratio = Math.Max(0, r);
-        }
+    // public class ExposureRatio : Exposure
+    // {
+    //     /// <summary>
+    //     /// final value ratio
+    //     /// </summary>
+    //     public double Ratio { get; set; }
 
-        public double Ratio { get; set; }
-    }
+    //     public ExposureRatio(
+    //         AssetClass c,
+    //         AssetLocation l,
+    //         double r)
+    //         : base(c, l)
+    //     {
+    //         if (double.IsNaN(r))
+    //         {
+    //             r = 0.0;
+    //         }
+
+    //         Ratio = Math.Max(0, r);
+    //     }
+    // }
 
     /// <summary>
     /// Add some functionality to lists of ExposureRatio
@@ -133,25 +126,25 @@ namespace PortfolioPicker.App
     public static class ExposureExtensions
     {
         public static double Percent(
-            this IList<ExposureRatio> ratios,
+            this IList<Exposure> exposures,
             AssetClass c)
         {
-            return 100.0 * ratios.Where(x => x.Class == c).Sum(x => x.Ratio);
+            return 100.0 * exposures.Where(x => x.Class == c).Sum(x => x.Value);
         }
 
         public static double Percent(
-            this IList<ExposureRatio> ratios,
+            this IList<Exposure> exposures,
             AssetLocation l)
         {
-            return 100.0 * ratios.Where(x => x.Location == l).Sum(x => x.Ratio);
+            return 100.0 * exposures.Where(x => x.Location == l).Sum(x => x.Value);
         }
 
         public static double Percent(
-            this IList<ExposureRatio> ratios,
+            this IList<Exposure> exposures,
             AssetClass c,
             AssetLocation l)
         {
-            return 100.0 * ratios.Where(x => x.Class == c && x.Location == l).Sum(x => x.Ratio);
+            return 100.0 * exposures.Where(x => x.Class == c && x.Location == l).Sum(x => x.Value);
         }
     }
 }
