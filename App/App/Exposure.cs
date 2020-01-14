@@ -47,6 +47,8 @@ namespace PortfolioPicker.App
             Value = value;
         }
 
+        public override string ToString() => $"{Class}:{Location}:{Value}";
+
         public static AccountType[] GetPreferences(
             AssetClass c,
             AssetLocation l)
@@ -96,29 +98,6 @@ namespace PortfolioPicker.App
             }
         }
     }
-
-
-    // public class ExposureRatio : Exposure
-    // {
-    //     /// <summary>
-    //     /// final value ratio
-    //     /// </summary>
-    //     public double Ratio { get; set; }
-
-    //     public ExposureRatio(
-    //         AssetClass c,
-    //         AssetLocation l,
-    //         double r)
-    //         : base(c, l)
-    //     {
-    //         if (double.IsNaN(r))
-    //         {
-    //             r = 0.0;
-    //         }
-
-    //         Ratio = Math.Max(0, r);
-    //     }
-    // }
 
     /// <summary>
     /// Add some functionality to lists of ExposureRatio
