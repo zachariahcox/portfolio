@@ -4,6 +4,28 @@ using System.Linq;
 
 namespace PortfolioPicker.App
 {
+    /// <summary>
+    /// Based on the target exposures and total money, compute target dollar-value per exposure type.
+    ///  Strategy: 
+    ///  * accounts prefer funds sponsored by their brokerage
+    ///    * Helps avoid fees?
+    ///
+    ///  * roth accounts should prioritize stocks over bonds
+    ///    * Growth can be withdrawn tax-free, prioritize high-growth-potential products.
+    ///
+    ///  * regular taxable accounts should prioritize international assets over domestic
+    ///    * foreign income tax credit is deductible
+    /// 
+    ///  * 401k accounts should prioritize bonds and avoid international assets
+    ///    * Because growth is taxable, prioritize low-growth products
+    ///
+    /// This basically works out to the following exposure-to-account type prioritization list:
+    ///  dom stocks -> roth, tax, 401k
+    ///  int stocks -> tax, roth, 401k
+    ///  dom bonds  -> 401k, roth, tax
+    ///  int bonds  -> tax, 401k, roth
+    //
+    /// </summary>
     public class Picker
     {
         private Portfolio Portfolio { get; set; }
@@ -347,10 +369,26 @@ namespace PortfolioPicker.App
                 }
             }
 
+            // create portfolio
+            var newAccounts = positions.GroupBy(
+                x => x.Item1,
+                x => x.Item2,
+                (key, g) =>
+                {
+                    var newAccount = key.Clone();
+                    newAccount.Positions = g.ToList();
+                    return newAccount;
+                })
+                .ToList();
+
+            var portfolio = new RebalancedPortfolio {Accounts = newAccounts};
+
             // SCORE THE PORTFOLIO (bigger is better)
             var score = 0.0;
             var bestScorePerCategory = 1.0;
             var perfectScore = (double)(accounts.Count + exposures.Count);
+
+            // we want to meet our exposure targets
             foreach (var e in exposures)
             {
                 var r = exposureRemainders[e];
@@ -364,6 +402,7 @@ namespace PortfolioPicker.App
                 score += bestScorePerCategory - (double)Math.Abs(r) / e.Value;
             }
 
+            // we want to allocate all our money
             var totalValue = 0m;
             foreach (var a in accounts)
             {
@@ -387,28 +426,17 @@ namespace PortfolioPicker.App
                 }
             }
 
+            // we want to meet our allocation type goals
+            // foreach (var )
+
             // compute final score
             score /= perfectScore;
 
-            // RESULT
-            var newAccounts = positions.GroupBy(
-                x => x.Item1,
-                x => x.Item2,
-                (key, g) =>
-                {
-                    var newAccount = key.Clone();
-                    newAccount.Positions = g.ToList();
-                    return newAccount;
-                })
-                .ToList();
-
-            return new RebalancedPortfolio
-            {
-                Accounts = newAccounts,
-                Score = score,
-                Warnings = warnings,
-                Errors = errors,
-            };
+            // save results
+            portfolio.Score = score;
+            portfolio.Warnings = warnings;
+            portfolio.Errors = errors;
+            return portfolio;
         }
     }
 }

@@ -16,13 +16,21 @@ namespace PortfolioPicker.App
                 if (value is null)
                 {
                     _accounts = null;
-                    Positions = null;
                 }
                 else
                 {
                     _accounts = value.OrderBy(x => x.Name).ToList();
-                    Positions = value.SelectMany(x => x.Positions).ToList();
-                    ComputeStats();
+                    
+                    // total value
+                    TotalValue = _accounts
+                        .SelectMany(x => x.Positions)
+                        .Sum(x => x.Value);
+
+                    // expense ratio
+                    var weightedValue = _accounts
+                        .SelectMany(x => x.Positions)
+                        .Sum(x => (double)x.Value * Fund.Get(x.Symbol).ExpenseRatio); 
+                    ExpenseRatio = TotalValue == 0 ? 0 : weightedValue / (double)TotalValue;
                 }
             }
         }
@@ -32,16 +40,14 @@ namespace PortfolioPicker.App
 
         public double ExpenseRatio { get; private set; }
 
-        public IList<Exposure> Exposures { get; private set; }
-
-        public IDictionary<AccountType, IList<Exposure>> ExposuresByAccountType {get; private set;}
+        // public IList<Exposure> Exposures { get; private set; }
 
         /// <summary>
         /// collection of all positions from all accounts
         /// </summary>
-        public IList<Position> Positions { get; private set; }
+        public IEnumerable<Position> Positions => Accounts.SelectMany(x => x.Positions);
 
-        public int NumberOfPositions => Positions.Count;
+        public int NumberOfPositions => Accounts.Sum(x => x.Positions.Count);
 
         /// <summary>
         /// portfolios are serialized as a list of accounts.
@@ -72,24 +78,53 @@ namespace PortfolioPicker.App
             return new Portfolio { Accounts = accounts };
         }
 
+        public double PercentOfPortfolio(AssetClass c, AssetLocation l) => 
+            100 * Value(c, l) / (double)TotalValue;
+        public double PercentOfPortfolio(AssetClass c) => 
+            100 * Value(c) / (double)TotalValue;
+        public double PercentOfPortfolio(AssetLocation l) => 
+            100 * Value(l) / (double)TotalValue;
 
-        protected string Row(params object[] values)
+        public double PercentOfAssetType(
+            AccountType t, 
+            AssetClass c, 
+            AssetLocation l)
         {
-            return "|" + string.Join("|", values) + "|";
+            var total = Value(c, l);
+            return total <= 0 ? 0.0 : 100 * Value(t, c, l) / total;
         }
 
-        protected string Url(string _s)
-        {
-            return $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
-        }
+        public double Value(AccountType t, AssetClass c, AssetLocation l) =>  Accounts
+            .Where(x => x.Type == t)
+            .SelectMany(x => x.Exposures)
+            .Where(x => x.Class == c && x.Location == l)
+            .Sum(x => x.Value);
+
+        public double Value(AssetClass c, AssetLocation l) => Accounts
+            .SelectMany(x => x.Exposures)
+            .Where(x => x.Class == c && x.Location == l)
+            .Sum(x => x.Value);
+
+        public double Value(AssetClass c) => Accounts
+            .SelectMany(x => x.Exposures)
+            .Where(x => x.Class == c)
+            .Sum(x => x.Value);
+
+        public double Value(AssetLocation l) => Accounts
+            .SelectMany(x => x.Exposures)
+            .Where(x => x.Location == l)
+            .Sum(x => x.Value);
+
+        protected string Row(params object[] values) => "|" + string.Join("|", values) + "|";
+
+        protected string Url(string _s) => $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
 
         public virtual IList<string> ToMarkdown()
         {
             double NotNan(double d){
-                if (double.IsNaN(d))
-                    return 0.0;
-                return d;
+                return double.IsNaN(d) ? 0.0 : d;
             }
+            
             var lines = new List<string>
             {
                 // STATS
@@ -98,32 +133,32 @@ namespace PortfolioPicker.App
                 Row("---", "---"),
                 Row("total value of assets", string.Format("${0:n2}", TotalValue)),
                 Row("total expense ratio", string.Format("{0:0.0000}", NotNan(ExpenseRatio))),
-                Row("percent of stocks are domestic", string.Format("{0:0.0}%", NotNan(100 * Exposures.Percent(AssetClass.Stock, AssetLocation.Domestic) / Exposures.Percent(AssetClass.Stock)))),
-                Row("percent of bonds are domestic", string.Format("{0:0.0}%", NotNan(100 * Exposures.Percent(AssetClass.Bond, AssetLocation.Domestic) / Exposures.Percent(AssetClass.Bond)))),
                 "", // new line
 
                 // COMPOSITION
                 "## position composition",
-                Row("class", "location", "percentage", "value"),
-                Row("---", "---", "---:", "---:")
+                Row("class", "location", "% total", "% class", "value"),
+                Row("---", "---", "---:", "---:", "---:")
             };
             foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
             {
-                var percent = Exposures.Percent(c);
+                var percent = PercentOfPortfolio(c);
                 lines.Add(Row(
                     c.ToString().ToLower(),
                     "*",
                     string.Format("{0:0.0}%", percent),
+                    string.Format("{0:0.0}%", 100),
                     string.Format("${0:n2}", TotalValue * (decimal)percent / 100)
                     ));
 
                 foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                 {
-                    var e = Exposures.Percent(c, l);
+                    var e = PercentOfPortfolio(c, l);
                     lines.Add(Row(
                         c.ToString().ToLower(),
                         l.ToString().ToLower(),
                         string.Format("{0:0.0}%", e),
+                        string.Format("{0:0.0}%", NotNan(100 * e / PercentOfPortfolio(c))),
                         string.Format("${0:n2}", TotalValue * (decimal)e / 100)
                         ));
                 }
@@ -131,42 +166,34 @@ namespace PortfolioPicker.App
             lines.Add("");
 
             // ACCOUNT STATS
-            lines.Add("## account composition");
-            lines.Add(Row("class", "location", 
-                AccountType.BROKERAGE.ToString().ToLower(), 
-                AccountType.IRA.ToString().ToLower(), 
-                AccountType.ROTH.ToString().ToLower()));
-            lines.Add(Row("---", "---", "---:", "---:", "---:"));
-            
-            string GetValue(AccountType _t, AssetClass c, AssetLocation l)
+            if (Accounts?.Any() == true)
             {
-                var percent = 0m;
-                if (ExposuresByAccountType.TryGetValue(_t, out var exposures))
+                lines.Add("## account composition");
+                lines.Add(Row("class", "location", 
+                    AccountType.BROKERAGE.ToString().ToLower(), 
+                    AccountType.IRA.ToString().ToLower(), 
+                    AccountType.ROTH.ToString().ToLower()));
+                lines.Add(Row("---", "---", "---:", "---:", "---:"));
+                foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
                 {
-                    var e = exposures.First(x => x.Class == c && x.Location == l);
-                    percent = 100 * (decimal)e.Value / TotalValue;
+                    foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                    {
+                        lines.Add(Row(
+                            c.ToString().ToLower(),
+                            l.ToString().ToLower(),
+                            string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c, l)),
+                            string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c, l)),
+                            string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c, l))
+                        ));
+                    }
                 }
-                return string.Format("{0:0.0}%", percent);
+                lines.Add("");
             }
-            foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-            {
-                foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                {
-                    lines.Add(Row(
-                        c.ToString().ToLower(),
-                        l.ToString().ToLower(),
-                        GetValue(AccountType.BROKERAGE, c, l),
-                        GetValue(AccountType.IRA, c, l),
-                        GetValue(AccountType.ROTH, c, l)
-                    ));
-                }
-            }
-            lines.Add("");
 
             // POSIITONS
             if (Positions?.Any() == true)
             {
-                lines.Add("## positions");
+                lines.Add($"## positions ({NumberOfPositions})");
                 lines.Add(Row("account", "symbol", "value", "description"));
                 lines.Add(Row("---", "---", "---:", "---"));
                 foreach (var a in Accounts.OrderBy(x => x.Name))
@@ -178,88 +205,9 @@ namespace PortfolioPicker.App
                     }
                 }
             }
+            lines.Add("");
 
             return lines;
-        }
-
-        /// <summary>
-        /// automatically called when `Accounts` is set.
-        /// </summary>
-        private void ComputeStats()
-        {
-            var totalValue = TotalValue = Positions.Sum(x => x.Value);
-            var stockTotal = 0m;
-            var domesticStockTotal = 0m;
-            var bondTotal = 0m;
-            var domesticBondTotal = 0m;
-            var erWeightedSum = 0.0;
-
-            // portfolio stats
-            foreach (var p in Positions)
-            {
-                var fund = Fund.Get(p.Symbol);
-                stockTotal += (decimal)(fund.StockRatio * (double)p.Value);
-                domesticStockTotal += (decimal)(fund.StockRatio * fund.DomesticRatio * (double)p.Value);
-
-                bondTotal += (decimal)(fund.BondRatio * (double)p.Value);
-                domesticBondTotal += (decimal)(fund.BondRatio * fund.DomesticRatio * (double)p.Value);
-
-                erWeightedSum += fund.ExpenseRatio * (double)p.Value;
-            }
-            ExpenseRatio = totalValue == 0 ? 0 : erWeightedSum / (double)totalValue;
-
-            Exposures = new List<Exposure>
-            {
-                new Exposure(
-                    AssetClass.Stock,
-                    AssetLocation.Domestic,
-                    (double)domesticStockTotal / (double)totalValue),
-                new Exposure(
-                    AssetClass.Stock,
-                    AssetLocation.International,
-                    (double)(stockTotal - domesticStockTotal) / (double)totalValue),
-                new Exposure(
-                    AssetClass.Bond,
-                    AssetLocation.Domestic,
-                    (double)domesticBondTotal / (double)totalValue),
-                new Exposure(
-                    AssetClass.Bond,
-                    AssetLocation.International,
-                    (double)(bondTotal - domesticBondTotal) / (double)totalValue),
-            };
-
-            // account stats
-            var ad = new Dictionary<AccountType, IList<Exposure>>();
-            foreach (var a in Accounts)
-            {
-                // get current exposures for this account type
-                if (!ad.TryGetValue(a.Type, out var accountTypeExposures))
-                {
-                    accountTypeExposures = new List<Exposure>
-                    {
-                        new Exposure(AssetClass.Stock, AssetLocation.Domestic),
-                        new Exposure(AssetClass.Stock, AssetLocation.International),
-                        new Exposure(AssetClass.Bond, AssetLocation.Domestic),
-                        new Exposure(AssetClass.Bond, AssetLocation.International)
-                    };
-                    ad.Add(a.Type, accountTypeExposures);
-                }
-
-                // calculate each position's contributions to various exposures of interest
-                foreach (var p in a.Positions)
-                {
-                    var fund = Fund.Get(p.Symbol);
-                    foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                    {
-                        foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                        {
-                            var e = accountTypeExposures.First(x => x.Class == c && x.Location == l);
-                            e.Value += (double)p.Value * fund.Ratio(c) * fund.Ratio(l);
-                        }
-                    }
-                }
-            }
-            ExposuresByAccountType = ad;
         }
     }
 }

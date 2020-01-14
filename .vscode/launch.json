@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
-            "args": ["load /Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml -o /Users/zacox/work/build/"],
+            "args": ["load","/Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml", "-o", "/Users/zacox/work/build/"],
             "cwd": "${workspaceFolder}/CLI",
             "console": "internalConsole",
             "stopAtEntry": false
@@ -21,7 +21,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
-            "args": ["rebalance","/Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml", "-o", "/Users/zacox/work/build/"],
+            "args": ["rebalance","/Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml", "-db", "100", "-o", "/Users/zacox/work/build/"],
             "cwd": "${workspaceFolder}/CLI",
             "console": "internalConsole",
             "stopAtEntry": false

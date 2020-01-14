@@ -2,25 +2,20 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
+using YamlDotNet.Serialization;
 
 namespace PortfolioPicker.App
 {
-    [DataContract]
     public class Account
     {
-        [IgnoreDataMember]
-        private IList<Position> _positions;
-
-        [DataMember(IsRequired = true)]
         public string Name { get; set; }
 
-        [DataMember(IsRequired = true)]
         public string Brokerage { get; set; }
 
-        [DataMember(IsRequired = true)]
         public AccountType Type { get; set; } = AccountType.BROKERAGE;
 
-        [DataMember(IsRequired = true)]
+        [YamlIgnore]
+        private IList<Position> _positions;
         public IList<Position> Positions
         {
             get => _positions;
@@ -52,15 +47,38 @@ namespace PortfolioPicker.App
                 }
                 
                 // positions are ok, sum up thier total value
-                Value = value.Sum(x => x.Value);
+                Value = _positions.Sum(x => x.Value);
+
+                // compute their exposures
+                Exposures = new List<Exposure>();
+                foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
+                    foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                        Exposures.Add(new Exposure(c, l));
+
+                // calculate each position's contributions to various exposures of interest
+                foreach (var p in _positions)
+                {
+                    var fund = Fund.Get(p.Symbol);
+                    foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
+                    {
+                        foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                        {
+                            var e = Exposures.First(x => x.Class == c && x.Location == l);
+                            e.Value += (double)p.Value * fund.Ratio(c) * fund.Ratio(l);
+                        }
+                    }
+                }
             }
         }
 
         /// <summary>
         /// sum of values of all positions
         /// </summary>
-        [IgnoreDataMember]
+        [YamlIgnore]
         internal decimal Value { get; private set; }
+
+        [YamlIgnore]
+        public IList<Exposure> Exposures {get; private set;}
 
         public override string ToString() => $"{Name}@{Brokerage}";
 
