@@ -28,7 +28,7 @@ namespace PortfolioPicker.App
     /// </summary>
     public class Picker
     {
-        private Portfolio Portfolio { get; set; }
+        public Portfolio Portfolio { get; set; }
 
         public static Picker Create(
             IList<Account> accounts,

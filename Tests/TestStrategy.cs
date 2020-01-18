@@ -473,16 +473,18 @@ namespace PortfolioPicker.Tests
             }
 
             // output percentages should match input requests
-            foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                Assert.Equal(50, p.PercentOfPortfolio(c));
-
-            foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                Assert.Equal(50, p.PercentOfPortfolio(l));
+            Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Stock));
+            Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Bond));
+            Assert.Equal(50, p.PercentOfPortfolio(AssetLocation.Domestic));
+            Assert.Equal(50, p.PercentOfPortfolio(AssetLocation.International));
 
             foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
             {
                 foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                 {
+                    if (c == AssetClass.None || l == AssetLocation.None)
+                        continue; // tested above
+
                     Assert.Equal(25, p.PercentOfPortfolio(c, l));
                 }
             }

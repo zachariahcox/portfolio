@@ -46,12 +46,21 @@ namespace PortfolioPicker.App
 
         internal double Ratio(AssetClass c)
         {
-            return AssetClass.Stock == c ? StockRatio : BondRatio;
+            switch(c)
+            {
+                case AssetClass.Stock: return StockRatio;
+                case AssetClass.Bond: return BondRatio;
+                default: return 0.0;
+            }
         }
 
         internal double Ratio(AssetLocation l)
         {
-            return AssetLocation.Domestic == l ? DomesticRatio : InternationalRatio;
+            switch(l){
+                case AssetLocation.Domestic: return DomesticRatio;
+                case AssetLocation.International: return InternationalRatio;
+                default: return 0.0;
+            }
         }
 
         public override string ToString()

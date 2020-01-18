@@ -2,6 +2,7 @@
 {
     public enum AssetLocation
     {
+        None,
         Domestic,
         International
     }

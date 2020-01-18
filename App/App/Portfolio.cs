@@ -67,53 +67,34 @@ namespace PortfolioPicker.App
             return new Portfolio { Accounts = accounts };
         }
 
-        public double PercentOfPortfolio(AssetClass c, AssetLocation l) => 
-            100 * Value(c, l) / (double)TotalValue;
-        public double PercentOfPortfolio(AssetClass c) => 
-            100 * Value(c) / (double)TotalValue;
-        public double PercentOfPortfolio(AssetLocation l) => 
-            100 * Value(l) / (double)TotalValue;
+        public double PercentOfPortfolio(AssetClass c, AssetLocation l) => 100 * Value(c, l) / (double)TotalValue;
+        public double PercentOfPortfolio(AssetClass c) => PercentOfPortfolio(c, AssetLocation.None);
+        public double PercentOfPortfolio(AssetLocation l) => PercentOfPortfolio(AssetClass.None, l);
 
         public double PercentOfAssetType(
             AccountType t, 
             AssetClass c, 
             AssetLocation l)
         {
-            var total = Value(c, l);
+            var total = Value(c, l); // ignore account type
             return total <= 0 ? 0.0 : 100 * Value(t, c, l) / total;
         }
 
-        public double PercentOfAssetType(AccountType t, AssetClass c){
-            var total = Value(c);
-            return total <= 0 ? 0.0 : 100 * Value(t, c) / total;
-        }
+        public double PercentOfAssetType(AccountType t, AssetClass c) => PercentOfAssetType(t, c, AssetLocation.None);
 
-        public double Value(AccountType t, AssetClass c, AssetLocation l) =>  Accounts
-            .Where(x => x.Type == t)
+        public double Value(
+            AccountType t, 
+            AssetClass c, 
+            AssetLocation l) =>  Accounts
+            .Where(x => (t == AccountType.None || x.Type == t))
             .SelectMany(x => x.Exposures)
-            .Where(x => x.Class == c && x.Location == l)
+            .Where(x => (c == AssetClass.None || x.Class == c) && (l == AssetLocation.None || x.Location == l))
             .Sum(x => x.Value);
     
-        public double Value(AccountType t, AssetClass c) =>  Accounts
-            .Where(x => x.Type == t)
-            .SelectMany(x => x.Exposures)
-            .Where(x => x.Class == c)
-            .Sum(x => x.Value);
-
-        public double Value(AssetClass c, AssetLocation l) => Accounts
-            .SelectMany(x => x.Exposures)
-            .Where(x => x.Class == c && x.Location == l)
-            .Sum(x => x.Value);
-
-        public double Value(AssetClass c) => Accounts
-            .SelectMany(x => x.Exposures)
-            .Where(x => x.Class == c)
-            .Sum(x => x.Value);
-
-        public double Value(AssetLocation l) => Accounts
-            .SelectMany(x => x.Exposures)
-            .Where(x => x.Location == l)
-            .Sum(x => x.Value);
+        public double Value(AccountType t, AssetClass c) =>  Value(t, c, AssetLocation.None);
+        public double Value(AssetClass c, AssetLocation l) => Value(AccountType.None, c, l);
+        public double Value(AssetClass c) => Value(AccountType.None, c, AssetLocation.None);
+        public double Value(AssetLocation l) => Value(AccountType.None, AssetClass.None, l);
 
         protected string Row(params object[] values) => "|" + string.Join("|", values) + "|";
 
@@ -132,20 +113,53 @@ namespace PortfolioPicker.App
             return serializer.Serialize(Accounts);
         }
 
-        public virtual IList<string> ToMarkdown()
+        private double NotNan(double d) => double.IsNaN(d) ? 0.0 : d;
+
+        private string GetRow(AssetClass c, AssetLocation l)
         {
-            double NotNan(double d){
-                return double.IsNaN(d) ? 0.0 : d;
-            }
-            
+            var percentOfPortfolio = PercentOfPortfolio(c, l);
+
+            return Row(
+                c == AssetClass.None ? "*" : c.ToString().ToLower(),
+                l == AssetLocation.None ? "*" : l.ToString().ToLower()
+                
+                // total value
+                , string.Format("${0:n2}", TotalValue * (decimal)percentOfPortfolio / 100)
+
+                // percent of portfolio
+                , string.Format("{0:0.0}%", percentOfPortfolio)
+
+                // percent of asset class
+                , string.Format("{0:0.0}%", NotNan(100 * percentOfPortfolio / PercentOfPortfolio(c)))
+
+                // percent of asset location
+                , string.Format("{0:0.0}%", NotNan(100 * percentOfPortfolio / PercentOfPortfolio(l)))
+
+                // percent of asset category in brokerage accounts
+                , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c, l))
+
+                // percent of asset category in ira accounts
+                , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c, l))
+
+                // percent of asset category in roth accounts
+                , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c, l))
+                );
+        }
+
+        /// <summary>
+        /// produces a markdown report description of how current portfolio is different from reference
+        /// </summary>
+        public virtual IList<string> ToMarkdown(Portfolio reference = null)
+        {
             var lines = new List<string>
             {
-                // STATS
                 "## highlights",
                 Row("stat", "value"),
                 Row("---", "---"),
-                Row("total value of assets", string.Format("${0:n2}", TotalValue)),
-                Row("total expense ratio", string.Format("{0:0.0000}", NotNan(ExpenseRatio))),
+                Row("total value of assets", 
+                    string.Format("${0:n2}", TotalValue)),                    
+                Row("total expense ratio", 
+                    string.Format("{0:0.0000}", NotNan(ExpenseRatio))),
                 Row("morningstar xray", MdUrl(
                     "upload associated csv", 
                     "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page")),
@@ -156,45 +170,20 @@ namespace PortfolioPicker.App
             if (Accounts?.Any() == true)
             {
                 lines.Add("## composition");
-                lines.Add(Row("class", "location", "% total", "% class", "value", 
-                    AccountType.BROKERAGE.ToString().ToLower(), 
-                    AccountType.IRA.ToString().ToLower(), 
-                    AccountType.ROTH.ToString().ToLower()
+                lines.Add(Row("class", "location", "value"
+                    , "% total", "% class", "% location"
+                    , AccountType.BROKERAGE.ToString().ToLower() 
+                    , AccountType.IRA.ToString().ToLower()
+                    , AccountType.ROTH.ToString().ToLower()
                     ));
-                lines.Add(Row("---", "---", "---:", "---:", "---:", "---:", "---:", "---:"));
+
+                lines.Add(Row("---", "---", "---:",
+                    "---:", "---:", "---:", 
+                    "---:", "---:", "---:"));
+
                 foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                {
-                    var percent = PercentOfPortfolio(c);
-                    lines.Add(Row(
-                        c.ToString().ToLower(),
-                        "*"
-                        
-                        , string.Format("{0:0.0}%", percent)
-                        , string.Format("{0:0.0}%", 100)
-                        , string.Format("${0:n2}", TotalValue * (decimal)percent / 100)
-
-                        , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c))
-                        , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c))
-                        , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c))
-                        ));
-
                     foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                    {
-                        var e = PercentOfPortfolio(c, l);
-                        lines.Add(Row(
-                            c.ToString().ToLower(),
-                            l.ToString().ToLower()
-
-                            , string.Format("{0:0.0}%", e)
-                            , string.Format("{0:0.0}%", NotNan(100 * e / PercentOfPortfolio(c)))
-                            , string.Format("${0:n2}", TotalValue * (decimal)e / 100)
-
-                            , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c, l))
-                            , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c, l))
-                            , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c, l))
-                            ));
-                    }
-                }
+                        lines.Add(GetRow(c, l));
                 lines.Add("");
             }
 
@@ -205,21 +194,21 @@ namespace PortfolioPicker.App
                 lines.Add(Row("account", "symbol", "value", "description"));
                 lines.Add(Row("---", "---", "---:", "---"));
                 foreach (var a in Accounts.OrderBy(x => x.Name))
-                {
                     foreach (var p in a.Positions.OrderByDescending(x => x.Value))
-                    {
-                        var f = Fund.Get(p.Symbol);
-                        lines.Add(Row(a.Name, SymbolUrl(p.Symbol), string.Format("${0:n2}", p.Value), f.Description));
-                    }
-                }
+                        lines.Add(Row(
+                            a.Name, 
+                            SymbolUrl(p.Symbol), 
+                            string.Format("${0:n2}", p.Value), 
+                            Fund.Get(p.Symbol).Description));
+                lines.Add("");
             }
-            lines.Add("");
-
+            
             return lines;
         }
 
         /// <summary>
-        /// produce CSV file compatible with: https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page
+        /// produce CSV file compatible with: 
+        /// https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page
         /// </summary>
         public IList<string> ToXrayCsv()
         {

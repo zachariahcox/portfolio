@@ -112,6 +112,7 @@ namespace PortfolioPicker.CLI
                         ? double.Parse(domesticBondPercent.Value()) / 100.0
                         : 0.7;
 
+                    var original = picker.Portfolio;
                     var portfolio = picker.Rebalance(
                         stockRatio: stockRatio,
                         domesticStockRatio: domesticStockRatio,
@@ -129,7 +130,7 @@ namespace PortfolioPicker.CLI
 
                     var reportPath = Path.Combine(d, $"portfolio_{today}_orders.md");
                     Console.WriteLine("orders: " + reportPath);
-                    File.WriteAllLines(reportPath, portfolio.ToMarkdown());
+                    File.WriteAllLines(reportPath, portfolio.ToMarkdown(original));
                 });
             });
             return app.Execute(args);

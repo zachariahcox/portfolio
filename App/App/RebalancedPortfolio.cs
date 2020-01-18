@@ -13,9 +13,9 @@ namespace PortfolioPicker.App
 
         public IList<string> Errors { get; set; }
 
-        public override IList<string> ToMarkdown()
+        public override IList<string> ToMarkdown(Portfolio reference)
         {
-            var lines = base.ToMarkdown();
+            var lines = base.ToMarkdown(reference);
 
             // ORDERS
             if (Orders?.Any() == true)
