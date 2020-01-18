@@ -83,10 +83,21 @@ namespace PortfolioPicker.App
             return total <= 0 ? 0.0 : 100 * Value(t, c, l) / total;
         }
 
+        public double PercentOfAssetType(AccountType t, AssetClass c){
+            var total = Value(c);
+            return total <= 0 ? 0.0 : 100 * Value(t, c) / total;
+        }
+
         public double Value(AccountType t, AssetClass c, AssetLocation l) =>  Accounts
             .Where(x => x.Type == t)
             .SelectMany(x => x.Exposures)
             .Where(x => x.Class == c && x.Location == l)
+            .Sum(x => x.Value);
+    
+        public double Value(AccountType t, AssetClass c) =>  Accounts
+            .Where(x => x.Type == t)
+            .SelectMany(x => x.Exposures)
+            .Where(x => x.Class == c)
             .Sum(x => x.Value);
 
         public double Value(AssetClass c, AssetLocation l) => Accounts
@@ -139,57 +150,49 @@ namespace PortfolioPicker.App
                     "upload associated csv", 
                     "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page")),
                 "", // new line
-
-                // COMPOSITION
-                "## position composition",
-                Row("class", "location", "% total", "% class", "value"),
-                Row("---", "---", "---:", "---:", "---:")
             };
-            foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-            {
-                var percent = PercentOfPortfolio(c);
-                lines.Add(Row(
-                    c.ToString().ToLower(),
-                    "*",
-                    string.Format("{0:0.0}%", percent),
-                    string.Format("{0:0.0}%", 100),
-                    string.Format("${0:n2}", TotalValue * (decimal)percent / 100)
-                    ));
-
-                foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                {
-                    var e = PercentOfPortfolio(c, l);
-                    lines.Add(Row(
-                        c.ToString().ToLower(),
-                        l.ToString().ToLower(),
-                        string.Format("{0:0.0}%", e),
-                        string.Format("{0:0.0}%", NotNan(100 * e / PercentOfPortfolio(c))),
-                        string.Format("${0:n2}", TotalValue * (decimal)e / 100)
-                        ));
-                }
-            }
-            lines.Add("");
 
             // ACCOUNT STATS
             if (Accounts?.Any() == true)
             {
-                lines.Add("## account composition");
-                lines.Add(Row("class", "location", 
+                lines.Add("## composition");
+                lines.Add(Row("class", "location", "% total", "% class", "value", 
                     AccountType.BROKERAGE.ToString().ToLower(), 
                     AccountType.IRA.ToString().ToLower(), 
-                    AccountType.ROTH.ToString().ToLower()));
-                lines.Add(Row("---", "---", "---:", "---:", "---:"));
+                    AccountType.ROTH.ToString().ToLower()
+                    ));
+                lines.Add(Row("---", "---", "---:", "---:", "---:", "---:", "---:", "---:"));
                 foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
                 {
+                    var percent = PercentOfPortfolio(c);
+                    lines.Add(Row(
+                        c.ToString().ToLower(),
+                        "*"
+                        
+                        , string.Format("{0:0.0}%", percent)
+                        , string.Format("{0:0.0}%", 100)
+                        , string.Format("${0:n2}", TotalValue * (decimal)percent / 100)
+
+                        , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c))
+                        , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c))
+                        , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c))
+                        ));
+
                     foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                     {
+                        var e = PercentOfPortfolio(c, l);
                         lines.Add(Row(
                             c.ToString().ToLower(),
-                            l.ToString().ToLower(),
-                            string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c, l)),
-                            string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c, l)),
-                            string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c, l))
-                        ));
+                            l.ToString().ToLower()
+
+                            , string.Format("{0:0.0}%", e)
+                            , string.Format("{0:0.0}%", NotNan(100 * e / PercentOfPortfolio(c)))
+                            , string.Format("${0:n2}", TotalValue * (decimal)e / 100)
+
+                            , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.BROKERAGE, c, l))
+                            , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.IRA, c, l))
+                            , string.Format("{0:0.0}%", PercentOfAssetType(AccountType.ROTH, c, l))
+                            ));
                     }
                 }
                 lines.Add("");
