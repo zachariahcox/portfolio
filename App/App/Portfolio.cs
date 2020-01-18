@@ -52,17 +52,6 @@ namespace PortfolioPicker.App
         /// <summary>
         /// portfolios are serialized as a list of accounts.
         /// </summary>
-        public string ToYaml()
-        {
-            var serializer = new SerializerBuilder()
-                .WithNamingConvention(new CamelCaseNamingConvention())
-                .Build();
-            return serializer.Serialize(Accounts);
-        }
-
-        /// <summary>
-        /// portfolios are serialized as a list of accounts.
-        /// </summary>
         public static Portfolio FromYaml(string yaml)
         {
             if (string.IsNullOrEmpty(yaml))
@@ -117,7 +106,20 @@ namespace PortfolioPicker.App
 
         protected string Row(params object[] values) => "|" + string.Join("|", values) + "|";
 
-        protected string Url(string _s) => $"[{_s}](https://finance.yahoo.com/quote/{_s}?p={_s})";
+        protected string MdUrl(string anchor, string href) => $"[{anchor}]({href})";
+        
+        protected string SymbolUrl(string s) => MdUrl(s, $"https://finance.yahoo.com/quote/{s}?p={s}");
+
+        /// <summary>
+        /// portfolios are serialized as a list of accounts.
+        /// </summary>
+        public string ToYaml()
+        {
+            var serializer = new SerializerBuilder()
+                .WithNamingConvention(new CamelCaseNamingConvention())
+                .Build();
+            return serializer.Serialize(Accounts);
+        }
 
         public virtual IList<string> ToMarkdown()
         {
@@ -133,6 +135,9 @@ namespace PortfolioPicker.App
                 Row("---", "---"),
                 Row("total value of assets", string.Format("${0:n2}", TotalValue)),
                 Row("total expense ratio", string.Format("{0:0.0000}", NotNan(ExpenseRatio))),
+                Row("morningstar xray", MdUrl(
+                    "upload associated csv", 
+                    "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page")),
                 "", // new line
 
                 // COMPOSITION
@@ -201,12 +206,32 @@ namespace PortfolioPicker.App
                     foreach (var p in a.Positions.OrderByDescending(x => x.Value))
                     {
                         var f = Fund.Get(p.Symbol);
-                        lines.Add(Row(a.Name, Url(p.Symbol), string.Format("${0:n2}", p.Value), f.Description));
+                        lines.Add(Row(a.Name, SymbolUrl(p.Symbol), string.Format("${0:n2}", p.Value), f.Description));
                     }
                 }
             }
             lines.Add("");
 
+            return lines;
+        }
+
+        /// <summary>
+        /// produce CSV file compatible with: https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page
+        /// </summary>
+        public IList<string> ToXrayCsv()
+        {
+            var byPosition = Positions
+                .GroupBy(x => x.Symbol,
+                         (key, values) => new {
+                            Symbol = key,
+                            Value = values.Sum(x => x.Value)})
+                .OrderByDescending(x => x.Value)
+                .ThenBy(x => x.Symbol);
+
+            var lines = new List<string>();
+            lines.Add("Ticker,Dollar Amount");
+            foreach(var g in byPosition)
+                lines.Add($"{g.Symbol},{g.Value}");
             return lines;
         }
     }

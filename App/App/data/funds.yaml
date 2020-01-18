@@ -31,6 +31,8 @@
   expenseRatio: 0.11
   stockRatio: 0
   domesticRatio: 0
+
+# SAS 
 - description: Vanguard Institutional Index Fund Institutional Plus Shares
   symbol: VIIIX
   brokerage: SAS
@@ -83,13 +85,30 @@
   domesticRatio: 1
 
 
-  # Microsoft
+# Microsoft
 - description: LifePath Dynamic 2050 Fund
-  symbol: STLFX
   brokerage: Microsoft
+  symbol: STLFX
   expenseRatio: 0.08
   stockRatio: 0.8
   domesticRatio: 1
+- description: Vanguard 500 Index Fund Investor Shares (Trust)
+  brokerage: Microsoft
+  symbol: VFINX
+  expenseRatio: 0.011
+  stockRatio: 1
+  domesticRatio: 1
+- description: Vanguard Russell 1000 Growth Index Fund (Trust)
+  brokerage: Microsoft
+  symbol: VRGWX
+  expenseRatio: 0.02
+  stockRatio: 1
+  domesticRatio: 1
+- description: International Growth Account (MS)
+  brokerage: Microsoft
+  expenseRatio: .52
+  stockRatio: 1
+  domesticRatio: 0
 
 # Microsoft HSA
 - description: "Schwab S&P 500 Index Fund"

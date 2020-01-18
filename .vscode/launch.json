@@ -27,10 +27,26 @@
             "stopAtEntry": false
         },
         {
-            "name": ".NET Core Attach",
+            "name": "load demo",
             "type": "coreclr",
-            "request": "attach",
-            "processId": "${command:pickProcess}"
-        }
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
+            "args": ["load","${workspaceFolder}/demo/demo.yml", "-o", "${workspaceFolder}/demo"],
+            "cwd": "${workspaceFolder}/CLI",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "rebalance demo",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
+            "args": ["rebalance","${workspaceFolder}/demo/demo.yml", "-db", "100", "-o", "${workspaceFolder}/demo"],
+            "cwd": "${workspaceFolder}/CLI",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
     ]
 }

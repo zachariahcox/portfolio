@@ -45,9 +45,15 @@ namespace PortfolioPicker.CLI
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
                         : portfolioFile.DirectoryName;
-                    var reportPath = Path.Combine(d, $"{Path.GetFileNameWithoutExtension(portfolioFile.Name)}_report.md");
+
+                    var basename = Path.GetFileNameWithoutExtension(portfolioFile.Name);
+                    var reportPath = Path.Combine(d, $"{basename}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdown());
+
+                    var csv = Path.Combine(d, $"{basename}.csv");
+                    Console.WriteLine("csv: " + csv);
+                    File.WriteAllLines(csv, portfolio.ToXrayCsv());
                 });
             });
 

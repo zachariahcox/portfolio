@@ -1,0 +1,30 @@
+- name: my 401k
+  brokerage: Fidelity
+  type: IRA
+  positions:
+  - symbol: FXNAX
+    value: 50
+  - symbol: FZILX
+    value: 50
+- name: my HSA
+  brokerage: Fidelity
+  type: ROTH
+  positions:
+  - symbol: FZROX
+    value: 100
+- name: my regular taxable
+  brokerage: Vanguard
+  positions:
+  - symbol: MSFT
+    value: 100
+    hold: true
+  - symbol: VTIAX
+    value: 100
+- name: my roth account
+  brokerage: Vanguard
+  type: ROTH
+  positions:
+  - symbol: VTSAX
+    value: 70
+  - symbol: VTIAX
+    value: 30
