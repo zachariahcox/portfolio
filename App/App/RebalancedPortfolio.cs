@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace PortfolioPicker.App
 {
@@ -7,13 +8,38 @@ namespace PortfolioPicker.App
     {
         public RebalancedPortfolio(IList<Account> accounts)
         : base(accounts)
-        {
-            
+        {   
         }
 
         public IList<Exposure> TargetExposureRatios {get; set;}
 
         public IList<Order> Orders { get; set; }
+
+        public override IList<string> GetMarkdownReportSummary(Portfolio reference = null)
+        {
+            var lines = base.GetMarkdownReportSummary(reference);
+                    
+            if (TargetExposureRatios?.Any() == true)
+            {
+                // percent stocks
+                var p = TargetExposureRatios
+                    .Where(x => x.Class == AssetClass.Stock)
+                    .Sum(x => x.Value) * 100;
+                lines.Add(Row("target % stocks", string.Format("{0:0.0}%", p)));
+
+                // percent bonds
+                p = TargetExposureRatios
+                    .Where(x => x.Class == AssetClass.Bond)
+                    .Sum(x => x.Value) * 100;
+                lines.Add(Row("target % bonds", string.Format("{0:0.0}%", p)));
+
+                // rebalance score
+                lines.Add(Row("rebalance score", string.Format("{0:0.0000}", Score)));
+                
+            }
+
+            return lines;
+        }
 
         public override IList<string> ToMarkdown(Portfolio reference)
         {

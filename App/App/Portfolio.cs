@@ -229,6 +229,32 @@ namespace PortfolioPicker.App
                 );
         }
 
+        public virtual IList<string> GetMarkdownReportSummary(Portfolio reference = null)
+        {
+            var lines = new List<string>();
+            lines.Add("## summary");
+            lines.Add(Row("stat", "value"));
+            lines.Add(Row("---", "---"));
+            lines.Add(Row("total value of assets", string.Format("${0:n2}", TotalValue)));
+
+            if (reference == null)
+            {
+                lines.Add(Row("total expense ratio", string.Format("{0:0.0000}", NotNan(ExpenseRatio))));
+            }
+            else 
+            {
+                lines.Add(Row("total expense ratio", 
+                    string.Format("{0:0.0000} (previous: {1:0.0000})", 
+                        NotNan(ExpenseRatio),
+                        NotNan(reference.ExpenseRatio))));
+            }
+            
+            lines.Add(Row("morningstar xray", MdUrl(
+                    "upload associated csv", 
+                    "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page")));
+            return lines;
+        }
+
         /// <summary>
         /// produces a markdown report description of how current portfolio is different from reference
         /// </summary>
@@ -236,29 +262,7 @@ namespace PortfolioPicker.App
         {
             var lines = new List<string>();
 
-            lines.Add("## highlights");
-            lines.Add(Row("stat", "value"));
-            lines.Add(Row("---", "---"));
-            lines.Add(Row("total value of assets", string.Format("${0:n2}", TotalValue)));
-            if (reference == null)
-            {
-                lines.Add(Row("total expense ratio", 
-                string.Format("{0:0.0000}", NotNan(ExpenseRatio))));
-            }
-            else 
-            {
-                lines.Add(Row("total expense ratio", 
-                    string.Format("{0:0.0000} ({1}{2:0.0000})", 
-                        NotNan(ExpenseRatio),
-                        ExpenseRatio - reference.ExpenseRatio > 0 ? "+" : "",
-                        ExpenseRatio - reference.ExpenseRatio)));
-            }
-            
-            if (Score > 0)
-                lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
-            lines.Add(Row("morningstar xray", MdUrl(
-                    "upload associated csv", 
-                    "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page")));
+            lines.AddRange(GetMarkdownReportSummary(reference));
             lines.Add("");
 
             // ACCOUNT STATS
