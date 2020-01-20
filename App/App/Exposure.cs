@@ -30,6 +30,25 @@ namespace PortfolioPicker.App
 
         public AccountType[] Preferences => GetPreferences(this.Class, this.Location);
 
+
+        /// <summary>
+        /// Based on the target exposures and total money, compute target dollar-value per exposure type.
+        ///  Strategy: 
+        ///  * accounts prefer funds sponsored by their brokerage
+        ///    * Helps avoid fees?
+        ///
+        ///  * roth accounts should prioritize stocks over bonds
+        ///    * growth can be withdrawn tax-free, prioritize high-growth-potential products.
+        ///
+        ///  * regular brokerage accounts should prioritize international assets over domestic
+        ///    * foreign income tax credit is deductible
+        /// 
+        ///  * 401k accounts should prioritize bonds and avoid international assets
+        ///    * because growth is taxable, prioritize low-growth products
+        /// 
+        ///  * tax-advantaged accounts should be generally preferred over brokerage accounts
+        //
+        /// </summary>
         public static AccountType[] GetPreferences(
             AssetClass c,
             AssetLocation l)
@@ -42,8 +61,8 @@ namespace PortfolioPicker.App
                     // stock, domestic
                     return new AccountType[] {
                         AccountType.ROTH,
+                        AccountType.IRA,
                         AccountType.BROKERAGE,
-                        AccountType.IRA
                     };
                 }
                 else 
@@ -62,9 +81,9 @@ namespace PortfolioPicker.App
                 {
                     // bond, domestic
                     return new AccountType[] {
+                        AccountType.BROKERAGE, // not ideal, but you have to put something in the brokerage accounts
                         AccountType.IRA,
-                        AccountType.BROKERAGE,
-                        AccountType.ROTH,
+                        AccountType.ROTH, // this is the worst
                     };
                 }
                 else 

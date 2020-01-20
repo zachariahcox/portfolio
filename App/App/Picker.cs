@@ -4,28 +4,6 @@ using System.Linq;
 
 namespace PortfolioPicker.App
 {
-    /// <summary>
-    /// Based on the target exposures and total money, compute target dollar-value per exposure type.
-    ///  Strategy: 
-    ///  * accounts prefer funds sponsored by their brokerage
-    ///    * Helps avoid fees?
-    ///
-    ///  * roth accounts should prioritize stocks over bonds
-    ///    * Growth can be withdrawn tax-free, prioritize high-growth-potential products.
-    ///
-    ///  * regular taxable accounts should prioritize international assets over domestic
-    ///    * foreign income tax credit is deductible
-    /// 
-    ///  * 401k accounts should prioritize bonds and avoid international assets
-    ///    * Because growth is taxable, prioritize low-growth products
-    ///
-    /// This basically works out to the following exposure-to-account type prioritization list:
-    ///  dom stocks -> roth, tax, 401k
-    ///  int stocks -> tax, roth, 401k
-    ///  dom bonds  -> 401k, roth, tax
-    ///  int bonds  -> tax, 401k, roth
-    //
-    /// </summary>
     public class Picker
     {
         // public static Picker Create(
