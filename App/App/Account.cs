@@ -45,17 +45,9 @@ namespace PortfolioPicker.App
                 {
                     throw new ArgumentException($"Invalid portfolio: \"{this.Name}\" has multiple positions for {string.Join(", ", duplicatedSymbols)}");
                 }
-                
-                // positions are ok, sum up thier total value
-                Value = _positions.Sum(x => x.Value);
-
-                // compute their exposures
-                Exposures = new List<Exposure>();
-                foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                    foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                        Exposures.Add(new Exposure(c, l));
 
                 // calculate each position's contributions to various exposures of interest
+                Exposures = new List<Exposure>();
                 foreach (var p in _positions)
                 {
                     var fund = Fund.Get(p.Symbol);
@@ -63,19 +55,20 @@ namespace PortfolioPicker.App
                     {
                         foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                         {
-                            var e = Exposures.First(x => x.Class == c && x.Location == l);
-                            e.Value += (double)p.Value * fund.Ratio(c) * fund.Ratio(l);
+                            var e = Exposures.FirstOrDefault(x => x.Class == c && x.Location == l);
+                            if (e is null)
+                            {
+                                e = new Exposure(c, l);
+                                Exposures.Add(e);
+                            }
+                            e.Value += p.Value * fund.Ratio(c) * fund.Ratio(l);
                         }
                     }
                 }
             }
         }
-
-        /// <summary>
-        /// sum of values of all positions
-        /// </summary>
-        [YamlIgnore]
-        internal decimal Value { get; private set; }
+        
+        internal double Value => Positions.Sum(x => x.Value);
 
         [YamlIgnore]
         public IList<Exposure> Exposures {get; private set;}

@@ -5,13 +5,15 @@ namespace PortfolioPicker.App
 {
     public class RebalancedPortfolio : Portfolio
     {
-        public double Score { get; set; }
+        public RebalancedPortfolio(IList<Account> accounts)
+        : base(accounts)
+        {
+            
+        }
+
+        public IList<Exposure> TargetExposureRatios {get; set;}
 
         public IList<Order> Orders { get; set; }
-
-        public IList<string> Warnings { get; set; }
-
-        public IList<string> Errors { get; set; }
 
         public override IList<string> ToMarkdown(Portfolio reference)
         {
@@ -30,7 +32,9 @@ namespace PortfolioPicker.App
                 {
                     lines.Add(Row(o.AccountName, o.Action, SymbolUrl(o.Symbol), string.Format("${0:n2}", o.Value)));
                 }
+                lines.Add("");
             }
+
             return lines;
         }
     }

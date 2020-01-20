@@ -95,25 +95,24 @@ namespace PortfolioPicker.CLI
 
                 cmd.OnExecute(() =>
                 {
+                    // load yaml files
                     var data = File.ReadAllText(portfolioPath.Value);
-                    var picker = Picker.Create(
-                        portfolioYaml: data,
-                        fundsYaml: funds.Value());
+                    var original = Portfolio.FromYaml(data);
+                    Fund.FromYaml(funds.Value());
 
+                    // finalize ratios
                     var stockRatio = stockPercent.HasValue()
                         ? double.Parse(stockPercent.Value()) / 100.0
                         : 0.9; // default to 90% stocks
-
                     var domesticStockRatio = domesticStockPercent.HasValue()
                         ? double.Parse(domesticStockPercent.Value()) / 100.0
                         : 0.6;
-
                     var domesticBondRatio = domesticBondPercent.HasValue()
                         ? double.Parse(domesticBondPercent.Value()) / 100.0
                         : 0.7;
 
-                    var original = picker.Portfolio;
-                    var portfolio = picker.Rebalance(
+                    var portfolio = Picker.Rebalance(
+                        portfolio: original,
                         stockRatio: stockRatio,
                         domesticStockRatio: domesticStockRatio,
                         domesticBondRatio: domesticBondRatio);
@@ -121,7 +120,6 @@ namespace PortfolioPicker.CLI
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
                         : new FileInfo(portfolioPath.Value).DirectoryName;
-
                     var today = DateTime.Now.ToString("MMddyyyy");
 
                     var balancedPortfolioPath = Path.Combine(d, $"portfolio_{today}.yaml");

@@ -28,6 +28,8 @@ namespace PortfolioPicker.App
 
         public override string ToString() => $"{Class}:{Location}:{Value}";
 
+        public AccountType[] Preferences => GetPreferences(this.Class, this.Location);
+
         public static AccountType[] GetPreferences(
             AssetClass c,
             AssetLocation l)

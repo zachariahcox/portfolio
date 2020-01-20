@@ -14,8 +14,9 @@ namespace PortfolioPicker.Web.Controllers
             using (var reader = new StreamReader(Request.Body))
             {
                 var yaml = reader.ReadToEnd();
-                var p = Picker.Create(yaml);
-                return p.Rebalance(
+                var original = Portfolio.FromYaml(yaml);
+                return Picker.Rebalance(
+                    original,
                     stockRatio: .9,
                     domesticStockRatio: .6,
                     domesticBondRatio: .7);

@@ -28,69 +28,63 @@ namespace PortfolioPicker.App
     /// </summary>
     public class Picker
     {
-        public Portfolio Portfolio { get; set; }
+        // public static Picker Create(
+        //     IList<Account> accounts,
+        //     IList<Fund> funds = null)
+        // {
+        //     var portfolio = new Portfolio { Accounts = accounts };
+        //     Fund.Add(funds);
+        //     return new Picker
+        //     {
+        //         Portfolio = portfolio
+        //     };
+        // }
 
-        public static Picker Create(
-            IList<Account> accounts,
-            IList<Fund> funds = null)
-        {
-            var portfolio = new Portfolio { Accounts = accounts };
-            Fund.Add(funds);
-            return new Picker
-            {
-                Portfolio = portfolio
-            };
-        }
-
-        public static Picker Create(
-            string portfolioYaml = null,
-            string fundsYaml = null)
-        {
-            Fund.FromYaml(fundsYaml);
-            return new Picker
-            {
-                Portfolio = Portfolio.FromYaml(portfolioYaml)
-            };
-        }
+        // public static Picker Create(
+        //     string portfolioYaml = null,
+        //     string fundsYaml = null)
+        // {
+        //     Fund.FromYaml(fundsYaml);
+        //     return new Picker
+        //     {
+        //         Portfolio = Portfolio.FromYaml(portfolioYaml)
+        //     };
+        // }
 
         /// <summary>
         /// follow a strategy to produce positions
         /// </summary>
-        public RebalancedPortfolio Rebalance(
+        public static RebalancedPortfolio Rebalance(
+            Portfolio portfolio,
             double stockRatio,
             double domesticStockRatio,
             double domesticBondRatio)
         {
-            if (Portfolio == null)
-            {
-                return null;
-            }
-
             // compute all possible orders of exposure priorities
             //   and return the product with the highest score
             var targetRatios = ComputeTargetRatios(stockRatio, domesticStockRatio, domesticBondRatio);
-            var exposures = ComputeExposures(targetRatios, Portfolio.TotalValue);
+            var exposures = ComputeExposures(targetRatios, portfolio.TotalValue);
             var result = Permutations(exposures)
-                .Select(x => GeneratePortfolio(Portfolio.Accounts, x))
-                .Where(x => x.Errors.Count == 0)       // no errors
-                .OrderByDescending(x => x.Score)       // best score
-                .ThenByDescending(x => x.ExpenseRatio) // lowest cost
-                .ThenBy(x => x.NumberOfPositions)      // fewest positions
-                .FirstOrDefault();                     // take the best
-
+                .Select(x => GeneratePortfolio(portfolio, x))
+                .Where(x => x.Errors.Count == 0)  // no errors
+                .OrderByDescending(x => x.Score)  // highest score
+                .ThenBy(x => x.ExpenseRatio)      // lowest cost
+                .ThenBy(x => x.NumberOfPositions) // fewest positions
+                .FirstOrDefault();                // take the best
             if (result == null)
             {
                 return null;
             }
 
-            result.Orders = ComputeOrders(Portfolio, result);
+            result.TargetExposureRatios = targetRatios;
+            result.Orders = ComputeOrders(portfolio, result);
             return result;
         }
 
         /// <summary>
         /// produce orders required to move from original portfolio to new one
         /// </summary>
-        private IList<Order> ComputeOrders(
+        private static IList<Order> ComputeOrders(
             Portfolio original,
             Portfolio balanced)
         {
@@ -122,7 +116,7 @@ namespace PortfolioPicker.App
                     {
                         var newP = newA.Positions.FirstOrDefault(x => x.Symbol == s);
                         var oldP = oldA.Positions.FirstOrDefault(x => x.Symbol == s);
-                        var difference = (newP == null ? 0m : newP.Value) - (oldP == null ? 0m : oldP.Value);
+                        var difference = (newP == null ? 0.0 : newP.Value) - (oldP == null ? 0.0 : oldP.Value);
                         orders.Add(Order.Create(a.Name, s, difference));
                     }
                 }
@@ -166,7 +160,7 @@ namespace PortfolioPicker.App
         /// <summary>
         /// create list of <class>Exposure</class>s given three stats.
         /// </summary>
-        private IList<Exposure> ComputeTargetRatios(
+        private static IList<Exposure> ComputeTargetRatios(
             double stockRatio,
             double domesticStockRatio,
             double domesticBondRatio)
@@ -192,14 +186,14 @@ namespace PortfolioPicker.App
             };
         }
 
-        private IList<Exposure> ComputeExposures(
+        private static IList<Exposure> ComputeExposures(
             IList<Exposure> ratios,
-            decimal totalValue)
+            double totalValue)
         {
             return ratios.Select(x => new Exposure(
                 x.Class,
                 x.Location,
-                (double)totalValue * x.Value))
+                totalValue * x.Value))
                 .ToList();
         }
 
@@ -234,20 +228,20 @@ namespace PortfolioPicker.App
         }
 
         private static RebalancedPortfolio GeneratePortfolio(
-            ICollection<Account> accounts,
+            Portfolio portfolio,
             ICollection<Exposure> exposures)
         {
             // setup bookkeeping
             var positions = new List<(Account, Position)>();
             var warnings = new List<string>();
             var errors = new List<string>();
-            var accountRemainders = new Dictionary<Account, decimal>();
-            var exposureRemainders = new Dictionary<Exposure, decimal>();
+            var accountRemainders = new Dictionary<Account, double>();
+            var exposureRemainders = new Dictionary<Exposure, double>();
 
             // function to allocate some resources
             void Buy(
                 Account a, 
-                decimal value, 
+                double value, 
                 string symbol = null, 
                 Fund fund = null, 
                 bool hold = false)
@@ -283,8 +277,8 @@ namespace PortfolioPicker.App
                 {
                     foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                     {
-                        var exposureValue = (decimal)((double)value * fund.Ratio(c) * fund.Ratio(l));
-                        if (exposureValue > 0m)
+                        var exposureValue = value * fund.Ratio(c) * fund.Ratio(l);
+                        if (exposureValue > 0.0)
                         {
                             var _e = exposures.First(x => x.Class == c && x.Location == l);
                             exposureRemainders[_e] -= exposureValue;
@@ -296,9 +290,9 @@ namespace PortfolioPicker.App
             // initialize remainders 
             foreach (var e in exposures)
             {
-                exposureRemainders[e] = (decimal)e.Value;
+                exposureRemainders[e] = e.Value;
             }
-            foreach (var a in accounts)
+            foreach (var a in portfolio.Accounts)
             {
                 accountRemainders[a] = a.Value;
 
@@ -310,6 +304,7 @@ namespace PortfolioPicker.App
             }
 
             // produce optimized positions
+            // exposures are looped-through in exactly the order provided to us
             foreach (var e in exposures)
             {
                 // Do we still need to meet this exposure target?
@@ -319,8 +314,8 @@ namespace PortfolioPicker.App
                 }
 
                 // find accounts with access to the right funds
-                var suitableAccounts = accounts
-                    .Where(a => accountRemainders[a] > 0m)
+                var suitableAccounts = portfolio.Accounts
+                    .Where(a => accountRemainders[a] > 0.0)
                     .Where(a => PickBestFund(e, Fund.GetFunds(a.Brokerage)) != null)
                     .OrderByDescending(a => accountRemainders[a]);
 
@@ -347,7 +342,7 @@ namespace PortfolioPicker.App
 
                         // try to exhaust this exposure with this fund
                         var percentOfThisFundThatAppliesToThisExposureType = f.Ratio(e);
-                        var purchaseValue = Math.Min(accountRemainders[a], exposureRemainders[e] / (decimal)percentOfThisFundThatAppliesToThisExposureType);
+                        var purchaseValue = Math.Min(accountRemainders[a], exposureRemainders[e] / percentOfThisFundThatAppliesToThisExposureType);
 
                         // create position and reduce remainders
                         if (purchaseValue > 0)
@@ -369,6 +364,26 @@ namespace PortfolioPicker.App
                 }
             }
 
+            // convert any remainders into cash positions
+            foreach (var pair in accountRemainders)
+            {
+                var a = pair.Key;
+                var r = pair.Value;
+                if (r > 0)
+                {
+                    var p = new Position
+                    {
+                        Symbol = "CASH",
+                        Value = r
+                    };
+                    positions.Add((a, p));
+                }
+                else if (r < 0.0)
+                {
+                    errors.Add($"Error: Overdraft: {a}, remainder: {r}");
+                }
+            }
+
             // create portfolio
             var newAccounts = positions.GroupBy(
                 x => x.Item1,
@@ -381,62 +396,17 @@ namespace PortfolioPicker.App
                 })
                 .ToList();
 
-            var portfolio = new RebalancedPortfolio {Accounts = newAccounts};
-
-            // SCORE THE PORTFOLIO (bigger is better)
-            var score = 0.0;
-            var bestScorePerCategory = 1.0;
-            var perfectScore = (double)(accounts.Count + exposures.Count);
-
-            // we want to meet our exposure targets
-            foreach (var e in exposures)
-            {
-                var r = exposureRemainders[e];
-                if (r == 0)
-                {
-                    score += bestScorePerCategory;
-                    continue;
-                }
-
-                warnings.Add($"Warning: Imbalance: {e}, remainder: {r}");
-                score += bestScorePerCategory - (double)Math.Abs(r) / e.Value;
-            }
-
-            // we want to allocate all our money
-            var totalValue = 0m;
-            foreach (var a in accounts)
-            {
-                totalValue += a.Value;
-
-                var r = accountRemainders[a];
-                if (r == 0m)
-                {
-                    // cool, it all worked out
-                    score += bestScorePerCategory;
-                }
-                else if (r > 0m)
-                {
-                    // how far were we off? 
-                    score += bestScorePerCategory - (double)r / (double)a.Value;
-                    warnings.Add($"Warning: Underdraft: {a}, remainder: {r}");
-                }
-                else if (r < 0m)
-                {
-                    errors.Add($"Error: Overdraft: {a}, remainder: {r}");
-                }
-            }
-
-            // we want to meet our allocation type goals
-            // foreach (var )
-
-            // compute final score
-            score /= perfectScore;
-
             // save results
-            portfolio.Score = score;
-            portfolio.Warnings = warnings;
-            portfolio.Errors = errors;
-            return portfolio;
+            var rebalanced = new RebalancedPortfolio(newAccounts)
+            {
+                Warnings = warnings,
+                Errors = errors,
+            };
+
+            // score portfolio
+            rebalanced.Score = rebalanced.GetScore(exposures);
+
+            return rebalanced;
         }
     }
 }

@@ -22,9 +22,6 @@ namespace PortfolioPicker.App
         public string Brokerage { get; set; }
 
         [DataMember(IsRequired = true)]
-        public string Url { get; set; }
-
-        [DataMember(IsRequired = true)]
         public double ExpenseRatio { get; set; } = -1.0;
 
         [DataMember(IsRequired = false)]
@@ -112,7 +109,7 @@ namespace PortfolioPicker.App
                     StockRatio = 1,
                     DomesticRatio = 1,
                     ExpenseRatio = 0,
-                    Description = "<unknown, assuming domestic stock>"
+                    Description = "domestic stock?"
                 };
                 Cache.Add(result);
             }

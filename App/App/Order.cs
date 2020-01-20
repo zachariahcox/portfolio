@@ -7,9 +7,9 @@ namespace PortfolioPicker.App
         public static Order Create(
             string accountName,
             string symbol,
-            decimal value)
+            double value)
         {
-            if (value == 0m)
+            if (value == 0.0)
             {
                 return null;
             }
@@ -26,7 +26,7 @@ namespace PortfolioPicker.App
 
         public string Symbol { get; set; }
 
-        public decimal Value { get; set; }
+        public double Value { get; set; }
 
         public string Action { get; set; }
     }
