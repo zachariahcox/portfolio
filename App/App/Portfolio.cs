@@ -240,11 +240,20 @@ namespace PortfolioPicker.App
             lines.Add(Row("stat", "value"));
             lines.Add(Row("---", "---"));
             lines.Add(Row("total value of assets", string.Format("${0:n2}", TotalValue)));
-            lines.Add(Row("total expense ratio", 
-                string.Format("{0:0.0000} ({1}{2:0.0000})", 
-                    NotNan(ExpenseRatio),
-                    ExpenseRatio - reference.ExpenseRatio > 0 ? "+" : "",
-                    ExpenseRatio - reference.ExpenseRatio)));
+            if (reference == null)
+            {
+                lines.Add(Row("total expense ratio", 
+                string.Format("{0:0.0000}", NotNan(ExpenseRatio))));
+            }
+            else 
+            {
+                lines.Add(Row("total expense ratio", 
+                    string.Format("{0:0.0000} ({1}{2:0.0000})", 
+                        NotNan(ExpenseRatio),
+                        ExpenseRatio - reference.ExpenseRatio > 0 ? "+" : "",
+                        ExpenseRatio - reference.ExpenseRatio)));
+            }
+            
             if (Score > 0)
                 lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
             lines.Add(Row("morningstar xray", MdUrl(

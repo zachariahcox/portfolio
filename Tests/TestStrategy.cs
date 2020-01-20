@@ -17,6 +17,9 @@ namespace PortfolioPicker.Tests
             var codeBaseUrl = new Uri(Assembly.GetExecutingAssembly().CodeBase);
             var codeBasePath = Uri.UnescapeDataString(codeBaseUrl.AbsolutePath);
             var dirPath = Path.GetDirectoryName(codeBasePath);
+            dirPath = Path.GetDirectoryName(dirPath);
+            dirPath = Path.GetDirectoryName(dirPath);
+            dirPath = Path.GetDirectoryName(dirPath);
             return Path.Combine(dirPath, relativePath);
         }
 
@@ -224,21 +227,29 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void MarkdownSerialization()
         {
-            var yaml = @"- name: Roth
-  brokerage: Vanguard
-  type: ROTH
-  positions:
-  - symbol: VTSAX
-    value: 100
-  - symbol: VTIAX
-    value: 200
-    hold: true
-";
-        var p = Portfolio.FromYaml(yaml);
-        var expected = File.ReadAllText(GetDataFilePath("Tests/MarkdownSerializationTest.md"));
-        var actual = string.Join(Environment.NewLine, p.ToMarkdown());
-        Assert.Equal(expected, actual);
+            var yaml = File.ReadAllText(GetDataFilePath("MarkdownSerialization/portfolio.yml"));
+            var p = Portfolio.FromYaml(yaml);
+            var expectedFile = GetDataFilePath("MarkdownSerialization/load.md");
+            var actual = string.Join(Environment.NewLine, p.ToMarkdown());
+            // uncomment to update
+            File.WriteAllText(expectedFile, actual);
+            var expected = File.ReadAllText(expectedFile);
+            Assert.Equal(expected, actual);
         }
+
+        // [Fact]
+        // public void MarkdownSerialization_rebalance()
+        // {
+        //     var yaml = File.ReadAllText(GetDataFilePath("MarkdownSerialization/portfolio.yml"));
+        //     var original = Portfolio.FromYaml(yaml);
+        //     var rebalance = Picker.Rebalance(original, .5, .5, .5);
+        //     var expectedFile = GetDataFilePath("MarkdownSerialization/rebalance.md");
+        //     var actual = string.Join(Environment.NewLine, rebalance.ToMarkdown(reference: original));
+        //     // uncomment to update
+        //     // File.WriteAllText(expectedFile, actual);
+        //     var expected = File.ReadAllText(expectedFile);
+        //     Assert.Equal(expected, actual);
+        // }
 
         [Fact]
         public void FromYaml()

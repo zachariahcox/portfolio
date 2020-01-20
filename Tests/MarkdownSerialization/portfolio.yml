@@ -1,0 +1,9 @@
+- name: Roth
+  brokerage: Vanguard
+  type: ROTH
+  positions:
+  - symbol: VTSAX
+    value: 100
+  - symbol: VTIAX
+    value: 200
+    hold: true

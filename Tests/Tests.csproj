@@ -13,10 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="MarkdownSerializationTEst.md" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\App\App.csproj" />
   </ItemGroup>
 
