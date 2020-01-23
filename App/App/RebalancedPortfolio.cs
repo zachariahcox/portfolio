@@ -34,8 +34,10 @@ namespace PortfolioPicker.App
                 lines.Add(Row("target % bonds", string.Format("{0:0.0}%", p)));
 
                 // rebalance score
-                lines.Add(Row("rebalance score", string.Format("{0:0.0000}", Score)));
-                
+                lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
+
+                var exposures = Picker.ComputeExposures(TargetExposureRatios, reference.TotalValue);
+                lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.GetScore(exposures))));
             }
 
             return lines;
@@ -49,14 +51,20 @@ namespace PortfolioPicker.App
             if (Orders?.Any() == true)
             {
                 lines.Add("## orders");
-                lines.Add(Row("account", "action", "symbol", "value"));
-                lines.Add(Row("---", "---", "---", "---:"));
+                lines.Add(Row("account", "action", "symbol", "value", "description"));
+                lines.Add(Row("---", "---", "---", "---:", "---"));
                 foreach (var o in Orders
                     .OrderBy(x => x.AccountName)
                     .ThenByDescending(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
-                    lines.Add(Row(o.AccountName, o.Action, SymbolUrl(o.Symbol), string.Format("${0:n2}", o.Value)));
+                    lines.Add(Row(
+                        o.AccountName, 
+                        o.Action, 
+                        SymbolUrl(o.Symbol), 
+                        string.Format("${0:n0}", o.Value), 
+                        Fund.Get(o.Symbol).Description
+                        ));
                 }
                 lines.Add("");
             }

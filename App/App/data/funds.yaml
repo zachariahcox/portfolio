@@ -32,38 +32,6 @@
   stockRatio: 0
   domesticRatio: 0
 
-# SAS 
-- description: Vanguard Institutional Index Fund Institutional Plus Shares
-  symbol: VIIIX
-  brokerage: SAS
-  expenseRatio: 0.02
-  stockRatio: 1
-  domesticRatio: 1
-- description: Vanguard Mid-Cap Index Fund Institutional Shares
-  symbol: VMCIX
-  brokerage: SAS
-  expenseRatio: 0.04
-  stockRatio: 1
-  domesticRatio: 1
-- description: Vanguard Small-Cap Index Fund Institutional Shares
-  symbol: VSCIX
-  brokerage: SAS
-  expenseRatio: 0.04
-  stockRatio: 1
-  domesticRatio: 1
-- description: Vanguard Developed Markets Index Fund Institutional Shares
-  symbol: VTMNX
-  brokerage: SAS
-  expenseRatio: 0.06
-  stockRatio: 1
-  domesticRatio: 0
-- description: Vanguard Total Bond Market Index Fund
-  symbol: VBTIX
-  brokerage: SAS
-  expenseRatio: 0.04
-  stockRatio: 0
-  domesticRatio: 1
-
 # Fidelity
 - description: Fidelity ZERO Total Market Index Fund
   symbol: FZROX
@@ -92,13 +60,18 @@
   expenseRatio: 0.08
   stockRatio: 0.8
   domesticRatio: 1
-- description: Vanguard 500 Index Fund Investor Shares (Trust)
+- description: Vanguard Short-Term Bond Index Fund Institutional Plus Shares
+  symbol: VBIPX
+  expenseRatio: 0.04
+  stockRatio: 0
+  domesticRatio: 1
+- description: Vanguard Institutional S&P 500 Index Trust
   brokerage: Microsoft
   symbol: VFINX
   expenseRatio: 0.011
   stockRatio: 1
   domesticRatio: 1
-- description: Vanguard Russell 1000 Growth Index Fund (Trust)
+- description: Vanguard Russell 1000 Growth Index Trust
   brokerage: Microsoft
   symbol: VRGWX
   expenseRatio: 0.02

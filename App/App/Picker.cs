@@ -6,29 +6,6 @@ namespace PortfolioPicker.App
 {
     public class Picker
     {
-        // public static Picker Create(
-        //     IList<Account> accounts,
-        //     IList<Fund> funds = null)
-        // {
-        //     var portfolio = new Portfolio { Accounts = accounts };
-        //     Fund.Add(funds);
-        //     return new Picker
-        //     {
-        //         Portfolio = portfolio
-        //     };
-        // }
-
-        // public static Picker Create(
-        //     string portfolioYaml = null,
-        //     string fundsYaml = null)
-        // {
-        //     Fund.FromYaml(fundsYaml);
-        //     return new Picker
-        //     {
-        //         Portfolio = Portfolio.FromYaml(portfolioYaml)
-        //     };
-        // }
-
         /// <summary>
         /// follow a strategy to produce positions
         /// </summary>
@@ -164,7 +141,7 @@ namespace PortfolioPicker.App
             };
         }
 
-        private static IList<Exposure> ComputeExposures(
+        public static IList<Exposure> ComputeExposures(
             IList<Exposure> ratios,
             double totalValue)
         {

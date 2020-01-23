@@ -25,16 +25,16 @@ namespace PortfolioPicker.App
         public double ExpenseRatio { get; set; } = -1.0;
 
         [DataMember(IsRequired = false)]
-        public double DomesticRatio { get; set; } = 1.0;
+        public virtual double DomesticRatio { get; set; } = 1.0;
 
         [IgnoreDataMember]
-        public double InternationalRatio => 1.0 - DomesticRatio;
+        public virtual double InternationalRatio => 1.0 - DomesticRatio;
 
         [DataMember(IsRequired = false)]
-        public double StockRatio { get; set; } = 1.0;
+        public virtual double StockRatio { get; set; } = 1.0;
 
         [IgnoreDataMember]
-        public double BondRatio => 1.0 - StockRatio;
+        public virtual double BondRatio => 1.0 - StockRatio;
 
         internal double Ratio(Exposure e)
         {
@@ -101,16 +101,21 @@ namespace PortfolioPicker.App
             var result = Cache.FirstOrDefault(x => x.Symbol == symbol);
             if (result == null)
             {
-                // found new product apparently? 
-                // TODO load stats from service? 
-                result = new Fund
+                // found new product apparently?
+                if (symbol == "CASH")
+                    result = new Cash();
+                else 
                 {
-                    Symbol = symbol,
-                    StockRatio = 1,
-                    DomesticRatio = 1,
-                    ExpenseRatio = 0,
-                    Description = "domestic stock?"
-                };
+                    // TODO load stats from service? 
+                    result = new Fund
+                    {
+                        Symbol = symbol,
+                        StockRatio = 1,
+                        DomesticRatio = 1,
+                        ExpenseRatio = 0,
+                        Description = "domestic stock?"
+                    };
+                }
                 Cache.Add(result);
             }
             return result;
@@ -159,5 +164,19 @@ namespace PortfolioPicker.App
         {
             get;
         } = new Dictionary<string, IList<Fund>>();
+    }
+
+    public class Cash : Fund 
+    {
+        public Cash()
+        {
+            Symbol = "CASH";
+            ExpenseRatio = 0;
+        }
+
+        public override double DomesticRatio => 0;
+        public override double InternationalRatio => 0;
+        public override double StockRatio => 0;
+        public override double BondRatio => 0;
     }
 }

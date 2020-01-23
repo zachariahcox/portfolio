@@ -127,7 +127,7 @@ namespace PortfolioPicker.App
             foreach (var e in exposures)
             {
                 var actualValue = Value(e.Class, e.Location);
-                score += 1.0 - Math.Abs(actualValue - e.Value);
+                score += 1.0 - Math.Abs((actualValue - e.Value)/TotalValue);
             }
 
             // we want to meet our account type preference goals
@@ -170,8 +170,8 @@ namespace PortfolioPicker.App
                 ? string.Format("+{0:0.0}%", d)
                 : string.Format("{0:0.0}%", d);
             string D(double d) => d == 0 ? "--" : d > 0
-                ? string.Format("+${0:n2}", d)
-                : string.Format("{0:n2}", d);
+                ? string.Format("+${0:n0}", d)
+                : string.Format("{0:n0}", d);
             return Row(
                 c == AssetClass.None ? "*" : c.ToString().ToLower(),
                 l == AssetLocation.None ? "*" : l.ToString().ToLower()
@@ -207,7 +207,7 @@ namespace PortfolioPicker.App
                 l == AssetLocation.None ? "*" : l.ToString().ToLower()
                 
                 // total value
-                , string.Format("${0:n2}", TotalValue * percentOfPortfolio / 100)
+                , string.Format("${0:n0}", TotalValue * percentOfPortfolio / 100)
 
                 // percent of portfolio
                 , string.Format("{0:0.0}%", percentOfPortfolio)
@@ -235,18 +235,13 @@ namespace PortfolioPicker.App
             lines.Add("## summary");
             lines.Add(Row("stat", "value"));
             lines.Add(Row("---", "---"));
-            lines.Add(Row("total value of assets", string.Format("${0:n2}", TotalValue)));
+            lines.Add(Row("total value of assets", string.Format("${0:n0}", TotalValue)));
 
-            if (reference == null)
+            lines.Add(Row("total expense ratio", string.Format("{0:0.0000}", NotNan(ExpenseRatio))));
+            if (reference != null)
             {
-                lines.Add(Row("total expense ratio", string.Format("{0:0.0000}", NotNan(ExpenseRatio))));
-            }
-            else 
-            {
-                lines.Add(Row("total expense ratio", 
-                    string.Format("{0:0.0000} (previous: {1:0.0000})", 
-                        NotNan(ExpenseRatio),
-                        NotNan(reference.ExpenseRatio))));
+                lines.Add(Row("previous total expense ratio", 
+                    string.Format("{0:0.0000}", NotNan(reference.ExpenseRatio))));   
             }
             
             lines.Add(Row("morningstar xray", MdUrl(
@@ -314,7 +309,7 @@ namespace PortfolioPicker.App
                         lines.Add(Row(
                             a.Name, 
                             SymbolUrl(p.Symbol), 
-                            string.Format("${0:n2}", p.Value), 
+                            string.Format("${0:n0}", p.Value), 
                             Fund.Get(p.Symbol).Description));
                 lines.Add("");
             }

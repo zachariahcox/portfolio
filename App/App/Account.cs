@@ -55,6 +55,8 @@ namespace PortfolioPicker.App
                     {
                         foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
                         {
+                            if (c == AssetClass.None || l == AssetLocation.None)
+                                continue;
                             var e = Exposures.FirstOrDefault(x => x.Class == c && x.Location == l);
                             if (e is null)
                             {
