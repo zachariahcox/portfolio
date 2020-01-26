@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -22,7 +23,7 @@ namespace PortfolioPicker.App
         public string Brokerage { get; set; }
 
         [DataMember(IsRequired = true)]
-        public double ExpenseRatio { get; set; } = -1.0;
+        public double ExpenseRatio { get; set; } = 0.0;
 
         [DataMember(IsRequired = false)]
         public virtual double DomesticRatio { get; set; } = 1.0;
@@ -65,7 +66,7 @@ namespace PortfolioPicker.App
             return $"{Symbol}, er: {ExpenseRatio}, sr: {StockRatio}, dr: {DomesticRatio}";
         }
 
-        public static IList<Fund> FromYaml(string yaml)
+        public static ConcurrentBag<Fund> FromYaml(string yaml)
         {
             if (string.IsNullOrEmpty(yaml))
             {
@@ -81,7 +82,7 @@ namespace PortfolioPicker.App
             return Cache;
         }
 
-        public static IList<Fund> LoadDefaultFunds()
+        public static ConcurrentBag<Fund> LoadDefaultFunds()
         {
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = "App.App.data.funds.yaml";
@@ -92,7 +93,9 @@ namespace PortfolioPicker.App
                     .WithNamingConvention(new CamelCaseNamingConvention())
                     .Build();
 
-                return deserializer.Deserialize<List<Fund>>(reader.ReadToEnd());
+                var list = deserializer.Deserialize<List<Fund>>(reader.ReadToEnd());
+                var result = new ConcurrentBag<Fund>(list);
+                return result;
             }
         }
 
@@ -121,15 +124,18 @@ namespace PortfolioPicker.App
             return result;
         }
 
-        public static IList<Fund> GetFunds(string brokerage)
+        public static IEnumerable<Fund> GetFunds(string brokerage)
         {
             // use cache
             if (!CacheByBrokerage.TryGetValue(brokerage, out var fundsAtBrokerage))
             {
                 fundsAtBrokerage = Cache?
-                    .Where(x => string.Equals(x.Brokerage, brokerage, StringComparison.OrdinalIgnoreCase))
+                    .Where(x => x.Symbol == "CASH" 
+                        || string.Equals(x.Brokerage, 
+                                         brokerage, 
+                                         StringComparison.OrdinalIgnoreCase))
                     .OrderBy(x => x.Symbol)
-                    .ToList();
+                    .ToArray();
 
                 CacheByBrokerage[brokerage] = fundsAtBrokerage;
             }
@@ -155,15 +161,15 @@ namespace PortfolioPicker.App
             }
         }
 
-        public static IList<Fund> Cache
+        public static ConcurrentBag<Fund> Cache
         {
             get;
         } = LoadDefaultFunds();
 
-        public static Dictionary<string, IList<Fund>> CacheByBrokerage
+        public static ConcurrentDictionary<string, IList<Fund>> CacheByBrokerage
         {
             get;
-        } = new Dictionary<string, IList<Fund>>();
+        } = new ConcurrentDictionary<string, IList<Fund>>();
     }
 
     public class Cash : Fund 

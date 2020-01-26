@@ -3,6 +3,7 @@ using System.Linq;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System;
+using System.IO;
 
 namespace PortfolioPicker.App
 {
@@ -12,47 +13,42 @@ namespace PortfolioPicker.App
         {
             Accounts = accounts;
         }
+
+        public int DescriptorKey => (int)(Positions.Sum(p => (double)p.Symbol.GetHashCode() * p.Value) % int.MaxValue);
+            
         public double Score {get; set;}
 
         public IList<string> Warnings { get; set; }
 
         public IList<string> Errors { get; set; }
 
-        public IList<Account> Accounts
-        {
-            get => _accounts;
-            set
-            {
-                if (value is null)
-                {
-                    _accounts = null;
-                }
-                else
-                {
-                    _accounts = value.OrderBy(x => x.Name).ToList();
-                }
-            }
-        }
-        private IList<Account> _accounts;
+        public IList<Account> Accounts {get; set;}
 
-        public double TotalValue => Accounts
-            .SelectMany(x => x.Positions)
-            .Sum(x => x.Value);
+        private double _totalValue = -1.0;
+        public double TotalValue => _totalValue == -1.0
+            ? _totalValue = Accounts.SelectMany(x => x.Positions).Sum(x => x.Value)
+            : _totalValue;
 
-        public double ExpenseRatio => TotalValue == 0.0 
-            ? 0.0 
-            : Accounts
-                .SelectMany(x => x.Positions)
-                .Sum(x => x.Value * Fund.Get(x.Symbol).ExpenseRatio) / TotalValue;
+        private double _expenseRatio = -1;
+        public double ExpenseRatio => _expenseRatio == -1.0 
+            ? _expenseRatio = TotalValue == 0.0 
+                ? 0.0 
+                : Accounts
+                    .SelectMany(x => x.Positions)
+                    .Sum(x => x.Value * Fund.Get(x.Symbol).ExpenseRatio) / TotalValue
+            : _expenseRatio;
 
         // public IList<Exposure> Exposures { get; private set; }
 
         /// <summary>
         /// collection of all positions from all accounts
         /// </summary>
-        public IEnumerable<Position> Positions => Accounts.SelectMany(x => x.Positions);
+        public IEnumerable<Position> Positions => Accounts.SelectMany(x => x.Positions).ToArray();
 
-        public int NumberOfPositions => Accounts.Sum(x => x.Positions.Count);
+        private int _numberOfPositions = -1;
+        public int NumberOfPositions => _numberOfPositions == -1 
+            ? _numberOfPositions = Accounts.Sum(x => x.Positions.Count)
+            : _numberOfPositions;
 
         /// <summary>
         /// portfolios are serialized as a list of accounts.
@@ -83,7 +79,7 @@ namespace PortfolioPicker.App
             return serializer.Serialize(Accounts);
         }
 
-        public double PercentOfPortfolio(AssetClass c, AssetLocation l) => 100 * Value(c, l) / TotalValue;
+        public double PercentOfPortfolio(AssetClass c, AssetLocation l) => 100 * Value(AccountType.None, c, l) / TotalValue;
         public double PercentOfPortfolio(AssetClass c) => PercentOfPortfolio(c, AssetLocation.None);
         public double PercentOfPortfolio(AssetLocation l) => PercentOfPortfolio(AssetClass.None, l);
 
@@ -92,27 +88,17 @@ namespace PortfolioPicker.App
             AssetClass c, 
             AssetLocation l)
         {
-            var total = Value(c, l); // ignore account type
+            var total = Value(AccountType.None, c, l); // ignore account type
             return total <= 0 ? 0.0 : 100 * Value(t, c, l) / total;
         }
 
-        public double PercentOfAssetType(AccountType t, AssetClass c) => PercentOfAssetType(t, c, AssetLocation.None);
-
-        public double Value(
-            AccountType t, 
-            AssetClass c, 
-            AssetLocation l) =>  Accounts
+        public double Value(AccountType t, AssetClass c, AssetLocation l) => Accounts
             .Where(x => (t == AccountType.None || x.Type == t))
             .SelectMany(x => x.Exposures)
             .Where(x => (c == AssetClass.None || x.Class == c) && (l == AssetLocation.None || x.Location == l))
             .Sum(x => x.Value);
-    
-        public double Value(AccountType t, AssetClass c) =>  Value(t, c, AssetLocation.None);
-        public double Value(AssetClass c, AssetLocation l) => Value(AccountType.None, c, l);
-        public double Value(AssetClass c) => Value(AccountType.None, c, AssetLocation.None);
-        public double Value(AssetLocation l) => Value(AccountType.None, AssetClass.None, l);
 
-        public double GetScore(ICollection<Exposure> exposures)
+        public virtual double GetScore(ICollection<Exposure> targetExposureRatios)
         {
             var score = 0.0;
             var perfectScore = 0.0;
@@ -123,16 +109,16 @@ namespace PortfolioPicker.App
             score += 1.0 - cashValue / TotalValue;
 
             // incentivize being close to the target exposure ratios
-            perfectScore += exposures.Count;
-            foreach (var e in exposures)
+            perfectScore += targetExposureRatios.Count;
+            foreach (var e in targetExposureRatios)
             {
-                var actualValue = Value(e.Class, e.Location);
-                score += 1.0 - Math.Abs((actualValue - e.Value)/TotalValue);
+                var actualRatio = PercentOfPortfolio(e.Class, e.Location) / 100;
+                score += 1.0 - Math.Abs((actualRatio - e.Value));
             }
 
             // we want to meet our account type preference goals
-            perfectScore += exposures.Count;
-            foreach (var e in exposures)
+            perfectScore += targetExposureRatios.Count;
+            foreach (var e in targetExposureRatios)
             {
                 if (e.Value == 0)
                 {
@@ -140,19 +126,20 @@ namespace PortfolioPicker.App
                     continue; 
                 }
 
-                // the top account type preference gets full points
-                var weight = 1.0; 
-                foreach (var t in e.Preferences)
+                // score each allocation
+                foreach (var t in Enum.GetValues(typeof(AccountType)).Cast<AccountType>())
                 {
                     var fraction = PercentOfAssetType(t, e.Class, e.Location) / 100;
-                    score += weight * fraction;
-                    // all subsequent allocations will be "worse" than this one
-                    weight = Math.Max(0.0, weight - 0.5);
+                    score += Exposure.GetScoreWeight(e.Class, e.Location, t) * fraction;
                 }
             }
+
+            // expenses are bad
+            perfectScore += 1;
+            score += 1 - ExpenseRatio / 0.15; // vanguard target retirement fund account er
+
             return score / perfectScore;
         }
-
 
         protected string Row(params object[] values) => "|" + string.Join("|", values) + "|";
 
@@ -336,6 +323,55 @@ namespace PortfolioPicker.App
             foreach(var g in byPosition)
                 lines.Add($"{g.Symbol},{g.Value}");
             return lines;
+        }
+
+        public virtual void Save(string directory)
+        {   
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(Path.Combine(directory, $"portfolio.yaml"), ToYaml());
+            File.WriteAllLines(Path.Combine(directory, $"portfolio.csv"), ToXrayCsv());
+        }
+
+        /// <summary>
+        /// produce orders required to move from original portfolio to new one
+        /// </summary>
+        public static IList<Order> ComputeOrders(Portfolio original, Portfolio balanced)
+        {
+            var orders = new List<Order>();
+            var accounts = original.Accounts.Union(balanced.Accounts);
+
+            foreach (var a in accounts)
+            {
+                var newA = balanced.Accounts.FirstOrDefault(x => x == a);
+                var oldA = original.Accounts.FirstOrDefault(x => x == a);
+
+                if (newA is null)
+                {
+                    // sell entire account
+                    orders.AddRange(oldA.Positions.Select(x => Order.Create(a, x.Symbol, -x.Value)));
+                }
+                else if (oldA is null)
+                {
+                    // buy entire account?
+                    orders.AddRange(newA.Positions.Select(x => Order.Create(a, x.Symbol, x.Value)));
+                }
+                else
+                {
+                    // modify position
+                    var symbols = new HashSet<string>();
+                    foreach (var p in oldA.Positions) { symbols.Add(p.Symbol); }
+                    foreach (var p in newA.Positions) { symbols.Add(p.Symbol); }
+                    foreach (var s in symbols)
+                    {
+                        var newP = newA.Positions.FirstOrDefault(x => x.Symbol == s);
+                        var oldP = oldA.Positions.FirstOrDefault(x => x.Symbol == s);
+                        var difference = (newP == null ? 0.0 : newP.Value) - (oldP == null ? 0.0 : oldP.Value);
+                        orders.Add(Order.Create(a, s, difference));
+                    }
+                }
+            }
+
+            return orders.Where(x => x != null).ToList();
         }
     }
 }

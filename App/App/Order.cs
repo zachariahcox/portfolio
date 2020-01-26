@@ -4,8 +4,11 @@ namespace PortfolioPicker.App
 {
     public class Order
     {
+        public static string Sell = "sell";
+        public static string Buy = "buy";
+
         public static Order Create(
-            string accountName,
+            Account account,
             string symbol,
             double value)
         {
@@ -15,14 +18,14 @@ namespace PortfolioPicker.App
             }
             return new Order
             {
-                AccountName = accountName,
+                Account = account,
                 Symbol = symbol,
                 Value = Math.Abs(value),
-                Action = value < 0 ? "sell" : "buy",
+                Action = value < 0 ? Sell: Buy,
             };
         }
 
-        public string AccountName { get; set; }
+        public Account Account { get; set; }
 
         public string Symbol { get; set; }
 

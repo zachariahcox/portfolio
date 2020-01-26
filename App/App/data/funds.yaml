@@ -78,6 +78,7 @@
   stockRatio: 1
   domesticRatio: 1
 - description: International Growth Account (MS)
+  symbol: MS_STOCK_INT
   brokerage: Microsoft
   expenseRatio: .52
   stockRatio: 1

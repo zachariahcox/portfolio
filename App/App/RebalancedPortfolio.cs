@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System;
+using System.IO;
 
 namespace PortfolioPicker.App
 {
@@ -11,9 +12,26 @@ namespace PortfolioPicker.App
         {   
         }
 
-        public IList<Exposure> TargetExposureRatios {get; set;}
+        public ICollection<Exposure> TargetExposureRatios {get; set;}
 
-        public IList<Order> Orders { get; set; }
+        public ICollection<Order> Orders { get; set; }
+
+        public Portfolio Original {get; set;}
+
+        public override double GetScore(ICollection<Exposure> targetExposureRatios)
+        {
+            var score = base.GetScore(targetExposureRatios);
+
+            // taxable sales are bad
+            var taxableSales = Orders
+                .Where(x => x.Account.Type == AccountType.BROKERAGE)
+                .Where(x => x.Action == Order.Sell)
+                .Sum(x => x.Value);
+
+            score -= taxableSales / TotalValue / 4;
+
+            return score;
+        }
 
         public override IList<string> GetMarkdownReportSummary(Portfolio reference = null)
         {
@@ -35,10 +53,15 @@ namespace PortfolioPicker.App
 
                 // rebalance score
                 lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
-
-                var exposures = Picker.ComputeExposures(TargetExposureRatios, reference.TotalValue);
-                lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.GetScore(exposures))));
+                lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.GetScore(TargetExposureRatios))));
             }
+
+            lines.Add(Row("sum of taxable sales", 
+                string.Format("${0:n0}", Orders
+                    .Where(x => x.Account.Type == AccountType.BROKERAGE)
+                    .Where(x => x.Action == Order.Sell)
+                    .Sum(x => x.Value))
+                ));
 
             return lines;
         }
@@ -54,12 +77,12 @@ namespace PortfolioPicker.App
                 lines.Add(Row("account", "action", "symbol", "value", "description"));
                 lines.Add(Row("---", "---", "---", "---:", "---"));
                 foreach (var o in Orders
-                    .OrderBy(x => x.AccountName)
+                    .OrderBy(x => x.Account.Name)
                     .ThenByDescending(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
                     lines.Add(Row(
-                        o.AccountName, 
+                        o.Account.Name, 
                         o.Action, 
                         SymbolUrl(o.Symbol), 
                         string.Format("${0:n0}", o.Value), 
@@ -70,6 +93,12 @@ namespace PortfolioPicker.App
             }
 
             return lines;
+        }
+
+        public override void Save(string directory)
+        {
+            base.Save(directory);
+            File.WriteAllLines(Path.Combine(directory, $"rebalance.md"), ToMarkdown(Original));
         }
     }
 }

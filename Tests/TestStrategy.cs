@@ -24,10 +24,10 @@ namespace PortfolioPicker.Tests
         }
 
         private Account CreateAccount(
-                string brokerage,
-                AccountType type,
-                string symbol = "VTSAX",
-                double value = 100.0)
+            string brokerage,
+            AccountType type,
+            string symbol = "VTSAX",
+            double value = 100.0)
         {
             return new Account
             {
@@ -232,7 +232,7 @@ namespace PortfolioPicker.Tests
             var expectedFile = GetDataFilePath("MarkdownSerialization/load.md");
             var actual = string.Join(Environment.NewLine, p.ToMarkdown());
             // uncomment to update
-            File.WriteAllText(expectedFile, actual);
+            // File.WriteAllText(expectedFile, actual);
             var expected = File.ReadAllText(expectedFile);
             Assert.Equal(expected, actual);
         }
@@ -475,6 +475,29 @@ namespace PortfolioPicker.Tests
                     Assert.Equal(25, p.PercentOfPortfolio(c, l));
                 }
             }
+        }
+
+        [Fact]
+        public void ReduceTax()
+        {
+            var b = "ReduceTax";
+            var symbolName = "Generic";
+            var accounts = new List<Account>{
+                CreateAccount(b, AccountType.BROKERAGE, value: 100),
+                CreateAccount(b, AccountType.ROTH, value: 100),
+                CreateAccount(b, AccountType.IRA, value: 100),
+            };
+            var funds = new List<Fund>{
+                CreateFund(b, symbolName, 0, 0.5, 1),
+                CreateFund(b, symbolName, 0, 0, 1),
+            };
+            Fund.Add(funds);
+            
+            var original = new Portfolio(accounts);
+            var p = Picker.Rebalance(original, 0.5, 0.5, 0.5);
+
+            var targetRatios = Picker.ComputeTargetRatios(.5, .5, .5);
+            var os = original.GetScore(targetRatios);
         }
     }
 }

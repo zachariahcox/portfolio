@@ -45,15 +45,13 @@ namespace PortfolioPicker.CLI
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
                         : portfolioFile.DirectoryName;
-
+                    
                     var basename = Path.GetFileNameWithoutExtension(portfolioFile.Name);
                     var reportPath = Path.Combine(d, $"{basename}_report.md");
                     Console.WriteLine("report: " + reportPath);
                     File.WriteAllLines(reportPath, portfolio.ToMarkdown());
 
-                    var csv = Path.Combine(d, $"{basename}.csv");
-                    Console.WriteLine("csv: " + csv);
-                    File.WriteAllLines(csv, portfolio.ToXrayCsv());
+                    portfolio.Save(d);
                 });
             });
 
@@ -117,18 +115,13 @@ namespace PortfolioPicker.CLI
                         domesticStockRatio: domesticStockRatio,
                         domesticBondRatio: domesticBondRatio);
 
+                    var defaultPath = Path.Join(
+                        new FileInfo(portfolioPath.Value).DirectoryName, 
+                        $"portfolio_{DateTime.Now.ToString("yyyyMMdd")}");
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
-                        : new FileInfo(portfolioPath.Value).DirectoryName;
-                    var today = DateTime.Now.ToString("MMddyyyy");
-
-                    var balancedPortfolioPath = Path.Combine(d, $"portfolio_{today}.yaml");
-                    Console.WriteLine("new portfolio: " + balancedPortfolioPath);
-                    File.WriteAllText(balancedPortfolioPath, portfolio.ToYaml());
-
-                    var reportPath = Path.Combine(d, $"portfolio_{today}_orders.md");
-                    Console.WriteLine("orders: " + reportPath);
-                    File.WriteAllLines(reportPath, portfolio.ToMarkdown(original));
+                        : defaultPath;
+                    portfolio.Save(d);
                 });
             });
             return app.Execute(args);
