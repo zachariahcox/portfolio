@@ -79,16 +79,17 @@ namespace PortfolioPicker.App
                 .Where(x => x.Errors.Count == 0)  // no errors
                 .Where(x => x.Score > originalScore)
                 .OrderByDescending(x => x.Score - x.OrdersScore)  // highest score
-                .Take(100)
+                .Take(100) // best 100 should be fine
                 .ToArray();
 
             // final log
             Console.WriteLine(
-            string.Format("Generated {0:n0} unique portfolios out of {1:n0} attempts in {2} seconds.\n{3:n0} score higher than the original.",
+            string.Format("Generated {0:n0} unique portfolios out of {1:n0} attempts in {2} seconds.\n{3:n0} score higher than the original.\n{4} are probably worth the tax implications of rebalancing.",
                 portfolioPermutations.Count,
                 generateTotal,
                 Math.Round(finishTime.TotalSeconds),
-                portfolios.Count()
+                portfolios.Count(),
+                portfolios.Where(x => x.Score - x.OrdersScore > originalScore).Count()
                 ));
 
             // debug
