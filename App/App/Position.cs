@@ -4,8 +4,6 @@ namespace PortfolioPicker.App
 {
     public class Position
     {
-        public Guid Id { get; private set; }
-
         public string Symbol { get; set; }
 
         public double Value { get; set; }

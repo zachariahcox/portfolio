@@ -16,21 +16,22 @@ namespace PortfolioPicker.App
 
         public ICollection<Order> Orders { get; set; }
 
+        public double OrdersScore {get; set;}
+
         public Portfolio Original {get; set;}
 
-        public override double GetScore(ICollection<Exposure> targetExposureRatios)
+        /// <summary>
+        /// how bad would it be to perform this rebalance?
+        /// </summary>
+        public double GetOrdersScore()
         {
-            var score = base.GetScore(targetExposureRatios);
-
             // taxable sales are bad
             var taxableSales = Orders
                 .Where(x => x.Account.Type == AccountType.BROKERAGE)
                 .Where(x => x.Action == Order.Sell)
                 .Sum(x => x.Value);
 
-            score -= taxableSales / TotalValue / 4;
-
-            return score;
+            return taxableSales / TotalValue / 4;
         }
 
         public override IList<string> GetMarkdownReportSummary(Portfolio reference = null)
@@ -55,14 +56,15 @@ namespace PortfolioPicker.App
                 lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
                 lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.GetScore(TargetExposureRatios))));
             }
-
+            
+            lines.Add(Row("orders score", string.Format("{0:0.0000}", OrdersScore)));
             lines.Add(Row("sum of taxable sales", 
                 string.Format("${0:n0}", Orders
                     .Where(x => x.Account.Type == AccountType.BROKERAGE)
                     .Where(x => x.Action == Order.Sell)
                     .Sum(x => x.Value))
                 ));
-
+            lines.Add(Row("weighted score", string.Format("{0:0.0000}", Score - OrdersScore)));
             return lines;
         }
 

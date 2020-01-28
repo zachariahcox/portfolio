@@ -98,7 +98,7 @@ namespace PortfolioPicker.App
             .Where(x => (c == AssetClass.None || x.Class == c) && (l == AssetLocation.None || x.Location == l))
             .Sum(x => x.Value);
 
-        public virtual double GetScore(ICollection<Exposure> targetExposureRatios)
+        public double GetScore(ICollection<Exposure> targetExposureRatios)
         {
             var score = 0.0;
             var perfectScore = 0.0;
