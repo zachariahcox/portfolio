@@ -497,7 +497,7 @@ namespace PortfolioPicker.Tests
             var p = Picker.Rebalance(original, 0.5, 0.5, 0.5);
 
             var targetRatios = Picker.ComputeTargetRatios(.5, .5, .5);
-            var os = original.GetScore(targetRatios);
+            var os = original.GetScore(Picker.GetScoreWeight, targetRatios);
         }
     }
 }

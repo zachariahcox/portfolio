@@ -7,10 +7,9 @@ namespace PortfolioPicker.App
 {
     public class RebalancedPortfolio : Portfolio
     {
-        public RebalancedPortfolio(IList<Account> accounts)
-        : base(accounts)
-        {   
-        }
+        public RebalancedPortfolio(IList<Account> accounts) : base(accounts) {}
+
+        public Portfolio Original {get; set;}
 
         public ICollection<Exposure> TargetExposureRatios {get; set;}
 
@@ -18,7 +17,13 @@ namespace PortfolioPicker.App
 
         public double OrdersScore {get; set;}
 
-        public Portfolio Original {get; set;}
+        public double WeightedScore => Score - OrdersScore;
+
+        public override void Save(string directory)
+        {
+            base.Save(directory);
+            File.WriteAllLines(Path.Combine(directory, $"rebalance.md"), ToMarkdown(Original));
+        }
 
         /// <summary>
         /// how bad would it be to perform this rebalance?
@@ -54,7 +59,7 @@ namespace PortfolioPicker.App
 
                 // rebalance score
                 lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
-                lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.GetScore(TargetExposureRatios))));
+                lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.Score)));
             }
             
             lines.Add(Row("orders score", string.Format("{0:0.0000}", OrdersScore)));
@@ -65,6 +70,9 @@ namespace PortfolioPicker.App
                     .Sum(x => x.Value))
                 ));
             lines.Add(Row("weighted score", string.Format("{0:0.0000}", Score - OrdersScore)));
+
+            lines.Add(Row("exposure priority order", string.Join("<br/>", 
+                TargetExposureRatios.Select(x => x.Class.ToString().ToLower() + x.Location.ToString().ToLower()))));
             return lines;
         }
 
@@ -95,12 +103,6 @@ namespace PortfolioPicker.App
             }
 
             return lines;
-        }
-
-        public override void Save(string directory)
-        {
-            base.Save(directory);
-            File.WriteAllLines(Path.Combine(directory, $"rebalance.md"), ToMarkdown(Original));
         }
     }
 }

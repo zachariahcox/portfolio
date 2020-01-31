@@ -9,16 +9,11 @@ namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        public Portfolio(IList<Account> accounts)
-        {
-            Accounts = accounts;
-        }
+        public Portfolio(IList<Account> accounts) => Accounts = accounts;
 
         public int DescriptorKey => (int)(Positions.Sum(p => (double)p.Symbol.GetHashCode() * p.Value) % int.MaxValue);
             
         public double Score {get; set;}
-
-        public IList<string> Warnings { get; set; }
 
         public IList<string> Errors { get; set; }
 
@@ -98,7 +93,9 @@ namespace PortfolioPicker.App
             .Where(x => (c == AssetClass.None || x.Class == c) && (l == AssetLocation.None || x.Location == l))
             .Sum(x => x.Value);
 
-        public double GetScore(ICollection<Exposure> targetExposureRatios)
+        public double GetScore(
+            Func<AssetClass, AssetLocation, AccountType, double> GetScoreWeight,
+            ICollection<Exposure> targetExposureRatios)
         {
             var score = 0.0;
             var perfectScore = 0.0;
@@ -130,13 +127,14 @@ namespace PortfolioPicker.App
                 foreach (var t in Enum.GetValues(typeof(AccountType)).Cast<AccountType>())
                 {
                     var fraction = PercentOfAssetType(t, e.Class, e.Location) / 100;
-                    score += Exposure.GetScoreWeight(e.Class, e.Location, t) * fraction;
+                    score += GetScoreWeight(e.Class, e.Location, t) * fraction;
                 }
             }
 
-            // expenses are bad
+            // expenses are bad -- how does this ER compare to a baseline?
+            var baselineER = 0.15; // vanguard target retirement fund account er
             perfectScore += 1;
-            score += 1 - ExpenseRatio / 0.15; // vanguard target retirement fund account er
+            score += 1 - ExpenseRatio / baselineER;
 
             return score / perfectScore;
         }
@@ -314,7 +312,8 @@ namespace PortfolioPicker.App
                 .GroupBy(x => x.Symbol,
                          (key, values) => new {
                             Symbol = key,
-                            Value = values.Sum(x => x.Value)})
+                            Value = Math.Floor(values.Sum(x => x.Value))
+                            })
                 .OrderByDescending(x => x.Value)
                 .ThenBy(x => x.Symbol);
 
