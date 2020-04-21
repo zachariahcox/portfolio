@@ -81,7 +81,7 @@ namespace PortfolioPicker.CLI
 
                 var domesticStockPercent = cmd.Option<int>(
                     "-ds|--domesticStockPercent <int>",
-                    "Target percent OF STOCKS to be domestic (default is 6)",
+                    "Target percent OF STOCKS to be domestic (default is 60)",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.Range(0, 100));
 
