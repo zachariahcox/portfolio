@@ -7,11 +7,12 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <EmbeddedResource Include="App\data\funds.yaml" />
+    <EmbeddedResource Include="src\data\funds.yaml" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="YamlDotNet" Version="5.3.0" />
+    <PackageReference Include="DocumentFormat.OpenXml" Version="2.10.0" />
   </ItemGroup>
 
   <ItemGroup>

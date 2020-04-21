@@ -1,7 +1,8 @@
 [![Build Status](https://dev.azure.com/zachariahcox/PortfolioPicker/_apis/build/status/release?branchName=master)](https://dev.azure.com/zachariahcox/PortfolioPicker/_build/latest?definitionId=7&branchName=master)
+
+
 # Introduction
-A simple dotnet console application to recommend financial portfolio allocations based on various strategies. 
-It's written in dotnet core for practice, but would make a much better python app probably.
+This app helps rebalance portfolios that span multiple investment accounts.
 
 Your current portfolio is described in a simple yaml syntax: 
 ```yaml
