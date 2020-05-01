@@ -2,7 +2,7 @@ trigger:
 - master
 
 parameters:
-  - name: buildConfiguration
+  - name: buildconfiguration
     type: string 
     default: Release
 
