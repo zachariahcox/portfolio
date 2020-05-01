@@ -11,13 +11,14 @@ namespace PortfolioPicker.CLI
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false)
             {
-                Name = "PortfolioPicker",
+                Name = "portfolio", // as far as I can tell there is no way to infer this at compile time
                 Description = "Portfolio balance suggestion engine."
             };
 
             app.HelpOption(inherited: true);
             app.OnExecute(() =>
             {
+                // invalid
                 Console.WriteLine("Specify a subcommand");
                 app.ShowHelp();
                 return 1;
@@ -27,7 +28,9 @@ namespace PortfolioPicker.CLI
             {
                 cmd.Description = "Creates a report for a given portfolio.";
 
-                var portfolioPath = cmd.Argument("currentPortfolio", "Path to portfolio file.")
+                var portfolioPath = cmd.Argument(
+                    "currentPortfolio", 
+                    "Path to portfolio file.")
                     .Accepts(v => v.ExistingFile())
                     .IsRequired();
 
@@ -57,25 +60,28 @@ namespace PortfolioPicker.CLI
 
             app.Command("rebalance", cmd =>
             {
-                cmd.Description = "Attempts to balance portfolio based on a strategy";
-                var portfolioPath = cmd.Argument("currentPortfolio", "Path to portfolio file.")
+                cmd.Description = "rebalance portfolio based on a strategy";
+                var portfolioPath = cmd.Argument(
+                    "currentPortfolio", 
+                    "Path to portfolio file.")
                     .Accepts(v => v.ExistingFile())
                     .IsRequired();
 
                 var outputDir = cmd.Option(
                     template: "-o|--output <DIR>",
-                    description: "Path to output directory. Defaults to directory containing accounts file.",
+                    description: "Path to output directory. Defaults to directory containing portfolio file.",
                     optionType: CommandOptionType.SingleValue)
                     .Accepts(v => v.LegalFilePath());
 
-                var funds = cmd.Option("-f|--funds <PATH>",
-                    "Path to custom funds yaml.",
+                var funds = cmd.Option(
+                    template: "-f|--funds <PATH>",
+                    description: "Path to custom funds yaml.",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.ExistingFile());
 
                 var stockPercent = cmd.Option<int>(
-                    "-s|--stockPercent <int>",
-                    "Target percent of TOTAL PORTFOLIO in stocks, remainder will be in bonds (default is 90)",
+                    template: "-s|--stockPercent <int>",
+                    description: "Target percent of TOTAL PORTFOLIO in stocks, remainder will be in bonds (default is 90)",
                     CommandOptionType.SingleValue)
                     .Accepts(x => x.Range(0, 100));
 
@@ -118,12 +124,15 @@ namespace PortfolioPicker.CLI
                     var defaultPath = Path.Join(
                         new FileInfo(portfolioPath.Value).DirectoryName, 
                         $"portfolio_{DateTime.Now.ToString("yyyyMMdd")}");
+
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
                         : defaultPath;
                     portfolio.Save(d);
                 });
             });
+
+            // run it
             return app.Execute(args);
         }
     }
