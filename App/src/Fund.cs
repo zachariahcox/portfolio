@@ -54,7 +54,8 @@ namespace PortfolioPicker.App
 
         internal double Ratio(AssetLocation l)
         {
-            switch(l){
+            switch(l)
+            {
                 case AssetLocation.Domestic: return DomesticRatio;
                 case AssetLocation.International: return InternationalRatio;
                 default: return 0.0;
@@ -85,7 +86,7 @@ namespace PortfolioPicker.App
         public static ConcurrentBag<Fund> LoadDefaultFunds()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "App.App.data.funds.yaml";
+            var resourceName = "App.src.data.funds.yaml";
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             using (var reader = new StreamReader(stream))
             {

@@ -4,8 +4,10 @@ trigger:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  buildConfiguration: 'Release'
+parameters:
+- name: buildConfiguration
+  type: string 
+  default: "Release"
 
 steps:
 
@@ -17,7 +19,7 @@ steps:
     packageType: sdk
 
 # TEST   
-- script: dotnet test -c $(buildconfiguration) --logger trx
+- script: dotnet test -c ${{parameters.buildconfiguration}} --logger trx
   displayName: test
 - task: PublishTestResults@2
   displayName: upload test results
@@ -28,19 +30,14 @@ steps:
     mergeTestResults: true
     failTaskOnFailedTests: true
 
-# PUBLISH WEBAPP
-# - script: dotnet publish **/Web.csproj -c $(buildconfiguration) -o $(build.artifactstagingdirectory)/www
-# - publish: $(build.artifactstagingdirectory)/www
-#   artifact: www
-
 # PUBLISH WINDOWS APP
-- script: dotnet publish **/CLI.csproj -c $(buildconfiguration) -o $(build.artifactstagingdirectory)/win /p:PublishSingleFile=true -r win10-x64
+- script: dotnet publish **/CLI.csproj -c ${{parameters.buildconfiguration}} -o $(build.artifactstagingdirectory)/win /p:PublishSingleFile=true -r win10-x64
   displayName: publish windows CLI
 - publish: $(build.artifactstagingdirectory)/win
   artifact: win
 
 # PUBLISH MACOS APP
-- script: dotnet publish **/CLI.csproj -c $(buildconfiguration) -o $(build.artifactstagingdirectory)/osx /p:PublishSingleFile=true -r osx-x64
+- script: dotnet publish **/CLI.csproj -c ${{parameters.buildconfiguration}} -o $(build.artifactstagingdirectory)/osx /p:PublishSingleFile=true -r osx-x64
   displayName: publish macOS CLI
 - publish: $(build.artifactstagingdirectory)/osx
   artifact: osx

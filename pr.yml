@@ -1,5 +1,4 @@
 # pr pipeline
-
 trigger: none
 
 pool:

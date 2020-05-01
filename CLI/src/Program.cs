@@ -1,10 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using McMaster.Extensions.CommandLineUtils;
 using PortfolioPicker.App;
-using DocumentFormat.OpenXml.Packaging;
-using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace PortfolioPicker.CLI
 {
@@ -132,122 +129,6 @@ namespace PortfolioPicker.CLI
                         ? outputDir.Value()
                         : defaultPath;
                     portfolio.Save(d);
-                });
-            });
-
-            app.Command("excel", cmd =>
-            {
-                cmd.Description = "rebalance portfolio described in spreadsheet";
-                var portfolioArg = cmd.Argument(
-                    "portfolio", 
-                    "path to excel file")
-                    .Accepts(v => v.ExistingFile())
-                    .IsRequired();
-                var sheetNameArg = cmd.Argument<string>(
-                    name: "sheet",
-                    description: "name of sheet containing portfolio description.")
-                    .IsRequired();
-
-                var outputDir = cmd.Option(
-                    template: "-o|--output <DIR>",
-                    description: "Path to output directory. Defaults to directory containing portfolio file.",
-                    optionType: CommandOptionType.SingleValue)
-                    .Accepts(v => v.LegalFilePath());
-
-                var funds = cmd.Option(
-                    template: "-f|--funds <PATH>",
-                    description: "Path to custom funds yaml.",
-                    CommandOptionType.SingleValue)
-                    .Accepts(x => x.ExistingFile());
-
-                cmd.OnExecute(() =>
-                {
-                    // load custom funds
-                    Fund.FromYaml(funds.Value());
-
-                    var excelFile = portfolioArg.Value;
-                    var sheetName = sheetNameArg.Value;
-                    var original = default(Portfolio);
-                    // load portfolio
-                    try
-                    {
-                        // Open the existing excel file and read through its content . 
-                        // Open the excel using openxml sdk
-                        using (var doc = SpreadsheetDocument.Open(excelFile, false))
-                        {
-                            //create the object for workbook part  
-                            var workbookPart = doc.WorkbookPart;
-                            var thesheetcollection = workbookPart.Workbook.GetFirstChild<Sheets>();
-
-                            //using for each loop to get the sheet from the sheetcollection 
-                            foreach (var thesheet in thesheetcollection)
-                            {
-                                if (thesheet.LocalName != sheetName)
-                                    continue;
-
-                                //statement to get the worksheet object by using the sheet id  
-                                var theWorksheet = (workbookPart.GetPartById(thesheet.id) as WorksheetPart).Worksheet;
-
-                                var thesheetdata = theWorksheet.GetFirstChild<SheetData>();
-                                foreach (var thecurrentrow in thesheetdata)
-                                {
-                                    foreach (var thecurrentcell in thecurrentrow)
-                                    {
-                                        //statement to take the integer value  
-                                        var currentcellvalue = string.Empty;
-                                        if (thecurrentcell.DataType != null)
-                                        {
-                                            if (thecurrentcell.DataType == CellValues.SharedString)
-                                            {
-                                                int id;
-                                                if (Int32.TryParse(thecurrentcell.InnerText, out id))
-                                                {
-                                                    SharedStringItem item = workbookPart.SharedStringTablePart.SharedStringTable.Elements<SharedStringItem>().ElementAt(id);
-                                                    if (item.Text != null)
-                                                    {
-                                                        //code to take the string value  
-                                                        // excelResult.Append(item.Text.Text + " ");
-                                                    }
-                                                    else if (item.InnerText != null)
-                                                    {
-                                                        currentcellvalue = item.InnerText;
-                                                    }
-                                                    else if (item.InnerXml != null)
-                                                    {
-                                                        currentcellvalue = item.InnerXml;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else
-                                        {
-                                            // null datatype?
-                                            // excelResult.Append(Convert.ToInt16(thecurrentcell.InnerText) + " ");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception)
-                    {
-
-                    }
-
-
-                    // finalize ratios
-                    var stockRatio = 0.9;
-                    var domesticStockRatio = 0.6;
-                    var domesticBondRatio = 1.0;
-
-                    // generate
-                    var portfolio = Picker.Rebalance(
-                        portfolio: original,
-                        stockRatio: stockRatio,
-                        domesticStockRatio: domesticStockRatio,
-                        domesticBondRatio: domesticBondRatio);
-                   
-                    // write sheet
                 });
             });
 
