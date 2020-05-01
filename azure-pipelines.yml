@@ -1,13 +1,13 @@
 trigger:
 - master
 
+parameters:
+  - name: buildConfiguration
+    type: string 
+    default: Release
+
 pool:
   vmImage: 'ubuntu-latest'
-
-parameters:
-- name: buildConfiguration
-  type: string 
-  default: "Release"
 
 steps:
 
