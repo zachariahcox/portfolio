@@ -102,7 +102,7 @@ namespace PortfolioPicker.App
             
             // penalize cash positions
             perfectScore += 1;
-            var cashValue = Positions.Where(x => x.Symbol == "CASH").Sum(x => x.Value);
+            var cashValue = Positions.Where(x => x.Symbol == Cash.CASH).Sum(x => x.Value);
             score += 1.0 - cashValue / TotalValue;
 
             // incentivize being close to the target exposure ratios

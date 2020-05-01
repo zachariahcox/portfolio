@@ -251,7 +251,7 @@ namespace PortfolioPicker.App
                 {
                     var cash = new Position
                     {
-                        Symbol = "CASH",
+                        Symbol = Cash.CASH,
                         Value = r
                     };
 

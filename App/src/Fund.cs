@@ -106,7 +106,7 @@ namespace PortfolioPicker.App
             if (result == null)
             {
                 // found new product apparently?
-                if (symbol == "CASH")
+                if (symbol == Cash.CASH)
                     result = new Cash();
                 else 
                 {
@@ -131,7 +131,7 @@ namespace PortfolioPicker.App
             if (!CacheByBrokerage.TryGetValue(brokerage, out var fundsAtBrokerage))
             {
                 fundsAtBrokerage = Cache?
-                    .Where(x => x.Symbol == "CASH" 
+                    .Where(x => x.Symbol == Cash.CASH
                         || string.Equals(x.Brokerage, 
                                          brokerage, 
                                          StringComparison.OrdinalIgnoreCase))
@@ -175,9 +175,11 @@ namespace PortfolioPicker.App
 
     public class Cash : Fund 
     {
+        public static string CASH = "CASH";
+
         public Cash()
         {
-            Symbol = "CASH";
+            Symbol = CASH;
             ExpenseRatio = 0;
         }
 
