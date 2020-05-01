@@ -16,9 +16,15 @@ namespace PortfolioPicker.App
             Portfolio portfolio,
             double stockRatio,
             double domesticStockRatio,
-            double domesticBondRatio)
+            double domesticBondRatio, 
+            int iterationLimit = -1,
+            int threadLimit = -1,
+            bool reportProgress = false,
+            string debugOutputDirectory = default // relative to ~
+        )
         {
             // compute target portfolio's exposure to various investment types
+            // this is the raw list of values without any priority ordering.
             var targetRatios = ComputeTargetRatios(stockRatio, domesticStockRatio, domesticBondRatio);
             
             // compute original score with these ratios
@@ -28,22 +34,27 @@ namespace PortfolioPicker.App
             var orderedAccounts = portfolio.Accounts.OrderBy(x => x.Type).ToArray();
             
             // state
-            var generateTotal = 
-                Factorial(targetRatios.Count) * 
-                Math.Pow(Factorial(_allAccountTypes.Count), targetRatios.Where(x => x.Value > 0).Count());
-            var logPercentage = Math.Round(generateTotal / 20);
-            var startGeneration = DateTime.Now;
-            var generateSum = TimeSpan.Zero;
+            var generateTotal = Math.Max(1, Math.Min(iterationLimit, Factorial(targetRatios.Count) * Math.Pow(Factorial(_allAccountTypes.Count), targetRatios.Where(x => x.Value > 0).Count())));
+            var degreeOfParallelism = Math.Max(1, Math.Min(threadLimit, Environment.ProcessorCount));
+            var iterationsPerReport = Math.Round(generateTotal / 20);
+            var generateTotalTime = TimeSpan.Zero;
             var generateCount = 0;
             var portfolioPermutations = new ConcurrentDictionary<int, RebalancedPortfolio>();
 
-            void DoWork(ICollection<Exposure> trp)
+            // the ratio permutations are processed in parallel
+            // In each thread, this 
+            void DoWork(ICollection<Exposure> targetRatioPermutation)
             {
-                foreach (var sdt in GetPermutations(trp.First(x => x.Class == AssetClass.Stock && x.Location == AssetLocation.Domestic).Value))
-                foreach (var sit in GetPermutations(trp.First(x => x.Class == AssetClass.Stock && x.Location == AssetLocation.International).Value))
-                foreach (var bdt in GetPermutations(trp.First(x => x.Class == AssetClass.Bond && x.Location == AssetLocation.Domestic).Value))
-                foreach (var bit in GetPermutations(trp.First(x => x.Class == AssetClass.Bond && x.Location == AssetLocation.International).Value))
+                foreach (var sdt in AccountTypePermutations(targetRatioPermutation.First(x => x.Class == AssetClass.Stock && x.Location == AssetLocation.Domestic).Value))
+                foreach (var sit in AccountTypePermutations(targetRatioPermutation.First(x => x.Class == AssetClass.Stock && x.Location == AssetLocation.International).Value))
+                foreach (var bdt in AccountTypePermutations(targetRatioPermutation.First(x => x.Class == AssetClass.Bond  && x.Location == AssetLocation.Domestic).Value))
+                foreach (var bit in AccountTypePermutations(targetRatioPermutation.First(x => x.Class == AssetClass.Bond  && x.Location == AssetLocation.International).Value))
                 {   
+                    // early bailout
+                    if (iterationLimit >= 0 && generateCount >= iterationLimit)
+                        return;
+
+                    // create unique preference set
                     var accountTypePreferences = new List<ExposureAccountTypePreference>
                     {
                         new ExposureAccountTypePreference(AssetClass.Stock, AssetLocation.Domestic, sdt),
@@ -52,29 +63,31 @@ namespace PortfolioPicker.App
                         new ExposureAccountTypePreference(AssetClass.Bond, AssetLocation.International, bit),
                     };
 
+                    // create portfolio
                     var t = DateTime.Now;
-                    var g = GeneratePortfolio(portfolio, orderedAccounts, trp, accountTypePreferences);
-                    generateSum += DateTime.Now - t; // this races but it's not critical
+                    var p = GeneratePortfolio(portfolio, orderedAccounts, targetRatioPermutation, accountTypePreferences);
+                    generateTotalTime += DateTime.Now - t; // this races but it's not critical
                     var newCount = Interlocked.Increment(ref generateCount);
-
-                    // uniquify produced portfolios with an ID key
-                    portfolioPermutations.TryAdd(g.DescriptorKey, g);
+                    portfolioPermutations.TryAdd(p.DescriptorKey, p);
 
                     // report progress
-                    // if (newCount % logPercentage == 0.0)
-                    // {
-                    //     Console.WriteLine(string.Format("{0:n0}%, {1:n0} portfolios / sec.", 
-                    //         100.0 * newCount / generateTotal,
-                    //         1.0 / (generateSum / newCount).TotalSeconds));
-                    // }
+                    if (reportProgress && newCount % iterationsPerReport == 0.0)
+                    {
+                        Console.WriteLine(string.Format("{0:n0}%, {1:n0} portfolios / sec.", 
+                            100.0 * newCount / generateTotal,
+                            1.0 / (generateTotalTime / newCount).TotalSeconds));
+                    }
                 }
             }
 
             Console.WriteLine(string.Format("Start: generate {0:n0} portfolios.", generateTotal));
-            var pq = Permutations(targetRatios).AsParallel();
+            var startGenerationTime = DateTime.Now;
+            var pq = Permutations(targetRatios)
+                .AsParallel()
+                .WithDegreeOfParallelism(degreeOfParallelism);
             pq.ForAll(trp => DoWork(trp));
             var results = pq.ToArray(); // force synchronize
-            var finishTime = DateTime.Now - startGeneration;
+            var duration = DateTime.Now - startGenerationTime;
             
             // take best portfolios that are at least better than we were
             var originalScore = portfolio.Score;
@@ -87,24 +100,27 @@ namespace PortfolioPicker.App
 
             // final log
             Console.WriteLine(
-            string.Format("Generated {0:n0} unique portfolios out of {1:n0} attempts in {2} seconds.\n{3:n0} score higher than the original.\n{4} are probably worth the tax implications of rebalancing.",
-                portfolioPermutations.Count,
-                generateTotal,
-                Math.Round(finishTime.TotalSeconds),
-                portfolios.Count(),
-                portfolios.Where(x => x.WeightedScore > originalScore).Count()
-                ));
+                string.Format("Generated {0:n0} unique portfolios out of {1:n0} attempts in {2} seconds.\n{3:n0} score higher than the original.\n{4} are probably worth the tax implications of rebalancing.",
+                    portfolioPermutations.Count,
+                    generateTotal,
+                    Math.Round(duration.TotalSeconds),
+                    portfolios.Count(),
+                    portfolios.Where(x => x.WeightedScore > originalScore).Count()
+                    ));
 
-            // debug
-            // var i = 0;
-            // foreach(var p in portfolios)
-            // {
-            //     p.Save(Path.Combine(
-            //         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), 
-            //         "work/build/test", 
-            //         i.ToString()));
-            //     ++i;
-            // }
+            // save best
+            if (!string.IsNullOrWhiteSpace(debugOutputDirectory))
+            {
+                var i = 0;
+                foreach(var p in portfolios)
+                {
+                    p.Save(Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        debugOutputDirectory, 
+                        i.ToString()));
+                    ++i;
+                }
+            }
 
             // take the best
             return portfolios.FirstOrDefault();
@@ -113,7 +129,7 @@ namespace PortfolioPicker.App
         private static RebalancedPortfolio GeneratePortfolio(
             Portfolio portfolio, 
             IEnumerable<Account> accounts,
-            ICollection<Exposure> targetExposureRatios, 
+            ICollection<Exposure> prioritizedTargetExposureRatios, 
             ICollection<ExposureAccountTypePreference> accountTypePreferences)
         {
             // setup bookkeeping
@@ -121,7 +137,7 @@ namespace PortfolioPicker.App
             var positionsByAccount = new Dictionary<Account, IList<Position>>();
             var accountRemainders = new Dictionary<Account, double>();
             var exposureRemainders = new Dictionary<Exposure, double>();
-            var exposures = targetExposureRatios
+            var exposures = prioritizedTargetExposureRatios
                 .Select(x => new Exposure(x.Class, x.Location, portfolio.TotalValue * x.Value))
                 .ToArray();
 
@@ -235,7 +251,7 @@ namespace PortfolioPicker.App
                 {
                     var cash = new Position
                     {
-                        Symbol = "CASH",
+                        Symbol = Cash.CASH,
                         Value = r
                     };
 
@@ -261,11 +277,11 @@ namespace PortfolioPicker.App
             {
                 Errors = errors,
                 Original = portfolio,
-                TargetExposureRatios = targetExposureRatios
+                TargetExposureRatios = prioritizedTargetExposureRatios
             };
             rebalanced.Orders = Portfolio.ComputeOrders(portfolio, rebalanced);
             rebalanced.OrdersScore = rebalanced.GetOrdersScore();
-            rebalanced.Score = rebalanced.GetScore(GetScoreWeight, targetExposureRatios);
+            rebalanced.Score = rebalanced.GetScore(GetScoreWeight, prioritizedTargetExposureRatios);
             return rebalanced;
         }
 
@@ -330,7 +346,7 @@ namespace PortfolioPicker.App
         }
 
         private static IList<AccountType> _allAccountTypes = Enum.GetValues(typeof(AccountType)).Cast<AccountType>().ToList();
-        private static ICollection<ICollection<AccountType>> GetPermutations(double value)
+        private static ICollection<ICollection<AccountType>> AccountTypePermutations(double value)
         {
             // if the value assigned is going to be zero anyway, don't bother permuting
             return value <= 0.0

@@ -1,13 +1,13 @@
 trigger:
 - master
 
+parameters:
+  - name: buildconfiguration
+    type: string 
+    default: Release
+
 pool:
   vmImage: 'ubuntu-latest'
-
-parameters:
-- name: buildConfiguration
-  type: string 
-  default: "Release"
 
 steps:
 
@@ -19,7 +19,7 @@ steps:
     packageType: sdk
 
 # TEST   
-- script: dotnet test -c ${{parameters.buildconfiguration}} --logger trx
+- script: dotnet test Tests -c ${{parameters.buildconfiguration}} --logger trx
   displayName: test
 - task: PublishTestResults@2
   displayName: upload test results
