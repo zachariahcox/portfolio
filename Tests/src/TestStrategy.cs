@@ -120,7 +120,7 @@ namespace PortfolioPicker.Tests
                 },
             };
 
-            var portfolio = Picker.Rebalance(new Portfolio(accounts), .9, .6, .7);
+            var portfolio = Picker.Rebalance(new Portfolio(accounts), .9, .6, .7, iterationLimit: 1, threadLimit: 1);
             Assert.Equal(4, portfolio.NumberOfPositions);
             Assert.Equal(100, portfolio.TotalValue);
         }
@@ -161,7 +161,9 @@ namespace PortfolioPicker.Tests
             var total_value = accounts
                 .SelectMany(x => x.Positions)
                 .Sum(x => x.Value);
-            Assert.Null(Picker.Rebalance(new Portfolio(accounts), .9, .6, .7));
+            Assert.Null(Picker.Rebalance(new Portfolio(accounts), .9, .6, .7
+                , iterationLimit: 1
+                , threadLimit: 1));
         }
 
         [Fact]
@@ -183,7 +185,7 @@ namespace PortfolioPicker.Tests
                     }
                 }
             };
-            Assert.Null(Picker.Rebalance(new Portfolio(accounts), .9, .6, .7));
+            Assert.Null(Picker.Rebalance(new Portfolio(accounts), .9, .6, .7, iterationLimit: 1, threadLimit: 1));
         }
 
         [Fact]
@@ -200,7 +202,7 @@ namespace PortfolioPicker.Tests
       value: 200
       hold: true";
 
-            var portfolio = Picker.Rebalance(Portfolio.FromYaml(yaml), .9, .6, .7);
+            var portfolio = Picker.Rebalance(Portfolio.FromYaml(yaml), .9, .6, .7, iterationLimit: 1, threadLimit: 1);
             Assert.Equal(4, portfolio.NumberOfPositions);
             var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(300, actualValue);
@@ -320,7 +322,7 @@ namespace PortfolioPicker.Tests
             var brokerages = CreateFundMap();
             var expectedTotal = accounts.Count * 10000;
             Fund.Add(brokerages);
-            var portfolio = Picker.Rebalance(new Portfolio(accounts), .9, .6, .7);
+            var portfolio = Picker.Rebalance(new Portfolio(accounts), .9, .6, .7, iterationLimit: 1, threadLimit: 1);
             Assert.Equal(12, portfolio.NumberOfPositions);
             Assert.Equal(1.59, portfolio.ExpenseRatio);
             Assert.Equal(expectedTotal, portfolio.TotalValue);
@@ -343,7 +345,7 @@ namespace PortfolioPicker.Tests
 
             Fund.Add(funds);
             var original = new Portfolio(accounts);
-            var p = Picker.Rebalance(original, .5, .5, .5);
+            var p = Picker.Rebalance(original, .5, .5, .5, iterationLimit: 1, threadLimit: 1);
 
             // funds should be equally split
             Assert.NotNull(p);
@@ -362,7 +364,7 @@ namespace PortfolioPicker.Tests
 
             // ==================================
             // Change stock ratio
-            p = Picker.Rebalance(original, .9, 1, 1);
+            p = Picker.Rebalance(original, .9, 1, 1, iterationLimit: 1, threadLimit: 1);
             Assert.NotNull(p);
             Assert.InRange(p.Score, .8, .9); // less than one due to account being always brokerage
             Assert.Equal(2, p.NumberOfPositions);
@@ -375,7 +377,7 @@ namespace PortfolioPicker.Tests
 
             // ==================================
             // Change domestic ratio
-            p = Picker.Rebalance(original, .5, .9, .1);
+            p = Picker.Rebalance(original, .5, .9, .1, iterationLimit: 1, threadLimit: 1);
             Assert.NotNull(p);
             Assert.InRange(p.Score, .8, .9); // less than one due to account being always brokerage
             Assert.Equal(4, p.NumberOfPositions);
@@ -411,7 +413,7 @@ namespace PortfolioPicker.Tests
 
             Fund.Add(funds);
             var original = new Portfolio(accounts);
-            var p = Picker.Rebalance(original, .5, .5, .5);
+            var p = Picker.Rebalance(original, .5, .5, .5, iterationLimit: 1, threadLimit: 1);
 
             // funds should be equally split
             Assert.NotNull(p);
@@ -445,7 +447,7 @@ namespace PortfolioPicker.Tests
 
             Fund.Add(funds);
             var original = new Portfolio(accounts);
-            var p = Picker.Rebalance(original, 0.5, 0.5, 0.5);
+            var p = Picker.Rebalance(original, 0.5, 0.5, 0.5, iterationLimit: 1, threadLimit: 1);
 
             // assert portfolio correctness
             Assert.NotNull(p);
@@ -494,7 +496,7 @@ namespace PortfolioPicker.Tests
             Fund.Add(funds);
             
             var original = new Portfolio(accounts);
-            var p = Picker.Rebalance(original, 0.5, 0.5, 0.5);
+            var p = Picker.Rebalance(original, 0.5, 0.5, 0.5, iterationLimit: 1, threadLimit: 1);
 
             var targetRatios = Picker.ComputeTargetRatios(.5, .5, .5);
             var os = original.GetScore(Picker.GetScoreWeight, targetRatios);
