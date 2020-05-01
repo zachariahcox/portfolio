@@ -11,7 +11,7 @@ namespace PortfolioPicker.CLI
         {
             var app = new CommandLineApplication(throwOnUnexpectedArg: false)
             {
-                Name = "PortfolioPicker",
+                Name = "portfolio", // as far as I can tell there is no way to infer this at compile time
                 Description = "Portfolio balance suggestion engine."
             };
 

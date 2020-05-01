@@ -70,7 +70,7 @@ The rebalance command runs the rebalancing logic and prints its recommendations.
 The load command simply reports on the portfolio you provide it.
 
 # Getting Started
-To build the project you will need [dotnet core 3.1 or greater](https://code.visualstudio.com/docs/languages/dotnet). 
+To build the project you will need [dotnet core 3.1 or greater](https://code.visualstudio.com/docs/languages/dotnet).
 
 # Build and Test
 ```bash
@@ -78,76 +78,10 @@ cd PortfolioPicker
 dotnet build
 dotnet test
 ```
-
-## Example
-There are other examples in the tests project. 
-Using the ```example.yaml`` file from above, running this should produce the following report:
-
+# Usage
 ```bash
-portfolio load /path/to/example.yaml
+cd PortfolioPicker
+cd ../build
+dotnet publish ../PortfolioPicker/CLI/ -o . -c release
+./portfolio rebalance path/to/portfolio.yaml -o path/to/outputdir/ -db 100
 ```
----
-# Custom portfolio
-## stats
-|stat|value|
-|---|---|
-|date|04/21/2019|
-|TotalValue|$600.00|
-|ExpenseRatio|0.0250|
-|BondRatio|0.00|
-|StockRatio|1.00|
-|DomesticRatio|0.83|
-|InternationalRatio|0.17|
-
-## positions
-|account|symbol|value|
-|---|---|---:|
-|my 401k|[FZROX](https://finance.yahoo.com/quote/FZROX?p=FZROX)|$100.00|
-|my regular taxable|[AMZN](https://finance.yahoo.com/quote/AMZN?p=AMZN)|$100.00|
-|my regular taxable|[MSFT](https://finance.yahoo.com/quote/MSFT?p=MSFT)|$100.00|
-|my roth account|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
-|my roth account|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$100.00|
-|my roth account|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100.00|
----
-
-Running this should produce the following report: 
-```bash
-$ portfolio rebalance /path/to/example.yaml
-```
---- 
-
-# portfolio
-## stats
-|stat|value|
-|---|---|
-|date|04/21/2019|
-|TotalValue|$600.00|
-|ExpenseRatio|0.0557|
-|BondRatio|0.10|
-|StockRatio|0.90|
-|DomesticRatio|0.61|
-|InternationalRatio|0.39|
-|Strategy|FourFundStrategy|
-
-## positions
-|account|symbol|value|
-|---|---|---:|
-|my 401k|[FZROX](https://finance.yahoo.com/quote/FZROX?p=FZROX)|$58.00|
-|my 401k|[FXNAX](https://finance.yahoo.com/quote/FXNAX?p=FXNAX)|$42.00|
-|my regular taxable|[MSFT](https://finance.yahoo.com/quote/MSFT?p=MSFT)|$100.00|
-|my regular taxable|[VTABX](https://finance.yahoo.com/quote/VTABX?p=VTABX)|$18.00|
-|my regular taxable|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$82.00|
-|my roth account|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$134.00|
-|my roth account|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$166.00|
-## orders
-|account|action|symbol|value|
-|---|---|---|---:|
-|my 401k|buy|[FXNAX](https://finance.yahoo.com/quote/FXNAX?p=FXNAX)|$42.00|
-|my 401k|sell|[FZROX](https://finance.yahoo.com/quote/FZROX?p=FZROX)|$42.00|
-|my regular taxable|buy|[VTABX](https://finance.yahoo.com/quote/VTABX?p=VTABX)|$18.00|
-|my regular taxable|buy|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$82.00|
-|my regular taxable|sell|[AMZN](https://finance.yahoo.com/quote/AMZN?p=AMZN)|$100.00|
-|my roth account|buy|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$34.00|
-|my roth account|buy|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$66.00|
-|my roth account|sell|[VMMXX](https://finance.yahoo.com/quote/VMMXX?p=VMMXX)|$100.00|
----
