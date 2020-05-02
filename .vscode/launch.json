@@ -5,28 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "load",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
-            "args": ["load","/Users/zacox/OneDrive/Documents/finance/portfolio_01102020.yml", "-o", "/Users/zacox/work/build/"],
-            "cwd": "${workspaceFolder}/CLI",
-            "console": "internalConsole",
-            "stopAtEntry": false
-        },
-        {
-            "name": "rebalance",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
-            "args": ["rebalance","/Users/zacox/OneDrive/Documents/finance/portfolio_01212020.yml", "-db", "100", "-o", "/Users/zacox/work/build/"],
-            "cwd": "${workspaceFolder}/CLI",
-            "console": "internalConsole",
-            "stopAtEntry": false
-        },
-        {
             "name": "load demo",
             "type": "coreclr",
             "request": "launch",

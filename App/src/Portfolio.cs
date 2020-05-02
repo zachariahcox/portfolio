@@ -71,7 +71,7 @@ namespace PortfolioPicker.App
             var serializer = new SerializerBuilder()
                 .WithNamingConvention(new CamelCaseNamingConvention())
                 .Build();
-            return serializer.Serialize(Accounts);
+            return serializer.Serialize(Accounts).Replace("\r\n", "\n");
         }
 
         public double PercentOfPortfolio(AssetClass c, AssetLocation l) => 100 * Value(AccountType.None, c, l) / TotalValue;

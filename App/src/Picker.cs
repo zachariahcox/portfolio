@@ -34,8 +34,13 @@ namespace PortfolioPicker.App
             var orderedAccounts = portfolio.Accounts.OrderBy(x => x.Type).ToArray();
             
             // state
-            var generateTotal = Math.Max(1, Math.Min(iterationLimit, Factorial(targetRatios.Count) * Math.Pow(Factorial(_allAccountTypes.Count), targetRatios.Where(x => x.Value > 0).Count())));
-            var degreeOfParallelism = Math.Max(1, Math.Min(threadLimit, Environment.ProcessorCount));
+            var generateTotal = Factorial(targetRatios.Count) * Math.Pow(Factorial(_allAccountTypes.Count), targetRatios.Where(x => x.Value > 0).Count());
+            if (iterationLimit != -1) 
+                generateTotal = Math.Max(1, Math.Min(iterationLimit, generateTotal));
+            var degreeOfParallelism = Environment.ProcessorCount;
+            if (threadLimit != -1) 
+                degreeOfParallelism = Math.Max(1, Math.Min(threadLimit, Environment.ProcessorCount));
+                
             var iterationsPerReport = Math.Round(generateTotal / 20);
             var generateTotalTime = TimeSpan.Zero;
             var generateCount = 0;

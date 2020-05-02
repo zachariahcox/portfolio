@@ -121,13 +121,10 @@ namespace PortfolioPicker.CLI
                         domesticStockRatio: domesticStockRatio,
                         domesticBondRatio: domesticBondRatio);
 
-                    var defaultPath = Path.Join(
-                        new FileInfo(portfolioPath.Value).DirectoryName, 
-                        $"portfolio_{DateTime.Now.ToString("yyyyMMdd")}");
-
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
-                        : defaultPath;
+                        : Path.Join(new FileInfo(portfolioPath.Value).DirectoryName, 
+                                    $"portfolio_{DateTime.Now.ToString("yyyy-MM-dd")}");
                     portfolio.Save(d);
                 });
             });
