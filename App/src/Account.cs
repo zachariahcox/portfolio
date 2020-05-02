@@ -50,20 +50,19 @@ namespace PortfolioPicker.App
                 foreach (var p in _positions)
                 {
                     var fund = Fund.Get(p.Symbol);
-                    foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
+                    foreach (var c in AssetClasses.ALL)
+                    foreach (var l in AssetLocations.ALL)
                     {
-                        foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                        if (c == AssetClass.None || l == AssetLocation.None)
+                            continue;
+                            
+                        var e = Exposures.FirstOrDefault(x => x.Class == c && x.Location == l);
+                        if (e is null)
                         {
-                            if (c == AssetClass.None || l == AssetLocation.None)
-                                continue;
-                            var e = Exposures.FirstOrDefault(x => x.Class == c && x.Location == l);
-                            if (e is null)
-                            {
-                                e = new Exposure(c, l);
-                                Exposures.Add(e);
-                            }
-                            e.Value += p.Value * fund.Ratio(c) * fund.Ratio(l);
+                            e = new Exposure(c, l);
+                            Exposures.Add(e);
                         }
+                        e.Value += p.Value * fund.Ratio(c) * fund.Ratio(l);
                     }
                 }
             }

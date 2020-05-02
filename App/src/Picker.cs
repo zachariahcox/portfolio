@@ -34,7 +34,7 @@ namespace PortfolioPicker.App
             var orderedAccounts = portfolio.Accounts.OrderBy(x => x.Type).ToArray();
             
             // state
-            var generateTotal = Factorial(targetRatios.Count) * Math.Pow(Factorial(_allAccountTypes.Count), targetRatios.Where(x => x.Value > 0).Count());
+            var generateTotal = Factorial(targetRatios.Count) * Math.Pow(Factorial(AccountTypes.ALL.Length), targetRatios.Where(x => x.Value > 0).Count());
             if (iterationLimit != -1) 
                 generateTotal = Math.Max(1, Math.Min(iterationLimit, generateTotal));
             var degreeOfParallelism = Environment.ProcessorCount;
@@ -191,8 +191,8 @@ namespace PortfolioPicker.App
                 accountRemainders[a] -= value;
 
                 // reduce exposure remainders
-                foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                foreach (var c in AssetClasses.ALL)
+                foreach (var l in AssetLocations.ALL)
                 {
                     var exposureValue = value * fund.Ratio(c) * fund.Ratio(l);
                     if (exposureValue > 0.0)
@@ -222,7 +222,7 @@ namespace PortfolioPicker.App
                 if (exposureRemainders[e] <= 0)
                     continue;
 
-                // buy as much as possible from prefered accounts, in order
+                // buy as much as possible from preferred accounts, in order
                 foreach (var t in accountTypePreferences.First(x => x.Class == e.Class && x.Location == e.Location).Preferences)
                 {
                     // which accounts will work? 
@@ -354,13 +354,12 @@ namespace PortfolioPicker.App
             };
         }
 
-        private static IList<AccountType> _allAccountTypes = Enum.GetValues(typeof(AccountType)).Cast<AccountType>().ToList();
         private static ICollection<ICollection<AccountType>> AccountTypePermutations(double value)
         {
             // if the value assigned is going to be zero anyway, don't bother permuting
             return value <= 0.0
-                ? new List<ICollection<AccountType>>(){_allAccountTypes} 
-                : Permutations(_allAccountTypes);
+                ? new List<ICollection<AccountType>>(){AccountTypes.ALL} 
+                : Permutations(AccountTypes.ALL);
         }
 
         /// <summary>

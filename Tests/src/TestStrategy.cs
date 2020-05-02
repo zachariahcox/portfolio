@@ -223,7 +223,7 @@ namespace PortfolioPicker.Tests
             var accounts = new List<Account>();
             var value = 10000;
             foreach(var b in brokerages)
-            foreach (var t in Enum.GetValues(typeof(AccountType)).Cast<AccountType>())
+            foreach (var t in AccountTypes.ALL)
                 accounts.Add(CreateAccount(b, t, symbol: Cash.CASH, value: value));
 
             var symbols = new []{"m", "n"};
@@ -237,7 +237,7 @@ namespace PortfolioPicker.Tests
             var expectedTotal = accounts.Count * value;
             var portfolio = Picker.Rebalance(new Portfolio(accounts), 1, 1, 1, iterationLimit: 1, threadLimit: 1);
             Assert.Equal(
-                brokerages.Length * Enum.GetValues(typeof(AccountType)).Length, 
+                brokerages.Length * AccountTypes.ALL.Length, 
                 portfolio.NumberOfPositions);
             Assert.Equal(expenseRatio, portfolio.ExpenseRatio);
             Assert.Equal(expectedTotal, portfolio.TotalValue);
@@ -382,15 +382,13 @@ namespace PortfolioPicker.Tests
             Assert.Equal(50, p.PercentOfPortfolio(AssetLocation.Domestic));
             Assert.Equal(50, p.PercentOfPortfolio(AssetLocation.International));
 
-            foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
+            foreach (var c in AssetClasses.ALL)
+            foreach (var l in AssetLocations.ALL)
             {
-                foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
-                {
-                    if (c == AssetClass.None || l == AssetLocation.None)
-                        continue; // tested above
+                if (c == AssetClass.None || l == AssetLocation.None)
+                    continue; // tested above
 
-                    Assert.Equal(25, p.PercentOfPortfolio(c, l));
-                }
+                Assert.Equal(25, p.PercentOfPortfolio(c, l));
             }
         }
 

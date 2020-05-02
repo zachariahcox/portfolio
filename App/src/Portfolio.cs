@@ -124,7 +124,7 @@ namespace PortfolioPicker.App
                 }
 
                 // score each allocation
-                foreach (var t in Enum.GetValues(typeof(AccountType)).Cast<AccountType>())
+                foreach (var t in AccountTypes.ALL)
                 {
                     var fraction = PercentOfAssetType(t, e.Class, e.Location) / 100;
                     score += GetScoreWeight(e.Class, e.Location, t) * fraction;
@@ -259,8 +259,8 @@ namespace PortfolioPicker.App
                     "---:", "---:", "---:", 
                     "---:", "---:", "---:"));
 
-                foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                    foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                foreach (var c in AssetClasses.ALL)
+                    foreach (var l in AssetLocations.ALL)
                         lines.Add(GetRow(c, l));
                 lines.Add("");
 
@@ -276,8 +276,8 @@ namespace PortfolioPicker.App
                     lines.Add(Row("---", "---", "---:",
                         "---:", "---:", "---:", 
                         "---:", "---:", "---:"));
-                    foreach (var c in Enum.GetValues(typeof(AssetClass)).Cast<AssetClass>())
-                        foreach (var l in Enum.GetValues(typeof(AssetLocation)).Cast<AssetLocation>())
+                    foreach (var c in AssetClasses.ALL)
+                        foreach (var l in AssetLocations.ALL)
                             lines.Add(GetRelativeRow(c, l, reference));   
                     lines.Add("");
                 }
