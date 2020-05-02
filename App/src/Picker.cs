@@ -39,7 +39,7 @@ namespace PortfolioPicker.App
                 generateTotal = Math.Max(1, Math.Min(iterationLimit, generateTotal));
             var degreeOfParallelism = Environment.ProcessorCount;
             if (threadLimit != -1) 
-                degreeOfParallelism = Math.Max(1, Math.Min(threadLimit, Environment.ProcessorCount));
+                degreeOfParallelism = Math.Max(1, Math.Min(threadLimit, degreeOfParallelism));
 
             var iterationsPerReport = Math.Round(generateTotal / 20);
             var generateTotalTime = TimeSpan.Zero;
@@ -276,10 +276,13 @@ namespace PortfolioPicker.App
             }
 
             // create new accounts
-            var newAccounts = positionsByAccount.Select(x => {
-                var rc = x.Key.Clone(); 
-                rc.Positions = x.Value; 
-                return rc;}).ToList();
+            var newAccounts = new List<Account>(positionsByAccount.Count);
+            foreach(var p in positionsByAccount)
+            {
+                var a = p.Key.Clone();
+                a.Positions = p.Value;
+                newAccounts.Add(a);
+            }
 
             // create portfolio
             var rebalanced = new RebalancedPortfolio(newAccounts)
