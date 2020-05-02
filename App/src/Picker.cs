@@ -20,7 +20,7 @@ namespace PortfolioPicker.App
             int iterationLimit = -1,
             int threadLimit = -1,
             bool reportProgress = false,
-            string debugOutputDirectory = default // relative to ~
+            string debugOutputDirectory = default // where to drop the best 100 for debugging
         )
         {
             // compute target portfolio's exposure to various investment types
@@ -40,7 +40,7 @@ namespace PortfolioPicker.App
             var degreeOfParallelism = Environment.ProcessorCount;
             if (threadLimit != -1) 
                 degreeOfParallelism = Math.Max(1, Math.Min(threadLimit, Environment.ProcessorCount));
-                
+
             var iterationsPerReport = Math.Round(generateTotal / 20);
             var generateTotalTime = TimeSpan.Zero;
             var generateCount = 0;
@@ -94,41 +94,45 @@ namespace PortfolioPicker.App
             var results = pq.ToArray(); // force synchronize
             var duration = DateTime.Now - startGenerationTime;
             
-            // take best portfolios that are at least better than we were
-            var originalScore = portfolio.Score;
-            var portfolios = portfolioPermutations.Values
-                .Where(x => x.Errors.Count == 0)  // no errors
-                .Where(x => x.Score > originalScore)
-                .OrderByDescending(x => x.WeightedScore)  // highest weighted score
-                .Take(100) // best 100 should be fine
+            // take the best unique portfolios
+            var best100 = portfolioPermutations.Values
+                .Where(x => x.Errors.Count == 0)
+                .OrderByDescending(x => x.WeightedScore)
+                .Take(100)
                 .ToArray();
 
+            // we mostly only care about the ones better than the input
+            var originalScore = portfolio.Score;
+            var better = best100
+                .Where(x => x.Score > originalScore)
+                .Count();
+            var weightedBetter = best100
+                .Where(x => x.WeightedScore > originalScore)
+                .Count();
+                
             // final log
             Console.WriteLine(
                 string.Format("Generated {0:n0} unique portfolios out of {1:n0} attempts in {2} seconds.\n{3:n0} score higher than the original.\n{4} are probably worth the tax implications of rebalancing.",
                     portfolioPermutations.Count,
                     generateTotal,
                     Math.Round(duration.TotalSeconds),
-                    portfolios.Count(),
-                    portfolios.Where(x => x.WeightedScore > originalScore).Count()
+                    better,
+                    weightedBetter
                     ));
 
-            // save best
+            // save best if asked
             if (!string.IsNullOrWhiteSpace(debugOutputDirectory))
             {
                 var i = 0;
-                foreach(var p in portfolios)
+                foreach(var p in best100)
                 {
-                    p.Save(Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                        debugOutputDirectory, 
-                        i.ToString()));
+                    p.Save(Path.Combine(debugOutputDirectory, i.ToString()));
                     ++i;
                 }
             }
 
-            // take the best
-            return portfolios.FirstOrDefault();
+            // take the best even though it might not be better than the input?
+            return best100.FirstOrDefault();
         }
 
         private static RebalancedPortfolio GeneratePortfolio(
