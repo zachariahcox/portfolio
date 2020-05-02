@@ -133,7 +133,7 @@ namespace PortfolioPicker.Tests
             var yaml = File.ReadAllText(GetDataFilePath("src/MarkdownSerialization/portfolio.yml"));
             var p = Portfolio.FromYaml(yaml);
             var expectedFile = GetDataFilePath("src/MarkdownSerialization/load.md");
-            var actual = string.Join(Environment.NewLine, p.ToMarkdown());
+            var actual = string.Join("\n", p.ToMarkdown());
             // uncomment to update
             // File.WriteAllText(expectedFile, actual);
             var expected = File.ReadAllText(expectedFile);
@@ -147,7 +147,7 @@ namespace PortfolioPicker.Tests
         //     var original = Portfolio.FromYaml(yaml);
         //     var rebalance = Picker.Rebalance(original, .5, .5, .5);
         //     var expectedFile = GetDataFilePath("MarkdownSerialization/rebalance.md");
-        //     var actual = string.Join(Environment.NewLine, rebalance.ToMarkdown(reference: original));
+        //     var actual = string.Join("\n", rebalance.ToMarkdown(reference: original));
         //     // uncomment to update
         //     // File.WriteAllText(expectedFile, actual);
         //     var expected = File.ReadAllText(expectedFile);
