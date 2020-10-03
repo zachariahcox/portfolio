@@ -12,7 +12,7 @@ namespace PortfolioPicker.CLI
             var app = new CommandLineApplication(throwOnUnexpectedArg: false)
             {
                 Name = "portfolio", // as far as I can tell there is no way to infer this at compile time
-                Description = "Portfolio balance suggestion engine."
+                Description = "financial portfolio balance suggestion engine."
             };
 
             app.HelpOption(inherited: true);
@@ -43,7 +43,9 @@ namespace PortfolioPicker.CLI
                 cmd.OnExecute(() =>
                 {
                     var data = File.ReadAllText(portfolioPath.Value);
-                    var portfolio = Portfolio.FromYaml(data);
+                    var portfolio = Path.GetExtension(portfolioPath.Value) == ".json"
+                        ? Portfolio.FromGoogleSheet(data) 
+                        : Portfolio.FromYaml(data);
                     var portfolioFile = new FileInfo(portfolioPath.Value);
                     var d = outputDir.HasValue()
                         ? outputDir.Value()
@@ -70,6 +72,12 @@ namespace PortfolioPicker.CLI
                 var outputDir = cmd.Option(
                     template: "-o|--output <DIR>",
                     description: "Path to output directory. Defaults to directory containing portfolio file.",
+                    optionType: CommandOptionType.SingleValue)
+                    .Accepts(v => v.LegalFilePath());
+                
+                var debugOutputDir = cmd.Option(
+                    template: "--debug <DIR>",
+                    description: "Path to DEBUG output directory.",
                     optionType: CommandOptionType.SingleValue)
                     .Accepts(v => v.LegalFilePath());
 
@@ -101,8 +109,15 @@ namespace PortfolioPicker.CLI
                 {
                     // load yaml files
                     var data = File.ReadAllText(portfolioPath.Value);
-                    var original = Portfolio.FromYaml(data);
-                    Fund.FromYaml(funds.Value());
+                    var original = Path.GetExtension(portfolioPath.Value) == ".json"
+                        ? Portfolio.FromGoogleSheet(data) 
+                        : Portfolio.FromYaml(data);
+
+                    // load additional funds data? 
+                    if (funds.HasValue())
+                    {
+                        original.AvailableSecurities.Add(Security.FromYaml(funds.Value()));
+                    }
 
                     // finalize ratios
                     var stockRatio = stockPercent.HasValue()
@@ -119,7 +134,8 @@ namespace PortfolioPicker.CLI
                         portfolio: original,
                         stockRatio: stockRatio,
                         domesticStockRatio: domesticStockRatio,
-                        domesticBondRatio: domesticBondRatio);
+                        domesticBondRatio: domesticBondRatio,
+                        debugOutputDirectory: debugOutputDir.Value());
 
                     if (portfolio != default)
                     {

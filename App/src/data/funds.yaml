@@ -7,12 +7,6 @@
   expenseRatio: 0.04
   stockRatio: 1
   domesticRatio: 1
-- description: Vanguard Balanced Index Fund Admiral Shares
-  symbol: VBIAX
-  brokerage: Vanguard
-  expenseRatio: 0.07
-  stockRatio: .6
-  domesticRatio: 1
 - description: Vanguard Total International Stock Index Fund
   symbol: VTIAX
   brokerage: Vanguard
@@ -51,55 +45,10 @@
   expenseRatio: 0.025
   stockRatio: 0
   domesticRatio: 1
-
-
-# Microsoft
-- description: LifePath Dynamic 2050 Fund
-  brokerage: Microsoft
-  symbol: STLFX
-  expenseRatio: 0.08
-  stockRatio: 0.8
-  domesticRatio: 1
-- description: Vanguard Short-Term Bond Index Fund Institutional Plus Shares
-  symbol: VBIPX
-  expenseRatio: 0.04
-  stockRatio: 0
-  domesticRatio: 1
-- description: Vanguard Institutional S&P 500 Index Trust
-  brokerage: Microsoft
-  symbol: VFINX
-  expenseRatio: 0.011
-  stockRatio: 1
-  domesticRatio: 1
-- description: Vanguard Russell 1000 Growth Index Trust
-  brokerage: Microsoft
-  symbol: VRGWX
-  expenseRatio: 0.02
-  stockRatio: 1
-  domesticRatio: 1
-- description: International Growth Account (MS)
-  symbol: MS_STOCK_INT
-  brokerage: Microsoft
-  expenseRatio: .52
-  stockRatio: 1
-  domesticRatio: 0
-
-# Microsoft HSA
-- description: "Schwab S&P 500 Index Fund"
-  symbol: SWPPX
-  brokerage: ms_hsa
-  expenseRatio: 0.02
-  stockRatio: 1
-  domesticRatio: 1
-- description: Vanguard Growth Index Fund Institutional Shares
-  symbol: VIGIX
-  brokerage: ms_hsa
-  expenseRatio: 0.04
-  stockRatio: 1 
-  domesticRatio: 1
-- description: Vanguard Balanced Index Fund Institutional Shares
-  symbol: VBAIX
-  brokerage: ms_hsa
+- description: Fidelity International Bond Index Fund
+  symbol: FBIIX
+  brokerage: Fidelity
   expenseRatio: 0.06
-  stockRatio: .6
-  domesticRatio: 1
+  stockRatio: 0
+  domesticRatio: 0
+  

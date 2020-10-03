@@ -21,5 +21,5 @@
 ## positions (2)
 |account|symbol|value|description|
 |---|---|---:|---|
-|Roth|[VTIAX](https://finance.yahoo.com/quote/VTIAX?p=VTIAX)|$200|Vanguard Total International Stock Index Fund|
-|Roth|[VTSAX](https://finance.yahoo.com/quote/VTSAX?p=VTSAX)|$100|Vanguard Total Stock Market Index Fund|
+|roth|[vtiax](https://finance.yahoo.com/quote/vtiax?p=vtiax)|$200|vanguard total international stock index fund|
+|roth|[vtsax](https://finance.yahoo.com/quote/vtsax?p=vtsax)|$100|vanguard total stock market index fund|

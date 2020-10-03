@@ -12,6 +12,18 @@ namespace PortfolioPicker.Tests
 {
     public class TestStrategy
     {
+        private static SecurityCache _sc;
+
+        public static SecurityCache GetSecurityCache()
+        {
+            if (_sc is null)
+            {
+                _sc = new SecurityCache();
+                _sc.Add(Security.LoadDefaults());
+            }
+            return _sc;
+        }
+
         private string GetDataFilePath(string relativePath)
         {
             var codeBaseUrl = new Uri(Assembly.GetExecutingAssembly().CodeBase);
@@ -45,14 +57,14 @@ namespace PortfolioPicker.Tests
             };
         }
 
-        private Fund CreateFund(
+        private Security CreateSecurity(
             string brokerage,
             string symbol,
             double er,
             double stock = 1.0,
             double domestic = 1.0)
         {
-            return new Fund
+            return new Security
             {
                 Symbol = symbol,
                 Brokerage = brokerage,
@@ -85,7 +97,7 @@ namespace PortfolioPicker.Tests
                 },
             };
 
-            var portfolio = Picker.Rebalance(new Portfolio(accounts), .9, .6, .7, iterationLimit: 1, threadLimit: 1);
+            var portfolio = Picker.Rebalance(new Portfolio(accounts, GetSecurityCache()), .9, .6, .7, iterationLimit: 1, threadLimit: 1);
             Assert.Equal(4, portfolio.NumberOfPositions);
             Assert.Equal(100, portfolio.TotalValue);
         }
@@ -104,7 +116,8 @@ namespace PortfolioPicker.Tests
       value: 200
       hold: true";
 
-            var portfolio = Picker.Rebalance(Portfolio.FromYaml(yaml), 0, 1, 1, iterationLimit: 1, threadLimit: 1);
+            var o = Portfolio.FromYaml(yaml, GetSecurityCache());
+            var portfolio = Picker.Rebalance(o,  0, 1, 1, iterationLimit: 1, threadLimit: 1);
             var actualValue = portfolio.Positions.Sum(o => o.Value);
             Assert.Equal(300, actualValue);
         }
@@ -112,16 +125,17 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void YamlSerialization()
         {
-            var expected = @"- name: Roth
-  brokerage: Vanguard
+            var expected = @"- name: roth
+  brokerage: vanguard
   type: ROTH
   positions:
-  - symbol: VTSAX
+  - symbol: vtsax
     value: 100
-  - symbol: VTIAX
+  - symbol: vtiax
     value: 200
     hold: true
-";
+".Replace("\r\n", "\n");
+
             var p = Portfolio.FromYaml(expected);
             var actual = p.ToYaml();
             Assert.Equal(expected, actual);
@@ -134,9 +148,11 @@ namespace PortfolioPicker.Tests
             var p = Portfolio.FromYaml(yaml);
             var expectedFile = GetDataFilePath("src/MarkdownSerialization/load.md");
             var actual = string.Join("\n", p.ToMarkdown());
+            
             // uncomment to update
             // File.WriteAllText(expectedFile, actual);
-            var expected = File.ReadAllText(expectedFile);
+            
+            var expected = File.ReadAllText(expectedFile).Replace("\r\n", "\n");
             Assert.Equal(expected, actual);
         }
 
@@ -190,7 +206,7 @@ namespace PortfolioPicker.Tests
             .WithNamingConvention(new CamelCaseNamingConvention())
             .Build();
 
-            var funds = deserializer.Deserialize<IList<Fund>>(fundsYaml);
+            var funds = deserializer.Deserialize<IList<Security>>(fundsYaml);
             Assert.Equal(2, funds.Count);
 
             var accounts = deserializer.Deserialize<IList<Account>>(accountsYaml);
@@ -228,14 +244,16 @@ namespace PortfolioPicker.Tests
 
             var symbols = new []{"m", "n"};
             var expenseRatio = 0.05;
-            var funds = new List<Fund>();
+            var securities = new List<Security>();
             foreach (var b in brokerages)
             foreach (var s in symbols)
-                funds.Add(CreateFund(b, s, expenseRatio, 1, 1));
-            Fund.Add(funds);
+                securities.Add(CreateSecurity(b, s, expenseRatio, 1, 1));
+            
+            var sc = GetSecurityCache();
+            sc.Add(securities);
 
             var expectedTotal = accounts.Count * value;
-            var portfolio = Picker.Rebalance(new Portfolio(accounts), 1, 1, 1, iterationLimit: 1, threadLimit: 1);
+            var portfolio = Picker.Rebalance(new Portfolio(accounts, sc), 1, 1, 1, iterationLimit: 1, threadLimit: 1);
             Assert.Equal(
                 brokerages.Length * AccountTypes.ALL.Length, 
                 portfolio.NumberOfPositions);
@@ -244,32 +262,33 @@ namespace PortfolioPicker.Tests
         }
 
         [Fact]
-        public void OneAccountFourPerfectFunds()
+        public void OneAccountFourPerfectSecuritys()
         {
-            var brokerage = "OneAccountFourPerfectFunds";
+            var brokerage = "OneAccountFourPerfectSecuritys";
             var dollars = 100m;
             var accounts = new List<Account>{
                 CreateAccount(brokerage, AccountType.BROKERAGE, value: (double)dollars)
             };
-            var funds = new List<Fund>{
-                CreateFund(brokerage, "SD", 0, 1, 1),
-                CreateFund(brokerage, "SI", 0, 1, 0),
-                CreateFund(brokerage, "BD", 0, 0, 1),
-                CreateFund(brokerage, "BI", 0, 0, 0),
+            var funds = new List<Security>{
+                CreateSecurity(brokerage, "sd", 0, 1, 1),
+                CreateSecurity(brokerage, "si", 0, 1, 0),
+                CreateSecurity(brokerage, "bd", 0, 0, 1),
+                CreateSecurity(brokerage, "bi", 0, 0, 0),
             };
 
-            Fund.Add(funds);
-            var original = new Portfolio(accounts);
+            var sc = new SecurityCache();
+            sc.Add(funds);
+            var original = new Portfolio(accounts, sc);
             var p = Picker.Rebalance(original, .5, .5, .5, iterationLimit: 1, threadLimit: 1);
 
             // funds should be equally split
             Assert.NotNull(p);
-            Assert.InRange(p.Score, .8, .9); // less than one due to account being always brokerage
+            Assert.Equal(0.925, p.Score.Total); // less than one due to account being always brokerage
             Assert.Equal(4, p.NumberOfPositions);
-            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "SD").Value);
-            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "SI").Value);
-            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "BD").Value);
-            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "BI").Value);
+            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "sd").Value);
+            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "si").Value);
+            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "bd").Value);
+            Assert.Equal(0.25m * dollars, (decimal)p.Positions.First(x => x.Symbol == "bi").Value);
 
             // output percentages should match input requests
             Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Stock));
@@ -281,10 +300,10 @@ namespace PortfolioPicker.Tests
             // Change stock ratio
             p = Picker.Rebalance(original, .9, 1, 1, iterationLimit: 1, threadLimit: 1);
             Assert.NotNull(p);
-            Assert.InRange(p.Score, .8, .9); // less than one due to account being always brokerage
+            Assert.Equal(0.775, p.Score.Total); // less than one due to account being always brokerage
             Assert.Equal(2, p.NumberOfPositions);
-            Assert.Equal(90m, (decimal)p.Positions.First(x => x.Symbol == "SD").Value);
-            Assert.Equal(10m, (decimal)p.Positions.First(x => x.Symbol == "BD").Value);
+            Assert.Equal(90m, (decimal)p.Positions.First(x => x.Symbol == "sd").Value);
+            Assert.Equal(10m, (decimal)p.Positions.First(x => x.Symbol == "bd").Value);
             Assert.Equal(90m, (decimal)p.PercentOfPortfolio(AssetClass.Stock));
             Assert.Equal(10m, (decimal)p.PercentOfPortfolio(AssetClass.Bond));
             Assert.Equal(90m, (decimal)p.PercentOfPortfolio(AssetClass.Stock, AssetLocation.Domestic));
@@ -294,16 +313,12 @@ namespace PortfolioPicker.Tests
             // Change domestic ratio
             p = Picker.Rebalance(original, .5, .9, .1, iterationLimit: 1, threadLimit: 1);
             Assert.NotNull(p);
-            Assert.InRange(p.Score, .8, .9); // less than one due to account being always brokerage
+            Assert.Equal(0.925, p.Score.Total); // less than one due to account being always brokerage
             Assert.Equal(4, p.NumberOfPositions);
-            Assert.Equal(.5m * 90m,
-                         (decimal)p.Positions.First(x => x.Symbol == "SD").Value);
-            Assert.Equal(.5m * 10m,
-                         (decimal)p.Positions.First(x => x.Symbol == "SI").Value);
-            Assert.Equal(.5m * 10m,
-                         (decimal)p.Positions.First(x => x.Symbol == "BD").Value);
-            Assert.Equal(.5m * 90m,
-                         (decimal)p.Positions.First(x => x.Symbol == "BI").Value);
+            Assert.Equal(.5m * 90m, (decimal)p.Positions.First(x => x.Symbol == "sd").Value);
+            Assert.Equal(.5m * 10m, (decimal)p.Positions.First(x => x.Symbol == "si").Value);
+            Assert.Equal(.5m * 10m, (decimal)p.Positions.First(x => x.Symbol == "bd").Value);
+            Assert.Equal(.5m * 90m, (decimal)p.Positions.First(x => x.Symbol == "bi").Value);
             Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Stock));
             Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Bond));
             Assert.Equal(45, p.PercentOfPortfolio(AssetClass.Stock, AssetLocation.Domestic));
@@ -311,33 +326,35 @@ namespace PortfolioPicker.Tests
         }
 
         [Fact]
-        public void OneAccountFourEqualFunds_IgnoreWorseER()
+        public void OneAccountFourEqualSecuritys_IgnoreWorseER()
         {
-            var brokerageName = "OneAccountFourEqualFunds_IgnoreWorseER";
+            var brokerageName = "OneAccountFourEqualSecuritys_IgnoreWorseER";
             var accounts = new List<Account>{
                 CreateAccount(brokerageName, AccountType.BROKERAGE, value: 100)
             };
-            var funds = new List<Fund>{
-                CreateFund(brokerageName, "SD", .5, 1, 1), // should be ignored, worse ER
-                CreateFund(brokerageName, "ZZ_SD", 0, 1, 1), // should be ignored, alphabetically sorted
-                CreateFund(brokerageName, "SD", 0, 1, 1),
-                CreateFund(brokerageName, "SI", 0, 1, 0),
-                CreateFund(brokerageName, "BD", 0, 0, 1),
-                CreateFund(brokerageName, "BI", 0, 0, 0),
+            var funds = new List<Security>{
+                CreateSecurity(brokerageName, "sd", .5, 1, 1), // should be ignored, worse ER
+                CreateSecurity(brokerageName, "zzsd", 0, 1, 1), // should be ignored, alphabetically sorted
+                CreateSecurity(brokerageName, "sd", 0, 1, 1),
+                CreateSecurity(brokerageName, "si", 0, 1, 0),
+                CreateSecurity(brokerageName, "bd", 0, 0, 1),
+                CreateSecurity(brokerageName, "bi", 0, 0, 0),
             };
 
-            Fund.Add(funds);
-            var original = new Portfolio(accounts);
+            var sc = new SecurityCache();
+            sc.Add(funds);
+
+            var original = new Portfolio(accounts, sc);
             var p = Picker.Rebalance(original, .5, .5, .5, iterationLimit: 1, threadLimit: 1);
 
             // funds should be equally split
             Assert.NotNull(p);
-            Assert.InRange(p.Score, .88, .9); // less than one due to account being always brokerage
+            Assert.Equal(0.925, p.Score.Total);
             Assert.Equal(4, p.NumberOfPositions);
-            Assert.Equal(25, p.Positions.First(x => x.Symbol == "SD").Value);
-            Assert.Equal(25, p.Positions.First(x => x.Symbol == "SI").Value);
-            Assert.Equal(25, p.Positions.First(x => x.Symbol == "BD").Value);
-            Assert.Equal(25, p.Positions.First(x => x.Symbol == "BI").Value);
+            Assert.Equal(25, p.Positions.First(x => x.Symbol == "sd").Value);
+            Assert.Equal(25, p.Positions.First(x => x.Symbol == "si").Value);
+            Assert.Equal(25, p.Positions.First(x => x.Symbol == "bd").Value);
+            Assert.Equal(25, p.Positions.First(x => x.Symbol == "bi").Value);
 
             // output percentages should match input requests
             Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Stock));
@@ -347,35 +364,38 @@ namespace PortfolioPicker.Tests
         }
 
         [Fact]
-        public void ThreeAccountsOneFund()
+        public void ThreeAccountsOneSecurity()
         {
-            var b = "ThreeAccountsOneFund";
-            var symbolName = "Generic";
+            var b = "ThreeAccountsOneSecurity";
+            var symbolName = "generic";
             var accounts = new List<Account>{
                 CreateAccount(b, AccountType.BROKERAGE, value: 100),
                 CreateAccount(b, AccountType.ROTH, value: 100),
                 CreateAccount(b, AccountType.IRA, value: 100),
             };
-            var funds = new List<Fund>{
-                CreateFund(b, symbolName, 0, 0.5, 0.5),
+            var funds = new List<Security>{
+                CreateSecurity(b, symbolName, 0, 0.5, 0.5),
             };
 
-            Fund.Add(funds);
-            var original = new Portfolio(accounts);
+            var sc = new SecurityCache();
+            sc.Add(funds);
+
+            var original = new Portfolio(accounts, sc);
             var p = Picker.Rebalance(original, 0.5, 0.5, 0.5, iterationLimit: 1, threadLimit: 1);
 
             // assert portfolio correctness
             Assert.NotNull(p);
-            Assert.InRange(p.Score, .77, .8); // less than 1 due to fund always bleeding exposures
-            Assert.Equal(100 * accounts.Count, p.TotalValue);
-            Assert.Equal(accounts.Count, p.NumberOfPositions);
             foreach (var o in p.Positions)
             {
                 // one fund per account, spend all the money there
                 Assert.Equal(symbolName, o.Symbol);
                 Assert.Equal(100, o.Value);
             }
+            Assert.Equal(100 * accounts.Count, p.TotalValue);
+            Assert.Equal(accounts.Count, p.NumberOfPositions);
 
+            Assert.InRange(p.Score.Total, .75, 1); 
+            
             // output percentages should match input requests
             Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Stock));
             Assert.Equal(50, p.PercentOfPortfolio(AssetClass.Bond));
@@ -402,17 +422,24 @@ namespace PortfolioPicker.Tests
                 CreateAccount(b, AccountType.ROTH, value: 100),
                 CreateAccount(b, AccountType.IRA, value: 100),
             };
-            var funds = new List<Fund>{
-                CreateFund(b, symbolName, 0, 0.5, 1),
-                CreateFund(b, symbolName, 0, 0, 1),
+            var funds = new List<Security>{
+                CreateSecurity(b, symbolName, 0, 0.5, 1),
+                CreateSecurity(b, symbolName, 0, 0, 1),
             };
-            Fund.Add(funds);
+            var sc = new SecurityCache();
+            sc.Add(funds);
             
-            var original = new Portfolio(accounts);
+            var original = new Portfolio(accounts, sc);
             var p = Picker.Rebalance(original, 0.5, 0.5, 0.5, iterationLimit: 1, threadLimit: 1);
 
             var targetRatios = Picker.ComputeTargetRatios(.5, .5, .5);
-            var os = original.GetScore(Picker.GetScoreWeight, targetRatios);
+            var os = original.GetScore(Score.GetScoreWeight, targetRatios);
+        }
+
+        [Fact]
+        public void TestGoogleSheet(){
+            var json = File.ReadAllText(GetDataFilePath("src/googlesheetexport/portfolio.json"));
+            Portfolio.FromGoogleSheet(json);
         }
     }
 }

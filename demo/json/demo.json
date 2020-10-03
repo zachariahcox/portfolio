@@ -1,0 +1,31 @@
+{
+    "securities": [
+        {
+            "symbol": "abc",
+            "symbolmap": "xyz",
+            "quantitymap": 0.5,
+            "expenseratio": 0.2,
+            "stockratio": 0.7,
+            "domesticratio": 0,
+            "bondratio": 0.3,
+            "internationalratio": 1,
+            "description": "Fidelity ZERO Total Market Index Fund",
+            "url": "https://finance.yahoo.com/quote/fzrox?p=fzrox"
+        }
+    ],
+    "accounts": [
+        {
+            "name": "test",
+            "brokerage": "fidelity",
+            "type": "roth",
+            "positions": [
+                {
+                    "symbol": "fzrox",
+                    "quantity": 10.100,
+                    "value": 12.56,
+                    "hold": true
+                }
+            ]
+        }
+    ]
+}

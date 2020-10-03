@@ -28,7 +28,7 @@ namespace PortfolioPicker.App
             var targetRatios = ComputeTargetRatios(stockRatio, domesticStockRatio, domesticBondRatio);
             
             // compute original score with these ratios
-            portfolio.Score = portfolio.GetScore(GetScoreWeight, targetRatios);
+            portfolio.Score = portfolio.GetScore(Score.GetScoreWeight, targetRatios);
 
             // in which order should we pick from available accounts?
             var orderedAccounts = portfolio.Accounts.OrderBy(x => x.Type).ToArray();
@@ -70,7 +70,11 @@ namespace PortfolioPicker.App
 
                     // create portfolio
                     var t = DateTime.Now;
-                    var p = GeneratePortfolio(portfolio, orderedAccounts, targetRatioPermutation, accountTypePreferences);
+                    var p = GeneratePortfolio(
+                        portfolio, 
+                        orderedAccounts, 
+                        targetRatioPermutation, 
+                        accountTypePreferences);
                     generateTotalTime += DateTime.Now - t; // this races but it's not critical
                     var newCount = Interlocked.Increment(ref generateCount);
                     portfolioPermutations.TryAdd(p.DescriptorKey, p);
@@ -95,19 +99,20 @@ namespace PortfolioPicker.App
             var duration = DateTime.Now - startGenerationTime;
             
             // take the best unique portfolios
-            var best100 = portfolioPermutations.Values
+            const int N = 50;
+            var topN = portfolioPermutations.Values
                 .Where(x => x.Errors.Count == 0)
-                .OrderByDescending(x => x.WeightedScore)
-                .Take(100)
+                .OrderByDescending(x => x.Score.Total)
+                .Take(N)
                 .ToArray();
 
             // we mostly only care about the ones better than the input
-            var originalScore = portfolio.Score;
-            var better = best100
-                .Where(x => x.Score > originalScore)
+            var originalTotalScore = portfolio.Score.Total;
+            var rawScoreIsBetter = topN
+                .Where(x => x.Score.Total > originalTotalScore)
                 .Count();
-            var weightedBetter = best100
-                .Where(x => x.WeightedScore > originalScore)
+            var worthRebalancing = topN
+                .Where(x => x.Score.RebalanceTotal > originalTotalScore)
                 .Count();
                 
             // final log
@@ -116,15 +121,15 @@ namespace PortfolioPicker.App
                     portfolioPermutations.Count,
                     generateTotal,
                     Math.Round(duration.TotalSeconds),
-                    better,
-                    weightedBetter
+                    rawScoreIsBetter,
+                    worthRebalancing
                     ));
 
             // save best if asked
             if (!string.IsNullOrWhiteSpace(debugOutputDirectory))
             {
                 var i = 0;
-                foreach(var p in best100)
+                foreach(var p in topN)
                 {
                     p.Save(Path.Combine(debugOutputDirectory, i.ToString()));
                     ++i;
@@ -132,22 +137,23 @@ namespace PortfolioPicker.App
             }
 
             // take the best even though it might not be better than the input?
-            return best100.FirstOrDefault();
+            return topN.FirstOrDefault();
         }
 
         private static RebalancedPortfolio GeneratePortfolio(
-            Portfolio portfolio, 
+            Portfolio original, 
             IEnumerable<Account> accounts,
             ICollection<Exposure> prioritizedTargetExposureRatios, 
             ICollection<ExposureAccountTypePreference> accountTypePreferences)
         {
             // setup bookkeeping
+            var sc = original.AvailableSecurities;
             var errors = new List<string>();
             var positionsByAccount = new Dictionary<Account, IList<Position>>();
             var accountRemainders = new Dictionary<Account, double>();
             var exposureRemainders = new Dictionary<Exposure, double>();
             var exposures = prioritizedTargetExposureRatios
-                .Select(x => new Exposure(x.Class, x.Location, portfolio.TotalValue * x.Value))
+                .Select(x => new Exposure(x.Class, x.Location, original.TotalValue * x.Value))
                 .ToArray();
 
             // function to allocate some resources
@@ -155,14 +161,14 @@ namespace PortfolioPicker.App
                 Account a, 
                 double value, 
                 string symbol = null, 
-                Fund fund = null, 
+                Security security = null, 
                 bool hold = false)
             {
                 if (value <= 0)
                     return;
 
                 // resolve fund
-                fund = fund ?? Fund.Get(symbol);
+                security = security ?? sc.Get(symbol);
 
                 // check if we already have a position for this
                 if(!positionsByAccount.TryGetValue(a, out var positions))
@@ -170,13 +176,13 @@ namespace PortfolioPicker.App
                     positions = new List<Position>();
                     positionsByAccount[a] = positions;
                 }
-                var p = positions.FirstOrDefault(x => x.Symbol == fund.Symbol);
+                var p = positions.FirstOrDefault(x => x.Symbol == security.Symbol);
                 if (p is null)
                 {
                     // add new position
                     positions.Add(new Position
                     {
-                        Symbol = fund.Symbol,
+                        Symbol = security.Symbol,
                         Value = value,
                         Hold = hold
                     });
@@ -190,11 +196,11 @@ namespace PortfolioPicker.App
                 // reduce account remainders
                 accountRemainders[a] -= value;
 
-                // reduce exposure remainders
+                // reduce exposure remainders (funds can be exposed to multiple asset types)
                 foreach (var c in AssetClasses.ALL)
                 foreach (var l in AssetLocations.ALL)
                 {
-                    var exposureValue = value * fund.Ratio(c) * fund.Ratio(l);
+                    var exposureValue = value * security.Ratio(c) * security.Ratio(l);
                     if (exposureValue > 0.0)
                     {
                         var e = exposures.First(x => x.Class == c && x.Location == l);
@@ -209,6 +215,7 @@ namespace PortfolioPicker.App
             foreach (var a in accounts)
             {
                 accountRemainders[a] = a.Value;
+
                 // pre "buy" all positions we are asked to hold
                 foreach (var p in a.Positions.Where(x => x.Hold).ToArray())
                     Buy(a, p.Value, symbol: p.Symbol, hold: true);
@@ -225,30 +232,36 @@ namespace PortfolioPicker.App
                 // buy as much as possible from preferred accounts, in order
                 foreach (var t in accountTypePreferences.First(x => x.Class == e.Class && x.Location == e.Location).Preferences)
                 {
-                    // which accounts will work? 
-                    var suitableAccounts = accounts
-                        .Where(a => a.Type == t && accountRemainders[a] > 0.0)
-                        .ToArray();
-                
-                    foreach (var a in suitableAccounts)
+                    foreach(var a in accounts)
                     {
+                        // ignore accounts of the wrong type
+                        if (a.Type != t)
+                            continue;
+                        
+                        // ignore empty accounts
+                        var remainder = accountRemainders[a];
+                        if (remainder <= 0.0)
+                            continue;
+
                         // pick best fund from account
-                        var f = PickBestFund(e, Fund.GetFunds(a.Brokerage));
-                        if (f is null)
+                        var s = PickBestSecurity(e, sc.GetSecurityGroup(a.Brokerage));
+                        if (s is null)
                             continue; // this account doesn't have any option
 
                         // try to exhaust this exposure with this fund
-                        var purchaseValue = Math.Min(accountRemainders[a], 
-                            exposureRemainders[e] / f.Ratio(e));
+                        var purchaseValue = Math.Min(remainder, exposureRemainders[e] / s.Ratio(e));
 
                         // add position and reduce remainders
-                        Buy(a, purchaseValue, fund: f);
+                        Buy(a, purchaseValue, security: s);
+
+                        // Exposure met: stop looking through accounts
                         if (exposureRemainders[e] <= 0)
-                            break; // Exposure met: stop looking through accounts
+                            break; 
                     }
 
+                    // Exposure met: stop looking through account types
                     if (exposureRemainders[e] <= 0)
-                        break; // Exposure met: stop looking through account types
+                        break; 
                 }
             }
 
@@ -284,33 +297,27 @@ namespace PortfolioPicker.App
                 newAccounts.Add(a);
             }
 
-            // create portfolio
-            var rebalanced = new RebalancedPortfolio(newAccounts)
-            {
-                Errors = errors,
-                Original = portfolio,
-                TargetExposureRatios = prioritizedTargetExposureRatios
-            };
-            rebalanced.Orders = Portfolio.ComputeOrders(portfolio, rebalanced);
-            rebalanced.OrdersScore = rebalanced.GetOrdersScore();
-            rebalanced.Score = rebalanced.GetScore(GetScoreWeight, prioritizedTargetExposureRatios);
+            // create new portfolio
+            var rebalanced = new RebalancedPortfolio(
+                accounts: newAccounts, 
+                original : original,
+                targetExposureRatios: prioritizedTargetExposureRatios,
+                errors: errors);            
             return rebalanced;
         }
 
         /// <summary>
-        /// Pick the best fund meeting the requirements from the list available to this account. 
-        /// A "better" fund has better ratios for the target exposure, or has the lowest expense ratio. 
+        /// Pick the best security meeting the requirements from the list available to this account. 
+        /// A "better" security has better ratios for the target exposure, or has the lowest expense ratio. 
         /// Typically single-asset class mutual funds have the lowest expense ratios anyway.
         /// </summary>
-        private static Fund PickBestFund(
-            Exposure e,
-            IEnumerable<Fund> funds)
+        private static Security PickBestSecurity(Exposure e, IEnumerable<Security> securities)
         {
-            var best = default(Fund);
+            var best = default(Security);
             var bestCoverage = double.NegativeInfinity;
-            foreach (var f in funds)
+            foreach (var s in securities)
             {
-                var coverageForThisExposure = f.Ratio(e);
+                var coverageForThisExposure = s.Ratio(e);
                 if (coverageForThisExposure == 0.0
                 || coverageForThisExposure < bestCoverage)
                 {
@@ -319,9 +326,9 @@ namespace PortfolioPicker.App
 
                 if (best == null
                 || coverageForThisExposure > bestCoverage
-                || f.ExpenseRatio < best.ExpenseRatio)
+                || s.ExpenseRatio < best.ExpenseRatio)
                 {
-                    best = f;
+                    best = s;
                     bestCoverage = coverageForThisExposure;
                 }
             }
@@ -368,7 +375,7 @@ namespace PortfolioPicker.App
         /// <summary>
         /// Given a list, return a list of all possible permutations.
         /// </summary>
-        public static ICollection<ICollection<T>> Permutations<T>(ICollection<T> list)
+        private static ICollection<ICollection<T>> Permutations<T>(ICollection<T> list)
         {
             var result = new List<ICollection<T>>();
 
@@ -396,7 +403,7 @@ namespace PortfolioPicker.App
             return result;
         }
 
-        public static double Factorial(int number)
+        private static double Factorial(int number)
         {
             double result = 1;
             while (number != 1)
@@ -405,73 +412,6 @@ namespace PortfolioPicker.App
                 number = number - 1;
             }
             return result;
-        }
-
-        /// <summary>
-        /// Based on the target exposures and total money, compute target dollar-value per exposure type.
-        ///  Strategy: 
-        ///  * accounts prefer funds sponsored by their brokerage
-        ///    * Helps avoid fees?
-        ///
-        ///  * roth accounts should prioritize stocks over bonds
-        ///    * growth can be withdrawn tax-free, prioritize high-growth-potential products.
-        ///
-        ///  * regular brokerage accounts should prioritize international assets over domestic
-        ///    * foreign income tax credit is deductible
-        /// 
-        ///  * 401k accounts should prioritize bonds and avoid international assets
-        ///    * because growth is taxable, prioritize low-growth products
-        /// 
-        ///  * tax-advantaged accounts should be generally preferred over brokerage accounts
-        //
-        /// </summary>
-        public static double GetScoreWeight(AssetClass c, AssetLocation l, AccountType t)
-        {
-            if (c == AssetClass.Stock && l == AssetLocation.Domestic)
-            {
-                // stock, domestic
-                switch (t)
-                {
-                    case AccountType.BROKERAGE: return 0; // really do not want this
-                    case AccountType.IRA:       return 1; // fine
-                    case AccountType.ROTH:      return 1; // fine
-                    default: return 0;
-                }
-            }
-            else if(c == AssetClass.Stock && l == AssetLocation.International)
-            {     
-                switch (t)
-                {
-                    case AccountType.BROKERAGE: return 1; // really want this
-                    case AccountType.IRA:       return 0; // neither of these are great
-                    case AccountType.ROTH:      return 0;
-                    default: return 0;
-                }
-            }
-            else if (c == AssetClass.Bond && l == AssetLocation.Domestic)
-            {
-                // bond, domestic
-                switch (t)
-                {
-                    case AccountType.BROKERAGE: return 1; // you have to put something in the brokerage accounts
-                    case AccountType.IRA:       return .25; // not ideal
-                    case AccountType.ROTH:      return 0; // the worst
-                    // default: return 0;
-                }
-            }
-            else if (c == AssetClass.Bond && l == AssetLocation.International)
-            {
-                // bond, international
-                switch (t){
-                    case AccountType.BROKERAGE: return 1; // low growth + foreign income tax credit
-                    case AccountType.IRA:       return 0; // neither of these are great
-                    case AccountType.ROTH:      return 0;
-                    default: return 0;
-                }
-            }
-
-            // anything else gets no points
-            return 0;
         }
     }
 }

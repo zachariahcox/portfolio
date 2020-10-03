@@ -1,0 +1,7 @@
+- name: test
+  brokerage: fidelity
+  type: ROTH
+  positions:
+  - symbol: fzrox
+    value: 12.56
+    hold: true

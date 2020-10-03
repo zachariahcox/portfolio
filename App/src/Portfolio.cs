@@ -4,51 +4,87 @@ using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace PortfolioPicker.App
 {
     public class Portfolio
     {
-        public Portfolio(IList<Account> accounts) => Accounts = accounts;
+        public Portfolio(IList<Account> accounts, SecurityCache securityCache)
+        {
+            Accounts = accounts;
+            AvailableSecurities = securityCache;
+        }
+
+        public SecurityCache AvailableSecurities {get; private set;}
 
         public int DescriptorKey => (int)(Positions.Sum(p => (double)p.Symbol.GetHashCode() * p.Value) % int.MaxValue);
             
-        public double Score {get; set;}
+        public Score Score {get; set;}
 
         public IList<string> Errors { get; set; }
 
         public IList<Account> Accounts {get; set;}
 
-        private double _totalValue = -1.0;
-        public double TotalValue => _totalValue == -1.0
-            ? _totalValue = Accounts.SelectMany(x => x.Positions).Sum(x => x.Value)
-            : _totalValue;
+        public double TotalValue {
+            get {
+                if (_totalValue == -1)
+                    Compute();
+                return _totalValue;
+            }
+        }
 
-        private double _expenseRatio = -1;
-        public double ExpenseRatio => _expenseRatio == -1.0 
-            ? _expenseRatio = TotalValue == 0.0 
-                ? 0.0 
-                : Accounts
-                    .SelectMany(x => x.Positions)
-                    .Sum(x => x.Value * Fund.Get(x.Symbol).ExpenseRatio) / TotalValue
-            : _expenseRatio;
+        public double ExpenseRatio
+        {
+            get 
+            {
+                if (_expenseRatio == -1.0)
+                    Compute();
+                return _expenseRatio; 
+            }
+        }
 
-        // public IList<Exposure> Exposures { get; private set; }
+        private void Compute()
+        {
+            _totalValue = 0;
+            _expenseRatio = 0;
+            _allPositions = new List<Position>();
+            foreach (var a in Accounts)
+            foreach (var p in a.Positions)
+            {
+                _allPositions.Add(p);
+                var v = p.Value;
+                _totalValue += v;
+                _expenseRatio += v * AvailableSecurities.Get(p.Symbol).ExpenseRatio;
+            }
+            _expenseRatio /= _totalValue;
+        }
 
+        private IList<Position> _allPositions;
         /// <summary>
         /// collection of all positions from all accounts
         /// </summary>
-        public IEnumerable<Position> Positions => Accounts.SelectMany(x => x.Positions).ToArray();
+        public IEnumerable<Position> Positions 
+        {
+            get {
+                if (_allPositions == default)
+                    Compute();
+                return _allPositions;
+            }
+        }
 
-        private int _numberOfPositions = -1;
-        public int NumberOfPositions => _numberOfPositions == -1 
-            ? _numberOfPositions = Accounts.Sum(x => x.Positions.Count)
-            : _numberOfPositions;
+        public int NumberOfPositions {
+            get {
+                if (_allPositions == default)
+                    Compute();
+                return _allPositions.Count;
+            }
+        }
 
         /// <summary>
         /// portfolios are serialized as a list of accounts.
         /// </summary>
-        public static Portfolio FromYaml(string yaml)
+        public static Portfolio FromYaml(string yaml, SecurityCache sc = null)
         {
             if (string.IsNullOrEmpty(yaml))
             {
@@ -60,7 +96,27 @@ namespace PortfolioPicker.App
                 .Build();
 
             var accounts = deserializer.Deserialize<IList<Account>>(yaml);
-            return new Portfolio(accounts);
+            
+            if (sc is null)
+            {
+                sc = new SecurityCache();
+                sc.Add(Security.LoadDefaults());
+            }
+
+            return new Portfolio(accounts, sc);
+        }
+
+        public static Portfolio FromGoogleSheet(string json)
+        {
+            var data = GoogleSheetPortfolio.FromJson(json);
+            if (data == null)
+                return null;
+
+            // load special securities                    
+            var sc = new SecurityCache();
+            sc.Add(data.Securities);
+            
+            return new Portfolio(data.Accounts, sc);
         }
 
         /// <summary>
@@ -84,66 +140,95 @@ namespace PortfolioPicker.App
             AssetLocation l)
         {
             var total = Value(AccountType.None, c, l); // ignore account type
-            return total <= 0 ? 0.0 : 100 * Value(t, c, l) / total;
+            return total <= 0 
+                ? 0.0 
+                : 100 * Value(t, c, l) / total;
         }
 
-        public double Value(AccountType t, AssetClass c, AssetLocation l) => Accounts
-            .Where(x => (t == AccountType.None || x.Type == t))
-            .SelectMany(x => x.Exposures)
-            .Where(x => (c == AssetClass.None || x.Class == c) && (l == AssetLocation.None || x.Location == l))
-            .Sum(x => x.Value);
+        /// <summary>
+        /// Manually rescrape for the aggregation. 
+        /// </summary>
+        public double Value(AccountType t, AssetClass c, AssetLocation l)
+        {
+            // TODO: this might be improved with a cache
+            var value = 0.0;
+            var sc = this.AvailableSecurities;
+            foreach(var a in Accounts)
+            {
+                if (t != AccountType.None && t != a.Type)
+                    continue;
 
-        public double GetScore(
-            Func<AssetClass, AssetLocation, AccountType, double> GetScoreWeight,
+                foreach(var e in a.GetExposures(sc))
+                    if (c == AssetClass.None || c == e.Class)
+                    if (l == AssetLocation.None || l == e.Location)
+                        value += e.Value;
+            }
+            return value;
+        }
+
+        ///<summary>
+        /// a "score" for the portfolio between 0 and 1
+        ///</summary>
+        public virtual Score GetScore(
+            Func<AssetClass, AssetLocation, AccountType, double> GetTaxOptimizationScoreWeight,
             ICollection<Exposure> targetExposureRatios)
         {
-            var score = 0.0;
-            var perfectScore = 0.0;
-            
-            // penalize cash positions
-            perfectScore += 1;
-            var cashValue = Positions.Where(x => x.Symbol == Cash.CASH).Sum(x => x.Value);
-            score += 1.0 - cashValue / TotalValue;
+            // total weights should sum to 100
+            Debug.Assert(100.0 ==  
+                  Score.weight_assetMix 
+                + Score.weight_useTaxOptimalAccounts 
+                + Score.weight_lowExpenseRatio
+                );
 
-            // incentivize being close to the target exposure ratios
-            perfectScore += targetExposureRatios.Count;
-            foreach (var e in targetExposureRatios)
+            var score = new Score()
             {
-                var actualRatio = PercentOfPortfolio(e.Class, e.Location) / 100;
-                score += 1.0 - Math.Abs((actualRatio - e.Value));
+                AssetMixWeight = Score.weight_assetMix,
+                TaxEfficiencyWeight = Score.weight_useTaxOptimalAccounts,
+                ExpenseRatioWeight = Score.weight_lowExpenseRatio,
+                TaxableSalesWeight = Score.weight_taxableSales
+            };
+
+            // keep expense ratios low: award zero points if this ER is higher than baseline
+            const double vanguardTargetDateFundER = 0.15; // source: vanguard target retirement fund account expense ratio (VFIFX)
+            if (ExpenseRatio < vanguardTargetDateFundER)
+            {
+                score.ExpenseRatio = 1.0 - ExpenseRatio / vanguardTargetDateFundER;
             }
 
-            // we want to meet our account type preference goals
-            perfectScore += targetExposureRatios.Count;
+            // owning the right assets: subtract points for not owning enough of the target
+            var totalUnderExposureRatio = 0.0;
+            foreach (var t in targetExposureRatios)
+            {
+                var actualRatio = PercentOfPortfolio(t.Class, t.Location) / 100;
+                var under = t.Value - actualRatio;
+                if (under > 0)
+                    totalUnderExposureRatio += under;
+            }
+            score.AssetMix = 1 - totalUnderExposureRatio;
+
+            // owning assets in tax-optimal accounts: subtract points if assets could be owned in a better account
+            var optimizationScore = 0.0;
             foreach (var e in targetExposureRatios)
             {
-                if (e.Value == 0)
+                foreach (var accountType in AccountTypes.ALL)
                 {
-                    score += 1; // no money should be allocated here
-                    continue; 
-                }
-
-                // score each allocation
-                foreach (var t in AccountTypes.ALL)
-                {
-                    var fraction = PercentOfAssetType(t, e.Class, e.Location) / 100;
-                    score += GetScoreWeight(e.Class, e.Location, t) * fraction;
+                    var fraction = PercentOfAssetType(accountType, e.Class, e.Location) / 100.0;
+                    optimizationScore += GetTaxOptimizationScoreWeight(e.Class, e.Location, accountType) * fraction;
                 }
             }
+            score.TaxEfficiency = optimizationScore / targetExposureRatios.Count;
 
-            // expenses are bad -- how does this ER compare to a baseline?
-            var baselineER = 0.15; // vanguard target retirement fund account er
-            perfectScore += 1;
-            score += 1 - ExpenseRatio / baselineER;
+            // no sales required here!
+            score.TaxableSales = 1;
 
-            return score / perfectScore;
+            return score;
         }
 
         protected string Row(params object[] values) => "|" + string.Join("|", values) + "|";
 
         protected string MdUrl(string anchor, string href) => $"[{anchor}]({href})";
         
-        protected string SymbolUrl(string s) => MdUrl(s, $"https://finance.yahoo.com/quote/{s}?p={s}");
+        protected string SymbolUrl(string s, string url=null) => MdUrl(s, url ?? $"https://finance.yahoo.com/quote/{s}?p={s}");
 
         private double NotNan(double d) => double.IsNaN(d) ? 0.0 : d;
 
@@ -238,7 +323,7 @@ namespace PortfolioPicker.App
         /// <summary>
         /// produces a markdown report description of how current portfolio is different from reference
         /// </summary>
-        public virtual IList<string> ToMarkdown(Portfolio reference = null)
+        public IList<string> ToMarkdown(Portfolio reference = null)
         {
             var lines = new List<string>();
 
@@ -290,12 +375,16 @@ namespace PortfolioPicker.App
                 lines.Add(Row("account", "symbol", "value", "description"));
                 lines.Add(Row("---", "---", "---:", "---"));
                 foreach (var a in Accounts.OrderBy(x => x.Name))
-                    foreach (var p in a.Positions.OrderByDescending(x => x.Value))
-                        lines.Add(Row(
-                            a.Name, 
-                            SymbolUrl(p.Symbol), 
-                            string.Format("${0:n0}", p.Value), 
-                            Fund.Get(p.Symbol).Description));
+                foreach (var p in a.Positions.OrderByDescending(x => x.Value))
+                {
+                    var security = AvailableSecurities.Get(p.Symbol);
+                    lines.Add(Row(
+                        a.Name, 
+                        SymbolUrl(security.Symbol, security.Url),
+                        string.Format("${0:n0}", p.Value), 
+                        security.Description
+                        ));
+                }
                 lines.Add("");
             }
             
@@ -332,7 +421,7 @@ namespace PortfolioPicker.App
         }
 
         /// <summary>
-        /// produce orders required to move from original portfolio to new one
+        /// produce orders required to move from original portfolio to rebalanced one
         /// </summary>
         public static IList<Order> ComputeOrders(Portfolio original, Portfolio balanced)
         {
@@ -372,5 +461,8 @@ namespace PortfolioPicker.App
 
             return orders.Where(x => x != null).ToList();
         }
+    
+        private double _totalValue = -1.0;
+        private double _expenseRatio = -1;
     }
 }

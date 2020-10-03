@@ -1,0 +1,31 @@
+- name: my regular taxable
+  brokerage: Vanguard
+  type: BROKERAGE
+  positions:
+  - symbol: MSFT
+    value: 100
+    hold: true
+  - symbol: VTIAX
+    value: 50.000000000000028
+  - symbol: VBTLX
+    value: 49.999999999999972
+- name: my roth account
+  brokerage: Vanguard
+  type: ROTH
+  positions:
+  - symbol: VTSAX
+    value: 100
+- name: my HSA
+  brokerage: Fidelity
+  type: ROTH
+  positions:
+  - symbol: FZROX
+    value: 70
+  - symbol: FZILX
+    value: 30
+- name: my 401k
+  brokerage: Fidelity
+  type: IRA
+  positions:
+  - symbol: FZILX
+    value: 100

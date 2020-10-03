@@ -1,0 +1,66 @@
+[
+    {
+       "description": "Vanguard Total Stock Market Index Fund",
+       "symbol": "VTSAX",
+       "brokerage": "Vanguard",
+       "expenseRatio": 0.04,
+       "stockRatio": 1,
+       "domesticRatio": 1
+    },
+    {
+       "description": "Vanguard Total International Stock Index Fund",
+       "symbol": "VTIAX",
+       "brokerage": "Vanguard",
+       "expenseRatio": 0.11,
+       "stockRatio": 1,
+       "domesticRatio": 0
+    },
+    {
+       "description": "Vanguard Total Bond Market Index Fund",
+       "symbol": "VBTLX",
+       "brokerage": "Vanguard",
+       "expenseRatio": 0.05,
+       "stockRatio": 0,
+       "domesticRatio": 1
+    },
+    {
+       "description": "Vanguard Total International Bond Index Fund",
+       "symbol": "VTABX",
+       "brokerage": "Vanguard",
+       "expenseRatio": 0.11,
+       "stockRatio": 0,
+       "domesticRatio": 0
+    },
+    {
+       "description": "Fidelity ZERO Total Market Index Fund",
+       "symbol": "FZROX",
+       "brokerage": "Fidelity",
+       "expenseRatio": 0,
+       "stockRatio": 1,
+       "domesticRatio": 1
+    },
+    {
+       "description": "Fidelity ZERO International Index Fund",
+       "symbol": "FZILX",
+       "brokerage": "Fidelity",
+       "expenseRatio": 0,
+       "stockRatio": 1,
+       "domesticRatio": 0
+    },
+    {
+       "description": "Fidelity U.S. Bond Index Fund",
+       "symbol": "FXNAX",
+       "brokerage": "Fidelity",
+       "expenseRatio": 0.025,
+       "stockRatio": 0,
+       "domesticRatio": 1
+    },
+    {
+       "description": "Fidelity International Bond Index Fund",
+       "symbol": "FBIIX",
+       "brokerage": "Fidelity",
+       "expenseRatio": 0.06,
+       "stockRatio": 0,
+       "domesticRatio": 0
+    }
+ ]

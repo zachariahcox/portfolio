@@ -7,7 +7,20 @@ namespace PortfolioPicker.App
 {
     public class RebalancedPortfolio : Portfolio
     {
-        public RebalancedPortfolio(IList<Account> accounts) : base(accounts) {}
+        public RebalancedPortfolio(
+            IList<Account> accounts,
+            Portfolio original,
+            ICollection<Exposure> targetExposureRatios,
+            IList<string> errors
+            ) 
+            : base(accounts, original.AvailableSecurities) 
+        {
+            Errors = errors;
+            Original = original;
+            TargetExposureRatios = targetExposureRatios;
+            Orders = Portfolio.ComputeOrders(original, this);
+            Score = GetScore(Score.GetScoreWeight, targetExposureRatios);
+        }
 
         public Portfolio Original {get; set;}
 
@@ -15,9 +28,14 @@ namespace PortfolioPicker.App
 
         public ICollection<Order> Orders { get; set; }
 
-        public double OrdersScore {get; set;}
-
-        public double WeightedScore => Score - OrdersScore;
+        public override Score GetScore(
+            Func<AssetClass, AssetLocation, AccountType, double> GetTaxOptimizationScoreWeight,
+            ICollection<Exposure> targetExposureRatios)
+        {
+            var s = base.GetScore(GetTaxOptimizationScoreWeight, targetExposureRatios);
+            s.TaxableSales = 1.0 - SumOfTaxableSales() / TotalValue;
+            return s;
+        }
 
         public override void Save(string directory)
         {
@@ -25,18 +43,13 @@ namespace PortfolioPicker.App
             File.WriteAllLines(Path.Combine(directory, $"rebalance.md"), ToMarkdown(Original));
         }
 
-        /// <summary>
-        /// how bad would it be to perform this rebalance?
-        /// </summary>
-        public double GetOrdersScore()
+        private double SumOfTaxableSales()
         {
-            // taxable sales are bad
-            var taxableSales = Orders
-                .Where(x => x.Account.Type == AccountType.BROKERAGE)
-                .Where(x => x.Action == Order.Sell)
-                .Sum(x => x.Value);
-
-            return taxableSales / TotalValue / 4;
+            var sum = 0.0;
+            foreach(var o in Orders)
+                if (o.Account.Type == AccountType.BROKERAGE && o.Action == Order.Sell)
+                    sum += o.Value;
+            return sum;
         }
 
         public override IList<string> GetMarkdownReportSummary(Portfolio reference = null)
@@ -57,33 +70,61 @@ namespace PortfolioPicker.App
                     .Sum(x => x.Value) * 100;
                 lines.Add(Row("target % bonds", string.Format("{0:0.0}%", p)));
 
-                // rebalance score
-                lines.Add(Row("score", string.Format("{0:0.0000}", Score)));
-                lines.Add(Row("previous score", string.Format("{0:0.0000}", reference.Score)));
+                lines.Add(Row("sum of taxable sales", string.Format("${0:n0}", SumOfTaxableSales())));
+                lines.Add(Row("exposure priority order", string.Join("<br/>", 
+                TargetExposureRatios.Select(x => x.Class.ToString().ToLower() + x.Location.ToString().ToLower()))
+                ));
             }
             
-            lines.Add(Row("orders score", string.Format("{0:0.0000}", OrdersScore)));
-            lines.Add(Row("sum of taxable sales", 
-                string.Format("${0:n0}", Orders
-                    .Where(x => x.Account.Type == AccountType.BROKERAGE)
-                    .Where(x => x.Action == Order.Sell)
-                    .Sum(x => x.Value))
-                ));
-            lines.Add(Row("weighted score", string.Format("{0:0.0000}", Score - OrdersScore)));
 
-            lines.Add(Row("exposure priority order", string.Join("<br/>", 
-                TargetExposureRatios.Select(x => x.Class.ToString().ToLower() + x.Location.ToString().ToLower()))));
+            // SCORE
+            if (Score != null)
+            {
+                lines.Add(Row("weight breakdown", 
+                    "<table><tr><td>"
+                    + string.Join("</td></tr><tr><td>",
+                        string.Format("asset mix</td><td>{0:0.0}", Score.AssetMixWeight),
+                        string.Format("tax efficiency</td><td>{0:0.0}", Score.TaxEfficiencyWeight),
+                        string.Format("expense ratio</td><td>{0:0.0}", Score.ExpenseRatioWeight),
+                        string.Format("taxable sales</td><td>{0:0.0}", Score.TaxableSalesWeight))
+                    + "</td></tr></table>"
+                ));
+
+                lines.Add("## score breakdown");
+                lines.Add(Row("portfolio", "total (sales)", "total", "asset mix", "tax efficiency", "expense ratio", "taxable sales"));
+                lines.Add(Row("---", "---:", "---:", "---:", "---:", "---:", "---:"));
+                lines.Add(Row("new", 
+                    string.Format("{0:0.0000}", Score.RebalanceTotal),
+                    string.Format("{0:0.0000}", Score.Total), 
+                    string.Format("{0:0.0000}", Score.AssetMix), 
+                    string.Format("{0:0.0000}", Score.TaxEfficiency), 
+                    string.Format("{0:0.0000}", Score.ExpenseRatio),
+                    string.Format("{0:0.0000}", Score.TaxableSales)
+                ));
+
+                lines.Add(Row("previous", 
+                    "-",
+                    string.Format("{0:0.0000}", reference.Score.Total), 
+                    string.Format("{0:0.0000}", reference.Score.AssetMix), 
+                    string.Format("{0:0.0000}", reference.Score.TaxEfficiency), 
+                    string.Format("{0:0.0000}", reference.Score.ExpenseRatio),
+                    string.Format("{0:0.0000}", reference.Score.TaxableSales)
+                ));
+
+                lines.Add("");
+            }
+
             return lines;
         }
 
-        public override IList<string> ToMarkdown(Portfolio reference)
+        public IList<string> ToMarkdown()
         {
-            var lines = base.ToMarkdown(reference);
+            var lines = base.ToMarkdown(this.Original);
 
             // ORDERS
             if (Orders?.Any() == true)
             {
-                lines.Add("## orders");
+                lines.Add("## orders (" + Orders.Count + ")");
                 lines.Add(Row("account", "action", "symbol", "value", "description"));
                 lines.Add(Row("---", "---", "---", "---:", "---"));
                 foreach (var o in Orders
@@ -91,12 +132,16 @@ namespace PortfolioPicker.App
                     .ThenByDescending(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
+                    if (o.Value < 10)
+                        continue; // not worth transaction cost.
+
+                    var fund = AvailableSecurities.Get(o.Symbol);
                     lines.Add(Row(
                         o.Account.Name, 
                         o.Action, 
-                        SymbolUrl(o.Symbol), 
+                        SymbolUrl(o.Symbol, fund.Url), 
                         string.Format("${0:n0}", o.Value), 
-                        Fund.Get(o.Symbol).Description
+                        fund.Description
                         ));
                 }
                 lines.Add("");
