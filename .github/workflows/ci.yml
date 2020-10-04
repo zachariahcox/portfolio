@@ -6,15 +6,28 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  image_name: ghcr.io/zachariahcox/portfolio
+  version: ${{ event.run_id }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
     - name: build image
       run: |
-        VERSION=$(date +%s)
-        IMAGE_NAME=ghcr.io/zachariahcox/portfolio
-        docker build . --file Dockerfile --tag ${IMAGE_NAME}:${VERSION}
+        docker build . --file Dockerfile --tag ${{image_name}}:${{version}}
         docker login ghcr.io -u zachariahcox -p ${{secrets.GHCR_PAT}}
-        docker push ${IMAGE_NAME}:${VERSION}
+        docker push ${{image_name}}:${{version}}
+
+    - uses: Azure/k8s-deploy@v1
+      with:
+        namespace: zachariahcox
+        manifests: |
+            k8_deployment.yaml
+        images: ${{image_name}}:${{version}}
+        imagepullsecrets: |
+          pullsecret
+        kubectl-version: 'latest'
