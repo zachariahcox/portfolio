@@ -26,5 +26,38 @@
             "console": "internalConsole",
             "stopAtEntry": false
         },
+        {
+            "name": "rebalance demo: json",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/CLI/bin/Debug/netcoreapp3.1/portfolio.dll",
+            "args": ["rebalance","${workspaceFolder}/demo/json/demo.json", "-db", "100", "-o", "${workspaceFolder}/demo/json"],
+            "cwd": "${workspaceFolder}/CLI",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Web DEBUG",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/Web/bin/Debug/netcoreapp3.1/Web.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Web",
+            "stopAtEntry": false,
+            // Enable launching a web browser when ASP.NET Core starts. For more information: https://aka.ms/VSCode-CS-LaunchJson-WebBrowser
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            },
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "sourceFileMap": {
+                "/Views": "${workspaceFolder}/Web/Views"
+            }
+        },
     ]
 }
