@@ -1,0 +1,20 @@
+name: ci
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: build image
+      run: |
+        VERSION=$(date +%s)
+        IMAGE_NAME=ghcr.io/zachariahcox/portfolio
+        docker build . --file Dockerfile --tag ${IMAGE_NAME}:${VERSION}
+        docker login ghcr.io -u zachariahcox -p ${{secrets.GHCR_PAT}}
+        docker push ${IMAGE_NAME}:${VERSION}
