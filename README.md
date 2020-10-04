@@ -1,6 +1,3 @@
-[![Build Status](https://dev.azure.com/zachariahcox/PortfolioPicker/_apis/build/status/release?branchName=master)](https://dev.azure.com/zachariahcox/PortfolioPicker/_build/latest?definitionId=7&branchName=master)
-
-
 # Introduction
 This app helps rebalance portfolios that span multiple investment accounts.
 

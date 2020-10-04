@@ -1,6 +1,6 @@
 # deployment
 #
-# setup a pull secret:
+# kubecutl
 # $ kubectl create secret docker-registry pullsecret --docker-server=https://ghcr.io/ --docker-username=notneeded --docker-password=$GHCR_PAT
 # $ kubectl apply -f k8_deployment.yaml
 # $ kubectl get service
@@ -28,28 +28,12 @@ spec:
         app: portfoliopicker
 
     spec:
-      imagePullSecrets:
-        - name: pullsecret
+      # imagePullSecrets:
+      #   - name: pullsecret
 
       containers:
         - name: portfoliopicker
           image: ghcr.io/zachariahcox/portfoliopicker:latest
           ports:
           - containerPort: 80
-      
----
-
-#
-# expose app to internets
-#
-apiVersion: v1
-kind: Service
-metadata:
-  name: portfoliopicker
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 80
-  selector:
-    app: portfoliopicker
-      
+          

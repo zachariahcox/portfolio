@@ -3,31 +3,51 @@ name: ci
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 env:
   image_name: ghcr.io/zachariahcox/portfolio
-  version: ${{ event.run_id }}
+  version: ${{github.run_id}}
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: build image
-      run: |
-        docker build . --file Dockerfile --tag ${{image_name}}:${{version}}
-        docker login ghcr.io -u zachariahcox -p ${{secrets.GHCR_PAT}}
-        docker push ${{image_name}}:${{version}}
+    - uses: actions/checkout@master
+    
+    # `$ echo $GHCR_PAT | docker login ghcr.io -u $GHCR_USER --password-stdin`
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: ghcr.io
+        username: ${{ secrets.GHCR_USER }}
+        password: ${{ secrets.GHCR_PAT }}
+    
+    # there should probably be a task for this too?
+    - run: |
+        docker build . -t ${{env.image_name}}:${{env.version}}
+        docker push ${{env.image_name}}:${{env.version}}
+      
+    # connect kubectl to our aks sub. 
+    - uses: Azure/aks-set-context@v1
+      with:
+        creds: '${{secrets.AZURE_CREDENTIALS}}'
+        resource-group: portfoliopicker
+        cluster-name: kluster
+    
+    # moral equivalent of `$ kubectl create secret docker-registry portfolio-pull-secret --docker-server=https://ghcr.io/ --docker-username=notneeded --docker-password=$GHCR_PAT`
+    - uses: Azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ghcr.io
+        container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        secret-name: portfolio-pull-secret
 
+    # `$ kubectl apply -f k8_deployment.yml`
     - uses: Azure/k8s-deploy@v1
       with:
-        namespace: zachariahcox
         manifests: |
-            k8_deployment.yaml
-        images: ${{image_name}}:${{version}}
+          manifests/deployment.yml
+          manifests/service.yml
+        images: |
+          ${{env.image_name}}:${{env.version}}
         imagepullsecrets: |
-          pullsecret
-        kubectl-version: 'latest'
+          portfolio-pull-secret
