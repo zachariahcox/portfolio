@@ -36,9 +36,9 @@ jobs:
     # moral equivalent of `$ kubectl create secret docker-registry portfolio-pull-secret --docker-server=https://ghcr.io/ --docker-username=notneeded --docker-password=$GHCR_PAT`
     - uses: Azure/k8s-create-secret@v1
       with:
-        container-registry-url: ghcr.io
-        container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
-        container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
+        container-registry-url: https://ghcr.io/
+        container-registry-username: notneeded
+        container-registry-password: ${{secrets.GHCR_PAT}}
         secret-name: portfolio-pull-secret
 
     # `$ kubectl apply -f k8_deployment.yml`
