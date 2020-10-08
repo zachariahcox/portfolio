@@ -36,7 +36,7 @@ Your current portfolio is described in a simple yaml syntax:
 ```
 
 You can also provide a list of fund descriptions you want to be made available.
-There is a common set loaded by [default](https://zachariahcox.visualstudio.com/_git/PortfolioPicker?path=%2FPortfolioPicker%2FApp%2Fdata%2Ffunds.yaml&version=GBmaster&_a=contents&line=2&lineStyle=plain&lineEnd=9&lineStartColumn=1&lineEndColumn=19). 
+There is a common set loaded by [default](https://github.com/zachariahcox/portfolio/blob/master/App/src/data/funds.json). 
 
 ```yaml
 - description: Vanguard Total Stock Market Index Fund
