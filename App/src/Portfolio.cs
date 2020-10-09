@@ -230,7 +230,7 @@ namespace PortfolioPicker.App
         
         protected string SymbolUrl(string s, string url=null) => MdUrl(s, url ?? $"https://finance.yahoo.com/quote/{s}?p={s}");
 
-        private double NotNan(double d) => double.IsNaN(d) ? 0.0 : d;
+        protected double NotNan(double d) => double.IsNaN(d) ? 0.0 : d;
 
         private string GetRelativeRow(AssetClass c, AssetLocation l, Portfolio p)
         {
