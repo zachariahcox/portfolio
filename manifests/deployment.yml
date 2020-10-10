@@ -12,28 +12,27 @@
 apiVersion: apps/v1 
 kind: Deployment
 metadata:
-  name: portfoliopicker-deployment
+  name: portfolio-deployment
   labels:
-    app: portfoliopicker
+    app: portfolio
 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: portfoliopicker
+      app: portfolio
 
   template:
     metadata:
       labels:
-        app: portfoliopicker
+        app: portfolio
 
     spec:
       # imagePullSecrets:
       #   - name: pullsecret
-
       containers:
-        - name: portfoliopicker
-          image: ghcr.io/zachariahcox/portfoliopicker:latest
+        - name: portfolio
+          image: ghcr.io/zachariahcox/portfolio
           ports:
           - containerPort: 80
           
