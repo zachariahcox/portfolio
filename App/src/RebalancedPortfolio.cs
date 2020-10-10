@@ -149,5 +149,129 @@ namespace PortfolioPicker.App
 
             return lines;
         }
+
+        public dynamic ToReport(Portfolio reference)
+        {
+            var composition = new List<dynamic>();
+            foreach (var c in AssetClasses.ALL)
+            foreach (var l in AssetLocations.ALL)
+            {
+                var percentOfPortfolio = PercentOfPortfolio(c, l);
+                composition.Add(new {
+                    Class = c == AssetClass.None ? "*" : c.ToString().ToLower(),
+                    Location = l == AssetLocation.None ? "*" : l.ToString().ToLower()
+                    
+                    // total value
+                    , Value = TotalValue * percentOfPortfolio / 100
+
+                    // percent of portfolio
+                    , TotalPercent = percentOfPortfolio
+
+                    // percent of asset class
+                    , ClassPercent = NotNan(100 * percentOfPortfolio / PercentOfPortfolio(c))
+
+                    // percent of asset location
+                    , LocationPercent = NotNan(100 * percentOfPortfolio / PercentOfPortfolio(l))
+
+                    // percent of asset category in brokerage accounts
+                    , Brokerage = PercentOfAssetType(AccountType.BROKERAGE, c, l)
+
+                    // percent of asset category in ira accounts
+                    , Ira = PercentOfAssetType(AccountType.IRA, c, l)
+
+                    // percent of asset category in roth accounts
+                    , Roth = PercentOfAssetType(AccountType.ROTH, c, l)
+                });
+            }
+            
+            // comparison vs reference
+            //
+            var comparisonObject = default(List<dynamic>);
+            if (reference != null)
+            {
+                comparisonObject = new List<dynamic>();
+                foreach (var c in AssetClasses.ALL)
+                foreach (var l in AssetLocations.ALL)
+                {
+                    var percentOfPortfolio = PercentOfPortfolio(c, l);
+                    var referencePercentOfPortfolio = reference.PercentOfPortfolio(c, l);
+                    comparisonObject.Add(new {
+                        // aggregated by x
+                        Class = c == AssetClass.None ? "*" : c.ToString().ToLower(),
+                        Location = l == AssetLocation.None ? "*" : l.ToString().ToLower(), 
+                        
+                        // total value
+                        Value = NotNan(TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100,
+
+                        // percent of portfolio
+                        TotalPercent = percentOfPortfolio - referencePercentOfPortfolio, 
+
+                        // percent of asset class
+                        ClassPercent = NotNan(100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c))),
+
+                        // percent of asset location
+                        LocationPercent = NotNan(100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l))),
+
+                        // percent of asset category in brokerage accounts
+                        Brokerage = PercentOfAssetType(AccountType.BROKERAGE, c, l) - reference.PercentOfAssetType(AccountType.BROKERAGE, c, l),
+
+                        // percent of asset category in ira accounts
+                        Ira = PercentOfAssetType(AccountType.IRA, c, l) - reference.PercentOfAssetType(AccountType.IRA, c, l),
+
+                        // percent of asset category in roth accounts
+                        Roth = PercentOfAssetType(AccountType.ROTH, c, l) - reference.PercentOfAssetType(AccountType.ROTH, c, l)
+                    });
+                }    
+            }
+
+            // currently held positions
+            //
+            var positions = new List<dynamic>();
+            foreach (var a in Accounts.OrderBy(x => x.Name))
+            foreach (var p in a.Positions.OrderByDescending(x => x.Value))
+            {
+                var security = AvailableSecurities.Get(p.Symbol);
+                positions.Add(new {
+                    Account = a.Name,
+                    Symbol = security.Symbol,
+                    Url = security.Url,
+                    Value = p.Value,
+                    Description = security.Description
+                });
+            }
+
+            // orders to get to new positions
+            //
+            var ordersObject = default(List<dynamic>);
+            if (Orders?.Any() == true)
+            {
+                ordersObject = new List<dynamic>();
+                foreach (var o in Orders
+                    .Where(x => x.Value >= 10)
+                    .OrderBy(x => x.Account.Name)
+                    .ThenByDescending(x => x.Action)
+                    .ThenBy(x => x.Symbol))
+                {
+                    var security = AvailableSecurities.Get(o.Symbol);
+                    ordersObject.Add(new {
+                        Account = o.Account.Name, 
+                        Action = o.Action, 
+                        Symbol = o.Symbol, 
+                        Url = security.Url,
+                        Value = o.Value, 
+                        Description = security.Description
+                    });
+                }
+            }
+
+            // construct json object
+            //
+            return new {
+                Composition = composition,
+                Comparison = comparisonObject,
+                Positions = positions,
+                Orders = ordersObject,
+            };
+        }
     }
 }

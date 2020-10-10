@@ -50,20 +50,8 @@ function exportPortfolio(e) {
     var portfolio = {};
     portfolio["accounts"] = accounts;
     portfolio["securities"] = securityData;
-
-    // rebalance using service
-    var rebalanceService = "http://52.154.202.11/rebalance";
-    var options = {
-        'method' : 'post',
-        'contentType': 'application/json',
-        'payload' : JSON.stringify(portfolio)
-    };
-    var response = UrlFetchApp.fetch(rebalanceService, options);
-    displayText_(response.getContentText());
-
-    // render as text
-    // var json = JSON.stringify(portfolio, null, 4);
-    // displayText_(json);
+    var json = JSON.stringify(portfolio, null, 4);
+    displayText_(json);
 }
 
 function displayText_(text) {
