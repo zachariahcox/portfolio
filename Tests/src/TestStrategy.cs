@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Reflection;
+using System.Text.Json;
 using PortfolioPicker.App;
 using Xunit;
 using YamlDotNet.Serialization;
@@ -439,7 +440,13 @@ namespace PortfolioPicker.Tests
         [Fact]
         public void TestGoogleSheet(){
             var json = File.ReadAllText(GetDataFilePath("src/googlesheetexport/portfolio.json"));
-            Portfolio.FromGoogleSheet(json);
+            var p = Portfolio.FromGoogleSheet(json);
+            var rebalanced = Picker.Rebalance(p, .5, .5, .5, 1, 1);
+            var report = rebalanced.ToReport(p);
+            Assert.NotNull(report);
+            var s = JsonSerializer.Serialize(report);
+            // Console.WriteLine(s);
+            Assert.NotNull(s);
         }
     }
 }

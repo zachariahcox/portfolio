@@ -201,16 +201,16 @@ namespace PortfolioPicker.App
                         Location = l == AssetLocation.None ? "*" : l.ToString().ToLower(), 
                         
                         // total value
-                        Value = (TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100,
+                        Value = NotNan(TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100,
 
                         // percent of portfolio
                         TotalPercent = percentOfPortfolio - referencePercentOfPortfolio, 
 
                         // percent of asset class
-                        ClassPercent = 100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c)),
+                        ClassPercent = NotNan(100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c))),
 
                         // percent of asset location
-                        LocationPercent = 100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l)),
+                        LocationPercent = NotNan(100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l))),
 
                         // percent of asset category in brokerage accounts
                         Brokerage = PercentOfAssetType(AccountType.BROKERAGE, c, l) - reference.PercentOfAssetType(AccountType.BROKERAGE, c, l),
@@ -233,7 +233,8 @@ namespace PortfolioPicker.App
                 var security = AvailableSecurities.Get(p.Symbol);
                 positions.Add(new {
                     Account = a.Name,
-                    Symbol = SymbolUrl(security.Symbol, security.Url),
+                    Symbol = security.Symbol,
+                    Url = security.Url,
                     Value = p.Value,
                     Description = security.Description
                 });
@@ -251,13 +252,14 @@ namespace PortfolioPicker.App
                     .ThenByDescending(x => x.Action)
                     .ThenBy(x => x.Symbol))
                 {
-                    var fund = AvailableSecurities.Get(o.Symbol);
+                    var security = AvailableSecurities.Get(o.Symbol);
                     ordersObject.Add(new {
-                        Account=o.Account.Name, 
-                        Action=o.Action, 
-                        Symbol=SymbolUrl(o.Symbol, fund.Url), 
-                        Value=o.Value, 
-                        Description=fund.Description
+                        Account = o.Account.Name, 
+                        Action = o.Action, 
+                        Symbol = o.Symbol, 
+                        Url = security.Url,
+                        Value = o.Value, 
+                        Description = security.Description
                     });
                 }
             }

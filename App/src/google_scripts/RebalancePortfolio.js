@@ -4,7 +4,7 @@
 //
 
 // main export function
-function exportPortfolio(e) {
+function rebalancePortfolio(e) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     // aggregate positions into accounts
@@ -50,8 +50,29 @@ function exportPortfolio(e) {
     var portfolio = {};
     portfolio["accounts"] = accounts;
     portfolio["securities"] = securityData;
-    var json = JSON.stringify(portfolio, null, 4);
-    displayText_(json);
+
+    // rebalance using service
+    var rebalanceService = "http://52.154.202.11/rebalance";
+    var options = {
+        'method' : 'post',
+        'contentType': 'application/json',
+        'payload' : JSON.stringify(portfolio)
+    };
+    var response = UrlFetchApp.fetch(rebalanceService, options);
+    displayText_(response.getContentText());
+
+    // print to sheet
+    var responseJson = "{\"Composition\":[{\"Class\":\"*\",\"Location\":\"*\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"*\",\"Location\":\"domestic\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"*\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"*\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"stock\",\"Location\":\"domestic\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"stock\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0}],\"Comparison\":[{\"Class\":\"*\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"*\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"*\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0}],\"Positions\":[{\"Account\":\"test\",\"Symbol\":\"fzrox\",\"Url\":null,\"Value\":12.56,\"Description\":\"domestic stock?\"}],\"Orders\":null}";
+    var rebalanceInstructions = JSON.parse(responseJson);
+    var rebalanceSheet = ss.insertSheet("rebalance", ss.getSheets().length);
+    if (rebalanceInstructions.hasOwnProperty("Composition")){
+        var comp = rebalanceInstructions.Composition;
+        if (comp !== null)
+        {
+            s.appendRow(Object.keys(comp[0])); // randomly pick one
+            comp.map(c => rebalanceSheet.appendRow(Object.values(c)));
+        }
+    }
 }
 
 function displayText_(text) {
@@ -168,9 +189,9 @@ function isDigit_(char) {
 // register menu button
 function onOpen() {
     var menuEntries = [
-        { name: "Export as json", functionName: "exportPortfolio" }
+        { name: "Update Rebalance Sheet", functionName: "rebalancePortfolio" }
     ];
     SpreadsheetApp
         .getActiveSpreadsheet()
-        .addMenu("Export Portfolio", menuEntries);
+        .addMenu("Rebalance Portfolio", menuEntries);
 }
