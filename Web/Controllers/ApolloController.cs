@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Web.Controllers
@@ -14,14 +15,69 @@ namespace Web.Controllers
             "I'm not sure?",
             "I'm tired",
             "Apps",
-            "Deelee"
+            "Deelee",
+            "ok",
+            "yeah",
+            "That's ok!"
         };
 
         [HttpGet]
-        public string Get()
+        public ContentResult Get()
         {
-            var randomNumberGenerator = new Random();
-            return ThingsToSay[randomNumberGenerator.Next(0, ThingsToSay.Length)];
+            var dice = new Random();
+            var myRandomNumber = dice.Next(minValue:0, maxValue:ThingsToSay.Length);
+            var whatToSay = ThingsToSay[myRandomNumber];
+            var html = MakeHtml(whatToSay);
+
+            return new ContentResult {
+                ContentType = "text/html",
+                StatusCode = (int) HttpStatusCode.OK,
+                Content = html
+            };
+        }
+
+        private string MakeHtml(string whatToSay)
+        {
+            return @"<!DOCTYPE html>
+<html>
+<head>
+<style>
+.rainbow-text {
+    background-image: linear-gradient(to left, violet, indigo, blue, green, yellow, orange, red);
+    -webkit-text-fill-color: transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    font-size: 25px;
+    transition: background-image .25s ease-in-out;
+
+    animation-name: spin;
+    animation-duration: 5000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear; 
+}
+.center-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 100vh;
+}
+@keyframes spin {
+    from {
+        transform:rotate(0deg);
+    }
+    to {
+        transform:rotate(360deg);
+    }
+}
+</style>
+</head>
+<body>
+    <div class='rainbow-text center-screen'>" + whatToSay + @"</div>
+</body>
+</html>
+";
         }
     }
 }
