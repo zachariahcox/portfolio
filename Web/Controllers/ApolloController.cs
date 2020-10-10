@@ -56,12 +56,14 @@ namespace Web.Controllers
     animation-timing-function: linear; 
 }
 .center-screen {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+    margin: auto;
+    width: 200px;
 }
 @keyframes spin {
     from {

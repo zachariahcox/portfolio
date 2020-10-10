@@ -88,6 +88,5 @@ dotnet publish ../PortfolioPicker/CLI/ -o . -c release
 For this, you'll need `docker` installed. 
 ```bash
 cd PortfolioPicker
-docker build -t portfoliopicker .
-docker run -d -p 5000:80 portfoliopicker
+docker build -t portfoliopicker . && docker run -d -p 5000:80 portfoliopicker
 ```
