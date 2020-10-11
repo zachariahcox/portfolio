@@ -5,6 +5,12 @@
 
 // main export function
 function exportPortfolio(e) {
+    var portfolio = createPortfolio();
+    var json = JSON.stringify(portfolio, null, 4);
+    displayText_(json);
+}
+
+function createPortfolio(){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     // aggregate positions into accounts
@@ -50,8 +56,7 @@ function exportPortfolio(e) {
     var portfolio = {};
     portfolio["accounts"] = accounts;
     portfolio["securities"] = securityData;
-    var json = JSON.stringify(portfolio, null, 4);
-    displayText_(json);
+    return portfolio;
 }
 
 function displayText_(text) {

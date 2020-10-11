@@ -5,6 +5,98 @@
 
 // main export function
 function rebalancePortfolio(e) {
+    // clear old recommendation
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var rebalanceSheetNames = [
+        "rebalance_composition",
+        "rebalance_comparison",
+        "rebalance_positions",
+        "rebalance_orders",
+    ];
+    rebalanceSheetNames.map(n=>{
+        var s = ss.getSheetByName(n);
+        if (s != null) { 
+            ss.deleteSheet(s); 
+        }
+    });
+  
+    // rebalance using service
+    //
+    var portfolio = createPortfolio();
+    var rebalanceService = "http://52.158.217.178/rebalance";
+    var options = {
+        'method' : 'post',
+        'contentType': 'application/json',
+        'payload' : JSON.stringify(portfolio)
+    };
+    var response = UrlFetchApp.fetch(rebalanceService, options);
+    var responseJson = response.getContentText();
+    var report = JSON.parse(responseJson);
+
+    // add all sheets
+    //
+    var s = ss.insertSheet(rebalanceSheetNames[0], ss.getSheets().length);
+    if (report.hasOwnProperty("composition")){
+        var table = report.composition;
+        if (table !== null)
+        {
+            var headerRow = Object.keys(table[0]);
+            var rowCount = 1 + table.length;
+            var colCount = headerRow.length;
+            var _data = []; // create 2d matrix
+            _data.push(headerRow);
+            table.map(c => _data.push(Object.values(c)));
+            s.getRange(1, 1, rowCount, colCount).setValues(_data);
+        }
+    }
+
+    s = ss.insertSheet(rebalanceSheetNames[1], ss.getSheets().length);
+    if (report.hasOwnProperty("comparison")){
+        var table = report.comparison;
+        if (table !== null)
+        {
+            var headerRow = Object.keys(table[0]);
+            var rowCount = 1 + table.length;
+            var colCount = headerRow.length;
+            var _data = []; // create 2d matrix
+            _data.push(headerRow);
+            table.map(c => _data.push(Object.values(c)));
+            s.getRange(1, 1, rowCount, colCount).setValues(_data);
+        }
+    }
+
+    s = ss.insertSheet(rebalanceSheetNames[2], ss.getSheets().length);
+    if (report.hasOwnProperty("positions")){
+        var table = report.positions;
+        if (table !== null)
+        {
+            var headerRow = Object.keys(table[0]);
+            var rowCount = 1 + table.length;
+            var colCount = headerRow.length;
+            var _data = []; // create 2d matrix
+            _data.push(headerRow);
+            table.map(c => _data.push(Object.values(c)));
+            s.getRange(1, 1, rowCount, colCount).setValues(_data);
+        }
+    }
+
+    s = ss.insertSheet(rebalanceSheetNames[3], ss.getSheets().length);
+    if (report.hasOwnProperty("orders")){
+        var table = report.orders;
+        if (table !== null)
+        {
+            var headerRow = Object.keys(table[0]);
+            var rowCount = 1 + table.length;
+            var colCount = headerRow.length;
+            var _data = []; // create 2d matrix
+            _data.push(headerRow);
+            table.map(c => _data.push(Object.values(c)));
+            s.getRange(1, 1, rowCount, colCount).setValues(_data);
+        }
+    }
+}
+
+function createPortfolio() {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     // aggregate positions into accounts
@@ -50,29 +142,7 @@ function rebalancePortfolio(e) {
     var portfolio = {};
     portfolio["accounts"] = accounts;
     portfolio["securities"] = securityData;
-
-    // rebalance using service
-    var rebalanceService = "http://52.154.202.11/rebalance";
-    var options = {
-        'method' : 'post',
-        'contentType': 'application/json',
-        'payload' : JSON.stringify(portfolio)
-    };
-    var response = UrlFetchApp.fetch(rebalanceService, options);
-    displayText_(response.getContentText());
-
-    // print to sheet
-    var responseJson = "{\"Composition\":[{\"Class\":\"*\",\"Location\":\"*\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"*\",\"Location\":\"domestic\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"*\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"*\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"stock\",\"Location\":\"domestic\",\"Value\":12.56,\"TotalPercent\":100,\"ClassPercent\":100,\"LocationPercent\":100,\"Brokerage\":0,\"Ira\":0,\"Roth\":100},{\"Class\":\"stock\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0}],\"Comparison\":[{\"Class\":\"*\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"*\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"*\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"stock\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"*\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"domestic\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0},{\"Class\":\"bond\",\"Location\":\"international\",\"Value\":0,\"TotalPercent\":0,\"ClassPercent\":0,\"LocationPercent\":0,\"Brokerage\":0,\"Ira\":0,\"Roth\":0}],\"Positions\":[{\"Account\":\"test\",\"Symbol\":\"fzrox\",\"Url\":null,\"Value\":12.56,\"Description\":\"domestic stock?\"}],\"Orders\":null}";
-    var rebalanceInstructions = JSON.parse(responseJson);
-    var rebalanceSheet = ss.insertSheet("rebalance", ss.getSheets().length);
-    if (rebalanceInstructions.hasOwnProperty("Composition")){
-        var comp = rebalanceInstructions.Composition;
-        if (comp !== null)
-        {
-            s.appendRow(Object.keys(comp[0])); // randomly pick one
-            comp.map(c => rebalanceSheet.appendRow(Object.values(c)));
-        }
-    }
+    return portfolio;
 }
 
 function displayText_(text) {
@@ -189,9 +259,9 @@ function isDigit_(char) {
 // register menu button
 function onOpen() {
     var menuEntries = [
-        { name: "Update Rebalance Sheet", functionName: "rebalancePortfolio" }
+        { name: "Update Rebalance Sheets", functionName: "rebalancePortfolio" }
     ];
     SpreadsheetApp
         .getActiveSpreadsheet()
-        .addMenu("Rebalance Portfolio", menuEntries);
+        .addMenu("Rebalance", menuEntries);
 }

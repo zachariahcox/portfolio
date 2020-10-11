@@ -12,7 +12,7 @@ namespace Web.Controllers
     public class RebalanceController : ControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> RebalanceAsync()
+        public async Task<dynamic> RebalanceAsync()
         {
             try
             {
@@ -38,12 +38,8 @@ namespace Web.Controllers
                     domesticStockRatio: domesticStockRatio,
                     domesticBondRatio: domesticBondRatio,
                     debugOutputDirectory: null);
-
-                var content = string.Join("\n", rb.ToMarkdown());
-                return new FileContentResult (Encoding.UTF8.GetBytes(content), "application/octet-stream")
-                    {
-                        FileDownloadName="rebalance.md"
-                    };  
+                var report = rb.ToReport(reference: original);
+                return report;
             }
             catch (Exception e)
             {
