@@ -6,19 +6,7 @@
 // main export function
 function rebalancePortfolio(e) {
     // clear old recommendation
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var rebalanceSheetNames = [
-        "rebalance_composition",
-        "rebalance_comparison",
-        "rebalance_positions",
-        "rebalance_orders",
-    ];
-    rebalanceSheetNames.map(n=>{
-        var s = ss.getSheetByName(n);
-        if (s != null) { 
-            ss.deleteSheet(s); 
-        }
-    });
+    deleteSheets();
   
     // rebalance using service
     //
@@ -35,6 +23,8 @@ function rebalancePortfolio(e) {
 
     // add all sheets
     //
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var rebalanceSheetNames = getSheetNames();
     var s = ss.insertSheet(rebalanceSheetNames[0], ss.getSheets().length);
     if (report.hasOwnProperty("composition")){
         var table = report.composition;
@@ -94,6 +84,24 @@ function rebalancePortfolio(e) {
             s.getRange(1, 1, rowCount, colCount).setValues(_data);
         }
     }
+}
+
+function getSheetNames(){
+    return [
+        "rebalance_composition",
+        "rebalance_comparison",
+        "rebalance_positions",
+        "rebalance_orders",
+    ];
+}
+function deleteSheets() {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    getSheetNames().map(n=>{
+        var s = ss.getSheetByName(n);
+        if (s != null) { 
+            ss.deleteSheet(s); 
+        }
+    });
 }
 
 function createPortfolio() {
@@ -259,7 +267,8 @@ function isDigit_(char) {
 // register menu button
 function onOpen() {
     var menuEntries = [
-        { name: "Update Rebalance Sheets", functionName: "rebalancePortfolio" }
+        { name: "Update Rebalance Sheets", functionName: "rebalancePortfolio" },
+        { name: "Remove Rebalance Sheets", functionName: "deleteSheets" },
     ];
     SpreadsheetApp
         .getActiveSpreadsheet()
