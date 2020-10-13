@@ -150,8 +150,63 @@ namespace PortfolioPicker.App
             return lines;
         }
 
-        public dynamic ToReport(Portfolio reference)
+        public dynamic ToReport()
         {
+            var reference = this.Original;
+            // basic rebalance stats
+            //
+            var stats = new List<dynamic>();
+            void AddStat(dynamic k, dynamic v){stats.Add(new {stat = k, value = v});}
+            AddStat("total value of assets", NotNan(TotalValue));
+            AddStat("total expense ratio", NotNan(ExpenseRatio));
+            AddStat("previous total expense ratio", NotNan(reference.ExpenseRatio));
+            AddStat("morningstar xray (upload csv)", "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page");
+            
+            if (TargetExposureRatios?.Any() == true)
+            {
+                AddStat("target % stocks", TargetExposureRatios
+                    .Where(x => x.Class == AssetClass.Stock)
+                    .Sum(x => x.Value));
+                AddStat("target % bonds", TargetExposureRatios
+                    .Where(x => x.Class == AssetClass.Bond)
+                    .Sum(x => x.Value));
+                
+                AddStat("sum of taxable sales", SumOfTaxableSales());
+                AddStat("exposure priority order",
+                    string.Join(", ", TargetExposureRatios.Select(x => x.Class.ToString().ToLower() + x.Location.ToString().ToLower()))
+                );
+            }
+
+            var scoreComparison = new List<dynamic>();
+            if (Score != null)
+            {
+                AddStat("weights: asset mix", Score.AssetMixWeight);
+                AddStat("weights: tax efficiency", Score.TaxEfficiencyWeight);
+                AddStat("weights: expense ratio", Score.ExpenseRatioWeight);
+                AddStat("weights: taxable sales", Score.TaxableSalesWeight);
+            
+                scoreComparison.Add(new {
+                    portfolio = "proposed",
+                    totalModifiedBySales = Score.RebalanceTotal,
+                    totalIgnoringSales = Score.Total,
+                    assetMix = Score.AssetMix,
+                    taxEfficiency = Score.TaxEfficiency,
+                    expenseRatio = Score.ExpenseRatio,
+                    taxableSalesPenalty = Score.TaxableSales
+                });
+                scoreComparison.Add(new {
+                    portfolio = "current",
+                    totalModifiedBySales = reference.Score.RebalanceTotal,
+                    totalIgnoringSales = reference.Score.Total,
+                    assetMix = reference.Score.AssetMix,
+                    taxEfficiency = reference.Score.TaxEfficiency,
+                    expenseRatio = reference.Score.ExpenseRatio,
+                    taxableSalesPenalty = reference.Score.TaxableSales
+                });
+            }
+
+            // final composition
+            //
             var composition = new List<dynamic>();
             foreach (var c in AssetClasses.ALL)
             foreach (var l in AssetLocations.ALL)
@@ -162,25 +217,25 @@ namespace PortfolioPicker.App
                     Location = l == AssetLocation.None ? "*" : l.ToString().ToLower()
                     
                     // total value
-                    , Value = TotalValue * percentOfPortfolio / 100
+                    , Value = TotalValue * percentOfPortfolio / 100.0
 
                     // percent of portfolio
-                    , TotalPercent = percentOfPortfolio
+                    , TotalPercent = percentOfPortfolio / 100.0
 
                     // percent of asset class
-                    , ClassPercent = NotNan(100 * percentOfPortfolio / PercentOfPortfolio(c))
+                    , ClassPercent = NotNan(percentOfPortfolio / PercentOfPortfolio(c))
 
                     // percent of asset location
-                    , LocationPercent = NotNan(100 * percentOfPortfolio / PercentOfPortfolio(l))
+                    , LocationPercent = NotNan(percentOfPortfolio / PercentOfPortfolio(l))
 
                     // percent of asset category in brokerage accounts
-                    , Brokerage = PercentOfAssetType(AccountType.BROKERAGE, c, l)
+                    , BrokeragePercent = PercentOfAssetType(AccountType.BROKERAGE, c, l) / 100.0
 
                     // percent of asset category in ira accounts
-                    , Ira = PercentOfAssetType(AccountType.IRA, c, l)
+                    , IraPercent = PercentOfAssetType(AccountType.IRA, c, l) / 100.0
 
                     // percent of asset category in roth accounts
-                    , Roth = PercentOfAssetType(AccountType.ROTH, c, l)
+                    , RothPercent = PercentOfAssetType(AccountType.ROTH, c, l) / 100.0
                 });
             }
             
@@ -201,25 +256,25 @@ namespace PortfolioPicker.App
                         Location = l == AssetLocation.None ? "*" : l.ToString().ToLower(), 
                         
                         // total value
-                        Value = NotNan(TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100,
+                        Value = NotNan(TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100.0,
 
                         // percent of portfolio
                         TotalPercent = percentOfPortfolio - referencePercentOfPortfolio, 
 
                         // percent of asset class
-                        ClassPercent = NotNan(100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c))),
+                        ClassPercent = NotNan((NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c))),
 
                         // percent of asset location
-                        LocationPercent = NotNan(100 * (NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l))),
+                        LocationPercent = NotNan((NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l))),
 
                         // percent of asset category in brokerage accounts
-                        Brokerage = PercentOfAssetType(AccountType.BROKERAGE, c, l) - reference.PercentOfAssetType(AccountType.BROKERAGE, c, l),
+                        BrokeragePercent = (PercentOfAssetType(AccountType.BROKERAGE, c, l) - reference.PercentOfAssetType(AccountType.BROKERAGE, c, l)) / 100.0,
 
                         // percent of asset category in ira accounts
-                        Ira = PercentOfAssetType(AccountType.IRA, c, l) - reference.PercentOfAssetType(AccountType.IRA, c, l),
+                        IraPercent = (PercentOfAssetType(AccountType.IRA, c, l) - reference.PercentOfAssetType(AccountType.IRA, c, l)) / 100.0,
 
                         // percent of asset category in roth accounts
-                        Roth = PercentOfAssetType(AccountType.ROTH, c, l) - reference.PercentOfAssetType(AccountType.ROTH, c, l)
+                        RothPercent = (PercentOfAssetType(AccountType.ROTH, c, l) - reference.PercentOfAssetType(AccountType.ROTH, c, l)) / 100.0
                     });
                 }    
             }
@@ -234,9 +289,9 @@ namespace PortfolioPicker.App
                 positions.Add(new {
                     Account = a.Name,
                     Symbol = security.Symbol,
-                    Url = security.Url,
                     Value = p.Value,
-                    Description = security.Description
+                    // Url = security.Url,
+                    // Description = security.Description
                 });
             }
 
@@ -257,9 +312,9 @@ namespace PortfolioPicker.App
                         Account = o.Account.Name, 
                         Action = o.Action, 
                         Symbol = o.Symbol, 
-                        Url = security.Url,
                         Value = o.Value, 
-                        Description = security.Description
+                        // Url = security.Url,
+                        // Description = security.Description
                     });
                 }
             }
@@ -267,8 +322,10 @@ namespace PortfolioPicker.App
             // construct json object
             //
             return new {
+                Stats = stats,
+                ScoreComparison = scoreComparison,
                 Composition = composition,
-                Comparison = comparisonObject,
+                CompositionComparison = comparisonObject,
                 Positions = positions,
                 Orders = ordersObject,
             };

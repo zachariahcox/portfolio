@@ -437,12 +437,36 @@ namespace PortfolioPicker.Tests
             var os = original.GetScore(Score.GetScoreWeight, targetRatios);
         }
 
+
+
         [Fact]
         public void TestGoogleSheet(){
             var json = File.ReadAllText(GetDataFilePath("src/googlesheetexport/portfolio.json"));
             var p = Portfolio.FromGoogleSheet(json);
-            var rebalanced = Picker.Rebalance(p, .5, .5, .5, 1, 1);
-            var report = rebalanced.ToReport(p);
+            Assert.NotNull(p);
+        }
+
+        [Fact]
+        public void TestReportObject(){
+            var b = "ReduceTax";
+            var accounts = new List<Account>{
+                CreateAccount(b, AccountType.BROKERAGE, value: 100),
+                CreateAccount(b, AccountType.ROTH, value: 100),
+                CreateAccount(b, AccountType.IRA, value: 100),
+            };
+            var funds = new List<Security>{
+                CreateSecurity(b, ".5s_1d", er: 0, stock: 0.5, domestic: 1),
+                CreateSecurity(b, "0s_.5d", er: 0, stock: 0, domestic: .5),
+            };
+            var sc = new SecurityCache();
+            sc.Add(funds);
+            var original = new Portfolio(accounts, sc);
+
+            //
+            //
+
+            var rebalanced = Picker.Rebalance(original, .5, .5, .5, 1, 1);
+            var report = rebalanced.ToReport();
             Assert.NotNull(report);
             var s = JsonSerializer.Serialize(report);
             // Console.WriteLine(s);

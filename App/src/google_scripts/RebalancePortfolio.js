@@ -6,10 +6,9 @@
 // main export function
 function rebalancePortfolio(e) {
     // clear old recommendation
-    deleteSheets();
+    deleteRebalanceSheets();
   
-    // rebalance using service
-    //
+    // call rebalance service to get report object
     var portfolio = createPortfolio();
     var rebalanceService = "http://52.158.217.178/rebalance";
     var options = {
@@ -22,88 +21,58 @@ function rebalancePortfolio(e) {
     var report = JSON.parse(responseJson);
 
     // add all sheets
-    //
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var rebalanceSheetNames = getSheetNames();
-    var s = ss.insertSheet(rebalanceSheetNames[0], ss.getSheets().length);
-    if (report.hasOwnProperty("composition")){
-        var table = report.composition;
-        if (table !== null)
-        {
-            var headerRow = Object.keys(table[0]);
-            var rowCount = 1 + table.length;
-            var colCount = headerRow.length;
-            var _data = []; // create 2d matrix
-            _data.push(headerRow);
-            table.map(c => _data.push(Object.values(c)));
-            s.getRange(1, 1, rowCount, colCount).setValues(_data);
-        }
-    }
+    Object.keys(report).map(k => createTableSheet(ss, report, k));
+}
 
-    s = ss.insertSheet(rebalanceSheetNames[1], ss.getSheets().length);
-    if (report.hasOwnProperty("comparison")){
-        var table = report.comparison;
+function createTableSheet(ss, report, propertyName) {
+    var s = ss.insertSheet("rebalance_" + propertyName, ss.getSheets().length);
+    if (report.hasOwnProperty(propertyName)){
+        var table = report[propertyName];
         if (table !== null)
         {
-            var headerRow = Object.keys(table[0]);
-            var rowCount = 1 + table.length;
-            var colCount = headerRow.length;
-            var _data = []; // create 2d matrix
-            _data.push(headerRow);
+            var headerRowValues = Object.keys(table[0]);
+            var rowCount = table.length;
+            var colCount = headerRowValues.length;
+            var _data = [];
+            _data.push(headerRowValues);
             table.map(c => _data.push(Object.values(c)));
-            s.getRange(1, 1, rowCount, colCount).setValues(_data);
-        }
-    }
-
-    s = ss.insertSheet(rebalanceSheetNames[2], ss.getSheets().length);
-    if (report.hasOwnProperty("positions")){
-        var table = report.positions;
-        if (table !== null)
-        {
-            var headerRow = Object.keys(table[0]);
-            var rowCount = 1 + table.length;
-            var colCount = headerRow.length;
-            var _data = []; // create 2d matrix
-            _data.push(headerRow);
-            table.map(c => _data.push(Object.values(c)));
-            s.getRange(1, 1, rowCount, colCount).setValues(_data);
-        }
-    }
-
-    s = ss.insertSheet(rebalanceSheetNames[3], ss.getSheets().length);
-    if (report.hasOwnProperty("orders")){
-        var table = report.orders;
-        if (table !== null)
-        {
-            var headerRow = Object.keys(table[0]);
-            var rowCount = 1 + table.length;
-            var colCount = headerRow.length;
-            var _data = []; // create 2d matrix
-            _data.push(headerRow);
-            table.map(c => _data.push(Object.values(c)));
-            s.getRange(1, 1, rowCount, colCount).setValues(_data);
+            s.getRange(1, 1, rowCount + 1, colCount).setValues(_data);
+            
+            // header formatting
+            var headerRow = s.getRange(1, 1, 1, colCount);
+            headerRow
+                .setHorizontalAlignment("center")
+                .setBackground("#d9e1f2")
+                .setFontWeight("bold");
+            
+            // rows
+            var colIndex = 1;
+            for(const h of headerRowValues) {
+                var l = h.toLowerCase();
+                var format = l.includes("value")
+                    ? "0.00"
+                    : l.includes("percent")
+                        ? "0.0%"
+                        : "@";
+                s.getRange(2, colIndex, rowCount, 1).setNumberFormat(format);
+                colIndex += 1;
+            }
         }
     }
 }
 
-function getSheetNames(){
-    return [
-        "rebalance_composition",
-        "rebalance_comparison",
-        "rebalance_positions",
-        "rebalance_orders",
-    ];
-}
-function deleteSheets() {
+// delete everything that starts with our prefix
+function deleteRebalanceSheets() { 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    getSheetNames().map(n=>{
-        var s = ss.getSheetByName(n);
-        if (s != null) { 
-            ss.deleteSheet(s); 
+    ss.getSheets().map(n => {
+        if (n.getName().startsWith("rebalance")){
+            ss.deleteSheet(n);
         }
     });
 }
 
+// parse spreadsheet to create data object
 function createPortfolio() {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 

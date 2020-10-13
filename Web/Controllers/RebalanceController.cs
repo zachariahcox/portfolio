@@ -38,7 +38,7 @@ namespace Web.Controllers
                     domesticStockRatio: domesticStockRatio,
                     domesticBondRatio: domesticBondRatio,
                     debugOutputDirectory: null);
-                var report = rb.ToReport(reference: original);
+                var report = rb.ToReport();
                 return report;
             }
             catch (Exception e)
