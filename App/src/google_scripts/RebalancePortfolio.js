@@ -59,8 +59,9 @@ function createTableSheet(ss, report, propertyName) {
                 colIndex += 1;
             }
 
-            // resize columns TODO: this call is really slow?
-            // s.autoResizeColumns(1, colCount);
+            // customise sheet
+            // s.autoResizeColumns(1, colCount); // this call is really slow?
+            s.setTabColor("#57bb8a");
         }
     }
 }
