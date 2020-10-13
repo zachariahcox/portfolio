@@ -51,13 +51,16 @@ function createTableSheet(ss, report, propertyName) {
             for(const h of headerRowValues) {
                 var l = h.toLowerCase();
                 var format = l.includes("value")
-                    ? "0.00"
+                    ? "$#,##0"
                     : l.includes("percent")
                         ? "0.0%"
                         : "@";
                 s.getRange(2, colIndex, rowCount, 1).setNumberFormat(format);
                 colIndex += 1;
             }
+
+            // resize columns
+            s.autoResizeColumns(1, column);
         }
     }
 }

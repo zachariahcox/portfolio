@@ -160,7 +160,7 @@ namespace PortfolioPicker.App
             AddStat("total value of assets", NotNan(TotalValue));
             AddStat("total expense ratio", NotNan(ExpenseRatio));
             AddStat("previous total expense ratio", NotNan(reference.ExpenseRatio));
-            AddStat("morningstar xray (upload csv)", "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page");
+            // AddStat("morningstar xray (upload csv)", "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page");
             
             if (TargetExposureRatios?.Any() == true)
             {
@@ -241,43 +241,39 @@ namespace PortfolioPicker.App
             
             // comparison vs reference
             //
-            var comparisonObject = default(List<dynamic>);
-            if (reference != null)
+            var comparisonObject = new List<dynamic>();
+            foreach (var c in AssetClasses.ALL)
+            foreach (var l in AssetLocations.ALL)
             {
-                comparisonObject = new List<dynamic>();
-                foreach (var c in AssetClasses.ALL)
-                foreach (var l in AssetLocations.ALL)
-                {
-                    var percentOfPortfolio = PercentOfPortfolio(c, l);
-                    var referencePercentOfPortfolio = reference.PercentOfPortfolio(c, l);
-                    comparisonObject.Add(new {
-                        // aggregated by x
-                        Class = c == AssetClass.None ? "*" : c.ToString().ToLower(),
-                        Location = l == AssetLocation.None ? "*" : l.ToString().ToLower(), 
-                        
-                        // total value
-                        Value = NotNan(TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100.0,
+                var percentOfPortfolio = PercentOfPortfolio(c, l);
+                var referencePercentOfPortfolio = reference.PercentOfPortfolio(c, l);
+                comparisonObject.Add(new {
+                    // aggregated by x
+                    Class = c == AssetClass.None ? "*" : c.ToString().ToLower(),
+                    Location = l == AssetLocation.None ? "*" : l.ToString().ToLower(), 
+                    
+                    // total value
+                    Value = NotNan(TotalValue * percentOfPortfolio - reference.TotalValue * referencePercentOfPortfolio) / 100.0,
 
-                        // percent of portfolio
-                        TotalPercent = percentOfPortfolio - referencePercentOfPortfolio, 
+                    // percent of portfolio
+                    TotalPercent = (percentOfPortfolio - referencePercentOfPortfolio) / 100.0, 
 
-                        // percent of asset class
-                        ClassPercent = NotNan((NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c))),
+                    // percent of asset class
+                    ClassPercent = NotNan((NotNan(percentOfPortfolio / PercentOfPortfolio(c)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(c))),
 
-                        // percent of asset location
-                        LocationPercent = NotNan((NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l))),
+                    // percent of asset location
+                    LocationPercent = NotNan((NotNan(percentOfPortfolio / PercentOfPortfolio(l)) - referencePercentOfPortfolio / reference.PercentOfPortfolio(l))),
 
-                        // percent of asset category in brokerage accounts
-                        BrokeragePercent = (PercentOfAssetType(AccountType.BROKERAGE, c, l) - reference.PercentOfAssetType(AccountType.BROKERAGE, c, l)) / 100.0,
+                    // percent of asset category in brokerage accounts
+                    BrokeragePercent = (PercentOfAssetType(AccountType.BROKERAGE, c, l) - reference.PercentOfAssetType(AccountType.BROKERAGE, c, l)) / 100.0,
 
-                        // percent of asset category in ira accounts
-                        IraPercent = (PercentOfAssetType(AccountType.IRA, c, l) - reference.PercentOfAssetType(AccountType.IRA, c, l)) / 100.0,
+                    // percent of asset category in ira accounts
+                    IraPercent = (PercentOfAssetType(AccountType.IRA, c, l) - reference.PercentOfAssetType(AccountType.IRA, c, l)) / 100.0,
 
-                        // percent of asset category in roth accounts
-                        RothPercent = (PercentOfAssetType(AccountType.ROTH, c, l) - reference.PercentOfAssetType(AccountType.ROTH, c, l)) / 100.0
-                    });
-                }    
-            }
+                    // percent of asset category in roth accounts
+                    RothPercent = (PercentOfAssetType(AccountType.ROTH, c, l) - reference.PercentOfAssetType(AccountType.ROTH, c, l)) / 100.0
+                });
+            } 
 
             // currently held positions
             //
@@ -313,7 +309,7 @@ namespace PortfolioPicker.App
                         Account = o.Account.Name, 
                         Symbol = o.Symbol, 
                         Value = o.Value, 
-                        Shares = $"=ifna({o.Value} / GOOGLEFINANCE(\"o.Symbol\", \"price\"), 0)"
+                        Shares = $"=ifna({o.Value} / GOOGLEFINANCE(\"{o.Symbol}\", \"price\"), 0)"
                         // Url = security.Url,
                         // Description = security.Description
                     });
