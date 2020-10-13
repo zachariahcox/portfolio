@@ -59,8 +59,8 @@ function createTableSheet(ss, report, propertyName) {
                 colIndex += 1;
             }
 
-            // resize columns
-            s.autoResizeColumns(1, colCount);
+            // resize columns TODO: this call is really slow?
+            // s.autoResizeColumns(1, colCount);
         }
     }
 }
