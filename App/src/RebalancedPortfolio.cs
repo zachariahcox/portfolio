@@ -309,10 +309,11 @@ namespace PortfolioPicker.App
                 {
                     var security = AvailableSecurities.Get(o.Symbol);
                     ordersObject.Add(new {
-                        Account = o.Account.Name, 
                         Action = o.Action, 
+                        Account = o.Account.Name, 
                         Symbol = o.Symbol, 
                         Value = o.Value, 
+                        Shares = $"=ifna({o.Value} / GOOGLEFINANCE(\"o.Symbol\", \"price\"), 0)"
                         // Url = security.Url,
                         // Description = security.Description
                     });
