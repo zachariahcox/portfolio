@@ -60,7 +60,7 @@ function createTableSheet(ss, report, propertyName) {
             }
 
             // resize columns
-            s.autoResizeColumns(1, column);
+            s.autoResizeColumns(1, colCount);
         }
     }
 }
