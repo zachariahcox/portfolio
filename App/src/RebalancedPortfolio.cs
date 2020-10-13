@@ -201,7 +201,7 @@ namespace PortfolioPicker.App
                     assetMix = reference.Score.AssetMix,
                     taxEfficiency = reference.Score.TaxEfficiency,
                     expenseRatio = reference.Score.ExpenseRatio,
-                    taxableSalesPenalty = reference.Score.TaxableSales
+                    taxableSales = reference.Score.TaxableSales
                 });
             }
 
