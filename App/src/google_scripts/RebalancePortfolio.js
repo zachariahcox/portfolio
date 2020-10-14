@@ -1,9 +1,10 @@
-// export a custom view of the user input data
-// the positions and securities sheets need to have 1 frozen row. 
+// a google apps script to rebalance a portfolio and produce sheets describing the process. 
+// the `positions` and `securities` sheets need to have 1 frozen row. 
 // these will be used as headers and should be reasonable json keys. 
 //
+// @zachariahcox
 
-// main export function
+// main
 function rebalancePortfolio(e) {
     // clear old recommendation
     deleteRebalanceSheets();
@@ -237,7 +238,7 @@ function isDigit_(char) {
     return char >= '0' && char <= '9';
 }
 
-// register menu button
+// register menu buttons
 function onOpen() {
     var menuEntries = [
         { name: "Update Rebalance Sheets", functionName: "rebalancePortfolio" },
