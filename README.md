@@ -71,22 +71,60 @@ To build the project you will need [dotnet core 3.1 or greater](https://code.vis
 
 # Build and Test
 ```bash
-cd PortfolioPicker
+cd portfolio
 dotnet build
 dotnet test
 ```
 
 # Usage
 ```bash
-cd PortfolioPicker
+cd portfolio
 cd ../build
-dotnet publish ../PortfolioPicker/CLI/ -o . -c release
+dotnet publish ../portfolio/CLI/ -o . -c release
 ./portfolio rebalance path/to/portfolio.yaml -o path/to/outputdir/ -db 100
 ```
 
 # docker
 For this, you'll need `docker` installed. 
 ```bash
-cd PortfolioPicker
-docker build -t portfoliopicker . && docker run -d -p 5000:80 portfoliopicker
+cd portfolio
+docker build -t portfolio . 
+docker run -d -p 5000:80 portfolio
+```
+
+# api test
+```bash
+curl --location --request POST 'http://localhost:5000/rebalance' \
+     --header 'Content-Type: application/json' \
+     --data-raw '{
+    "securities": [
+        {
+            "symbol": "abc",
+            "symbolmap": "xyz",
+            "quantitymap": 0.5,
+            "expenseratio": 0.2,
+            "stockratio": 0.7,
+            "domesticratio": 0,
+            "bondratio": 0.3,
+            "internationalratio": 1,
+            "description": "Fidelity ZERO Total Market Index Fund",
+            "url": "https://finance.yahoo.com/quote/fzrox?p=fzrox"
+        }
+    ],
+    "accounts": [
+        {
+            "name": "test",
+            "brokerage": "fidelity",
+            "type": "roth",
+            "positions": [
+                {
+                    "symbol": "fzrox",
+                    "quantity": 10.100,
+                    "value": 12.56,
+                    "hold": true
+                }
+            ]
+        }
+    ]
+}'
 ```
