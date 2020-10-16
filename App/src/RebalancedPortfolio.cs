@@ -156,7 +156,7 @@ namespace PortfolioPicker.App
             // basic rebalance stats
             //
             var stats = new List<dynamic>();
-            void AddStat(dynamic k, dynamic v){stats.Add(new {stat = k, value = v});}
+            void AddStat(dynamic k, dynamic v){stats.Add(new {metric = k, result = v});}
             AddStat("total value of assets", NotNan(TotalValue));
             AddStat("total expense ratio", NotNan(ExpenseRatio));
             AddStat("previous total expense ratio", NotNan(reference.ExpenseRatio));
@@ -192,7 +192,7 @@ namespace PortfolioPicker.App
                     assetMix = Score.AssetMix,
                     taxEfficiency = Score.TaxEfficiency,
                     expenseRatio = Score.ExpenseRatio,
-                    taxableSalesPenalty = Score.TaxableSales
+                    taxableSales = Score.TaxableSales
                 });
                 scoreComparison.Add(new {
                     portfolio = "current",

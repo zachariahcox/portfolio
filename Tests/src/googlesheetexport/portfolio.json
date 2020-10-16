@@ -1,4 +1,9 @@
 {
+    "rebalanceparameters" : {
+        "stockratio": 1,
+        "domesticbondratio": 0.1,
+        "domesticstockratio": 0.9
+    },
     "securities": [
         {
             "symbol": "abc",

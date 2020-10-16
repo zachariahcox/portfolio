@@ -25,13 +25,23 @@ namespace Web.Controllers
                 if (gsp == null)
                     return BadRequest();  
 
-                var securityCache = new SecurityCache();
-                securityCache.Add(gsp.Securities);
-
-                var original = new Portfolio(gsp.Accounts, securityCache);
+                // load parameters
                 var stockRatio = 0.9;
                 var domesticStockRatio = 0.6;
                 var domesticBondRatio = 1.0;
+                gsp.RebalanceParameters.TryGetValue(GoogleSheetPortfolio.TotalStockRatio, out stockRatio);
+                gsp.RebalanceParameters.TryGetValue(GoogleSheetPortfolio.DomesticStockRatio, out domesticStockRatio);
+                gsp.RebalanceParameters.TryGetValue(GoogleSheetPortfolio.DomesticBondRatio, out domesticBondRatio);
+                stockRatio = Math.Max(Math.Min(stockRatio, 1.0), 0.0);
+                domesticStockRatio = Math.Max(Math.Min(domesticStockRatio, 1.0), 0.0);
+                domesticBondRatio = Math.Max(Math.Min(domesticBondRatio, 1.0), 0.0);
+
+                // load original portfolio
+                var securityCache = new SecurityCache();
+                securityCache.Add(gsp.Securities);
+                var original = new Portfolio(gsp.Accounts, securityCache);
+                
+                // rebalance
                 var rb = Picker.Rebalance(
                     portfolio: original,
                     stockRatio: stockRatio,

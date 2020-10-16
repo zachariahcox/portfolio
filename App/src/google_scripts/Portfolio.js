@@ -1,16 +1,87 @@
-// export a custom view of the user input data
-// the positions and securities sheets need to have 1 frozen row. 
-// these will be used as headers and should be reasonable json keys. 
-//
+// Tools for exporting and rebalancing portfolios in google sheets.
+// @zachariahcox
 
 // main export function
+function rebalancePortfolio(e) {
+    // clear old recommendation
+    deleteRebalanceSheets();
+  
+    // call rebalance service to get report object
+    var portfolio = createPortfolio();
+    var rebalanceService = portfolio.rebalanceparameters.url;
+    var options = {
+        'method' : 'post',
+        'contentType': 'application/json',
+        'payload' : JSON.stringify(portfolio)
+    };
+    var response = UrlFetchApp.fetch(rebalanceService, options);
+    var responseJson = response.getContentText();
+    var report = JSON.parse(responseJson);
+
+    // add all sheets
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    Object.keys(report).map(k => createTableSheet(ss, report, k));
+}
+
 function exportPortfolio(e) {
     var portfolio = createPortfolio();
     var json = JSON.stringify(portfolio, null, 4);
-    displayText_(json);
+    displayText_(json, "Exported Portfolio");
 }
 
-function createPortfolio(){
+function createTableSheet(ss, report, propertyName) {
+    var s = ss.insertSheet("rebalance_" + propertyName, ss.getSheets().length);
+    if (report.hasOwnProperty(propertyName)){
+        var table = report[propertyName];
+        if (table !== null)
+        {
+            var headerRowValues = Object.keys(table[0]);
+            var rowCount = table.length;
+            var colCount = headerRowValues.length;
+            var _data = [];
+            _data.push(headerRowValues);
+            table.map(c => _data.push(Object.values(c)));
+            s.getRange(1, 1, rowCount + 1, colCount).setValues(_data);
+            
+            // header formatting
+            var headerRow = s.getRange(1, 1, 1, colCount);
+            headerRow
+                .setHorizontalAlignment("center")
+                .setBackground("#d9e1f2")
+                .setFontWeight("bold");
+            
+            // rows
+            var colIndex = 1;
+            for(const h of headerRowValues) {
+                var l = h.toLowerCase();
+                var format = l.includes("value")
+                    ? "$#,##0"
+                    : l.includes("percent")
+                        ? "0.0%"
+                        : "@";
+                s.getRange(2, colIndex, rowCount, 1).setNumberFormat(format);
+                colIndex += 1;
+            }
+
+            // customise sheet
+            // s.autoResizeColumns(1, colCount); // this call is really slow?
+            s.setTabColor("#57bb8a");
+        }
+    }
+}
+
+// delete everything that starts with our prefix
+function deleteRebalanceSheets() { 
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    ss.getSheets().map(n => {
+        if (n.getName().startsWith("rebalance")){
+            ss.deleteSheet(n);
+        }
+    });
+}
+
+// parse spreadsheet to create data object
+function createPortfolio() {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     // aggregate positions into accounts
@@ -52,18 +123,22 @@ function createPortfolio(){
         }
     }
 
+    // grab rebalance parameters
+    var params = getRowsData_(ss.getSheetByName('parameters'))[0];
+
     // create portfolio object
     var portfolio = {};
     portfolio["accounts"] = accounts;
     portfolio["securities"] = securityData;
+    portfolio["rebalanceparameters"] = params;
     return portfolio;
 }
 
-function displayText_(text) {
+function displayText_(text, title) {
     var output = HtmlService.createHtmlOutput("<textarea style='width:100%;' rows='20'>" + text + "</textarea>");
     output.setWidth(400);
     output.setHeight(300);
-    SpreadsheetApp.getUi().showModalDialog(output, 'Exported Portfolio');
+    SpreadsheetApp.getUi().showModalDialog(output, title);
 }
 
 // getRowsData iterates row by row in the input range and returns an array of objects.
@@ -173,9 +248,11 @@ function isDigit_(char) {
 // register menu button
 function onOpen() {
     var menuEntries = [
-        { name: "Export as json", functionName: "exportPortfolio" }
+        { name: "Update Rebalance Sheets", functionName: "rebalancePortfolio" },
+        { name: "Remove Rebalance Sheets", functionName: "deleteSheets" },
+        { name: "Export as json", functionName: "exportPortfolio"},
     ];
     SpreadsheetApp
         .getActiveSpreadsheet()
-        .addMenu("Export Portfolio", menuEntries);
+        .addMenu("Portfolio Tools", menuEntries);
 }

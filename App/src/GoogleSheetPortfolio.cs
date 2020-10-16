@@ -7,6 +7,7 @@ namespace PortfolioPicker.App
     {
         public IList<Security> Securities {get;set;}
         public IList<Account> Accounts{get;set;}
+        public IDictionary<string, double> RebalanceParameters {get; set;}
 
         public static GoogleSheetPortfolio FromJson(string json)
         {
@@ -23,5 +24,9 @@ namespace PortfolioPicker.App
             var gsp = JsonSerializer.Deserialize<GoogleSheetPortfolio>(json, options);
             return gsp;
         }
+
+        public const string TotalStockRatio = "totalstockratio";
+        public const string DomesticStockRatio = "domesticstockratio";
+        public const string DomesticBondRatio = "domesticbondratio";
     }
 }

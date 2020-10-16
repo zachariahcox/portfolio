@@ -437,13 +437,16 @@ namespace PortfolioPicker.Tests
             var os = original.GetScore(Score.GetScoreWeight, targetRatios);
         }
 
-
-
         [Fact]
         public void TestGoogleSheet(){
             var json = File.ReadAllText(GetDataFilePath("src/googlesheetexport/portfolio.json"));
             var p = Portfolio.FromGoogleSheet(json);
             Assert.NotNull(p);
+
+            var gs = GoogleSheetPortfolio.FromJson(json);
+            Assert.NotNull(gs.Accounts);
+            Assert.NotNull(gs.Securities);
+            Assert.NotNull(gs.RebalanceParameters);
         }
 
         [Fact]
@@ -461,15 +464,10 @@ namespace PortfolioPicker.Tests
             var sc = new SecurityCache();
             sc.Add(funds);
             var original = new Portfolio(accounts, sc);
-
-            //
-            //
-
             var rebalanced = Picker.Rebalance(original, .5, .5, .5, 1, 1);
             var report = rebalanced.ToReport();
             Assert.NotNull(report);
             var s = JsonSerializer.Serialize(report);
-            // Console.WriteLine(s);
             Assert.NotNull(s);
         }
     }
