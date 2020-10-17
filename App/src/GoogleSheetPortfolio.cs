@@ -3,11 +3,19 @@ using System.Text.Json;
 
 namespace PortfolioPicker.App
 {
+    public class RebalanceParameters
+    {
+        public double TotalStockRatio {get;set;} = 0.9;
+        public double DomesticStockRatio {get;set;} = 0.6;
+        public double DomesticBondRatio {get;set;} = 1.0;
+        public string Url {get;set;}
+    }
+
     public class GoogleSheetPortfolio 
     {
         public IList<Security> Securities {get;set;}
         public IList<Account> Accounts{get;set;}
-        public IDictionary<string, double> RebalanceParameters {get; set;}
+        public RebalanceParameters RebalanceParameters {get; set;}
 
         public static GoogleSheetPortfolio FromJson(string json)
         {
@@ -24,9 +32,5 @@ namespace PortfolioPicker.App
             var gsp = JsonSerializer.Deserialize<GoogleSheetPortfolio>(json, options);
             return gsp;
         }
-
-        public const string TotalStockRatio = "totalstockratio";
-        public const string DomesticStockRatio = "domesticstockratio";
-        public const string DomesticBondRatio = "domesticbondratio";
     }
 }

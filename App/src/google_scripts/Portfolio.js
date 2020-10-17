@@ -239,9 +239,9 @@ function isCellEmpty_(cellData) {
 
 // Returns true if the character char is alphabetical, false otherwise.
 function isAlnum_(char) {
-    return char >= 'A' && char <= 'Z' ||
-        char >= 'a' && char <= 'z' ||
-        isDigit_(char);
+    return char >= 'A' && char <= 'Z'
+        || char >= 'a' && char <= 'z' 
+        || isDigit_(char);
 }
 
 // Returns true if the character char is a digit, false otherwise.
@@ -253,7 +253,7 @@ function isDigit_(char) {
 function onOpen() {
     var menuEntries = [
         { name: "Update Rebalance Sheets", functionName: "rebalancePortfolio" },
-        { name: "Remove Rebalance Sheets", functionName: "deleteSheets" },
+        { name: "Remove Rebalance Sheets", functionName: "deleteRebalanceSheets" },
         { name: "Export as json", functionName: "exportPortfolio"},
     ];
     SpreadsheetApp

@@ -26,15 +26,10 @@ namespace Web.Controllers
                     return BadRequest();  
 
                 // load parameters
-                var stockRatio = 0.9;
-                var domesticStockRatio = 0.6;
-                var domesticBondRatio = 1.0;
-                gsp.RebalanceParameters.TryGetValue(GoogleSheetPortfolio.TotalStockRatio, out stockRatio);
-                gsp.RebalanceParameters.TryGetValue(GoogleSheetPortfolio.DomesticStockRatio, out domesticStockRatio);
-                gsp.RebalanceParameters.TryGetValue(GoogleSheetPortfolio.DomesticBondRatio, out domesticBondRatio);
-                stockRatio = Math.Max(Math.Min(stockRatio, 1.0), 0.0);
-                domesticStockRatio = Math.Max(Math.Min(domesticStockRatio, 1.0), 0.0);
-                domesticBondRatio = Math.Max(Math.Min(domesticBondRatio, 1.0), 0.0);
+                double ForceRatio(double d) => Math.Max(Math.Min(d, 1.0), 0.0);
+                var stockRatio = ForceRatio(gsp.RebalanceParameters.TotalStockRatio);
+                var domesticStockRatio = ForceRatio(gsp.RebalanceParameters.DomesticStockRatio);
+                var domesticBondRatio = ForceRatio(gsp.RebalanceParameters.DomesticBondRatio);
 
                 // load original portfolio
                 var securityCache = new SecurityCache();
