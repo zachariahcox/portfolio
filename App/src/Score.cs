@@ -20,7 +20,7 @@ namespace PortfolioPicker.App
         public double TaxEfficiency;
         public double ExpenseRatio;
         public double TaxableSales;
-        public ScoreWeights Weights = new ScoreWeights();
+        public ScoreWeights Weights;
 
         // weight by number of orders? 
         // public double OrdersScore;

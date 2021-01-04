@@ -19,7 +19,8 @@ namespace PortfolioPicker.App
             Original = original;
             TargetExposureRatios = targetExposureRatios;
             Orders = Portfolio.ComputeOrders(original, this);
-            Score = GetScore(Score.Weights.GetWeight, targetExposureRatios);
+            Weights = original.Weights; // propogate weights
+            Score = GetScore(targetExposureRatios);
         }
 
         public Portfolio Original {get; set;}
@@ -28,11 +29,9 @@ namespace PortfolioPicker.App
 
         public ICollection<Order> Orders { get; set; }
 
-        public override Score GetScore(
-            Func<AssetClass, AssetLocation, AccountType, double> GetTaxOptimizationScoreWeight,
-            ICollection<Exposure> targetExposureRatios)
+        public override Score GetScore(ICollection<Exposure> targetExposureRatios)
         {
-            var s = base.GetScore(GetTaxOptimizationScoreWeight, targetExposureRatios);
+            var s = base.GetScore(targetExposureRatios);
             s.TaxableSales = 1.0 - SumOfTaxableSales() / TotalValue;
             return s;
         }
@@ -78,18 +77,20 @@ namespace PortfolioPicker.App
             
 
             // SCORE
-            if (Score != null)
+            if (Weights != null)
             {
                 lines.Add(Row("weight breakdown", 
                     "<table><tr><td>"
                     + string.Join("</td></tr><tr><td>",
-                        string.Format("asset mix</td><td>{0:0.0}", Score.Weights.AssetMix),
-                        string.Format("tax efficiency</td><td>{0:0.0}", Score.Weights.TaxEfficiency),
-                        string.Format("expense ratio</td><td>{0:0.0}", Score.Weights.ExpenseRatio),
-                        string.Format("taxable sales</td><td>{0:0.0}", Score.Weights.TaxableSales))
+                        string.Format("asset mix</td><td>{0:0.0}", Weights.AssetMix),
+                        string.Format("tax efficiency</td><td>{0:0.0}", Weights.TaxEfficiency),
+                        string.Format("expense ratio</td><td>{0:0.0}", Weights.ExpenseRatio),
+                        string.Format("taxable sales</td><td>{0:0.0}", Weights.TaxableSales))
                     + "</td></tr></table>"
                 ));
-
+            }
+            if (Score != null)
+            {
                 lines.Add("## score breakdown");
                 lines.Add(Row("portfolio", "total (sales)", "total", "asset mix", "tax efficiency", "expense ratio", "taxable sales"));
                 lines.Add(Row("---", "---:", "---:", "---:", "---:", "---:", "---:"));
@@ -182,10 +183,10 @@ namespace PortfolioPicker.App
             if (Score != null)
             {
                 AddStat("model weights", string.Join("\n", 
-                    "     asset mix: " + Score.Weights.AssetMix,
-                    "tax efficiency: " + Score.Weights.TaxEfficiency,
-                    " expense ratio: " + Score.Weights.ExpenseRatio,
-                    " taxable sales: " + Score.Weights.TaxableSales
+                    "     asset mix: " + Weights.AssetMix,
+                    "tax efficiency: " + Weights.TaxEfficiency,
+                    " expense ratio: " + Weights.ExpenseRatio,
+                    " taxable sales: " + Weights.TaxableSales
                     ));
             
                 scoreComparison.Add(new {
