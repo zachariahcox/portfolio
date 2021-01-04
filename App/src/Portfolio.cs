@@ -22,6 +22,8 @@ namespace PortfolioPicker.App
             
         public Score Score {get; set;}
 
+        public ScoreWeights Weights {get; set;}
+
         public IList<string> Errors { get; set; }
 
         public IList<Account> Accounts {get; set;}
@@ -169,24 +171,21 @@ namespace PortfolioPicker.App
         ///<summary>
         /// a "score" for the portfolio between 0 and 1
         ///</summary>
-        public virtual Score GetScore(
-            Func<AssetClass, AssetLocation, AccountType, double> GetTaxOptimizationScoreWeight,
-            ICollection<Exposure> targetExposureRatios)
+        public virtual Score GetScore(ICollection<Exposure> targetExposureRatios)
         {
-            // total weights should sum to 100
-            Debug.Assert(100.0 ==  
-                  Score.weight_assetMix 
-                + Score.weight_useTaxOptimalAccounts 
-                + Score.weight_lowExpenseRatio
-                );
-
-            var score = new Score()
+            Debug.Assert(this.Weights == null || this.Weights.IsValid());
+            
+            var score = new Score();
+            if (Weights == null)
             {
-                AssetMixWeight = Score.weight_assetMix,
-                TaxEfficiencyWeight = Score.weight_useTaxOptimalAccounts,
-                ExpenseRatioWeight = Score.weight_lowExpenseRatio,
-                TaxableSalesWeight = Score.weight_taxableSales
-            };
+                return score;
+            }
+            else 
+            {
+                // kind of hacky -- set a pointer to the portfolio's weights for quick lookups later
+                // propagate target weights
+                score.Weights = this.Weights;
+            }
 
             // keep expense ratios low: award zero points if this ER is higher than baseline
             const double vanguardTargetDateFundER = 0.15; // source: vanguard target retirement fund account expense ratio (VFIFX)
@@ -208,19 +207,19 @@ namespace PortfolioPicker.App
 
             // owning assets in tax-optimal accounts: subtract points if assets could be owned in a better account
             var optimizationScore = 0.0;
+            var weights = score.Weights; // cache
             foreach (var e in targetExposureRatios)
             {
                 foreach (var accountType in AccountTypes.ALL)
                 {
                     var fraction = PercentOfAssetType(accountType, e.Class, e.Location) / 100.0;
-                    optimizationScore += GetTaxOptimizationScoreWeight(e.Class, e.Location, accountType) * fraction;
+                    optimizationScore += fraction * weights.GetWeight(e.Class, e.Location, accountType);
                 }
             }
             score.TaxEfficiency = optimizationScore / targetExposureRatios.Count;
 
             // no sales required here!
             score.TaxableSales = 1;
-
             return score;
         }
 

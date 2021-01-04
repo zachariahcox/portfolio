@@ -27,8 +27,11 @@ namespace PortfolioPicker.App
             // this is the raw list of values without any priority ordering.
             var targetRatios = ComputeTargetRatios(stockRatio, domesticStockRatio, domesticBondRatio);
             
+            // fault-in weighting as needed
+            portfolio.Weights = portfolio.Weights ?? ScoreWeights.Default(); 
+
             // compute original score with these ratios
-            portfolio.Score = portfolio.GetScore(Score.GetScoreWeight, targetRatios);
+            portfolio.Score = portfolio.GetScore(targetRatios);
 
             // in which order should we pick from available accounts?
             var orderedAccounts = portfolio.Accounts.OrderBy(x => x.Type).ToArray();

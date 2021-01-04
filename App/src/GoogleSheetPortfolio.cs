@@ -9,6 +9,7 @@ namespace PortfolioPicker.App
         public double DomesticStockRatio {get;set;} = 0.6;
         public double DomesticBondRatio {get;set;} = 1.0;
         public string Url {get;set;}
+        public ScoreWeights Weights {get; set;}
     }
 
     public class GoogleSheetPortfolio 

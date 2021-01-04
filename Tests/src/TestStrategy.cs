@@ -434,7 +434,46 @@ namespace PortfolioPicker.Tests
             var p = Picker.Rebalance(original, 0.5, 0.5, 0.5, iterationLimit: 1, threadLimit: 1);
 
             var targetRatios = Picker.ComputeTargetRatios(.5, .5, .5);
-            var os = original.GetScore(Score.GetScoreWeight, targetRatios);
+
+            var os = original.GetScore(targetRatios);
+        }
+
+        [Fact]
+        public void PropagateWeights()
+        {
+            var b = "ReduceTax";
+            var symbolName = "Generic";
+            var accounts = new List<Account>{
+                CreateAccount(b, AccountType.BROKERAGE, value: 100),
+                CreateAccount(b, AccountType.ROTH, value: 100),
+                CreateAccount(b, AccountType.IRA, value: 100),
+            };
+            var funds = new List<Security>{
+                CreateSecurity(b, symbolName, 0, 0.5, 1),
+                CreateSecurity(b, symbolName, 0, 0, 1),
+            };
+
+            var sc = new SecurityCache();
+            sc.Add(funds);
+            
+            var original = new Portfolio(accounts, sc);
+            var originalWeights = ScoreWeights.Default();
+            originalWeights.AssetMix = 25;
+            originalWeights.TaxEfficiency = 50;
+            originalWeights.ExpenseRatio  = 25;
+            Assert.True(originalWeights.IsValid());
+            
+            //
+            original.Weights = originalWeights;
+            var targetRatios = Picker.ComputeTargetRatios(.5, .5, .5);
+            var os = original.GetScore(targetRatios);
+            Assert.Equal(originalWeights, os.Weights);
+            Assert.Null(original.Score);
+
+            //
+            var rebalanced = Picker.Rebalance(original, 0.5, 0.5, 0.5, iterationLimit: 1, threadLimit: 1);
+            Assert.Equal(originalWeights, rebalanced.Weights);
+            Assert.Equal(originalWeights, rebalanced.Score.Weights);
         }
 
         [Fact]
