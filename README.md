@@ -1,6 +1,10 @@
 # Introduction
-This app helps rebalance portfolios that span multiple investment accounts.
-The application parses the yaml/json and produces a ```Portfolio``` object. 
+This app helps maintain a target asset allocation mix on portfolios that span multiple investment accounts.
+It attempts to maximize a "score" function which is defined via provided sets of weights. 
+
+The application parses a current portfolio described in yaml/json and produces a ```Portfolio``` object. 
+
+This repo contains both a rest api and command line interface. 
 
 # Getting Started
 To build the project you will need [dotnet core 3.1 or greater](https://code.visualstudio.com/docs/languages/dotnet).
