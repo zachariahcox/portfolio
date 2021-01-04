@@ -19,7 +19,7 @@ namespace PortfolioPicker.App
             Original = original;
             TargetExposureRatios = targetExposureRatios;
             Orders = Portfolio.ComputeOrders(original, this);
-            Score = GetScore(Score.GetScoreWeight, targetExposureRatios);
+            Score = GetScore(Score.Weights.GetWeight, targetExposureRatios);
         }
 
         public Portfolio Original {get; set;}
@@ -83,10 +83,10 @@ namespace PortfolioPicker.App
                 lines.Add(Row("weight breakdown", 
                     "<table><tr><td>"
                     + string.Join("</td></tr><tr><td>",
-                        string.Format("asset mix</td><td>{0:0.0}", Score.AssetMixWeight),
-                        string.Format("tax efficiency</td><td>{0:0.0}", Score.TaxEfficiencyWeight),
-                        string.Format("expense ratio</td><td>{0:0.0}", Score.ExpenseRatioWeight),
-                        string.Format("taxable sales</td><td>{0:0.0}", Score.TaxableSalesWeight))
+                        string.Format("asset mix</td><td>{0:0.0}", Score.Weights.AssetMix),
+                        string.Format("tax efficiency</td><td>{0:0.0}", Score.Weights.TaxEfficiency),
+                        string.Format("expense ratio</td><td>{0:0.0}", Score.Weights.ExpenseRatio),
+                        string.Format("taxable sales</td><td>{0:0.0}", Score.Weights.TaxableSales))
                     + "</td></tr></table>"
                 ));
 
@@ -157,33 +157,36 @@ namespace PortfolioPicker.App
             //
             var stats = new List<dynamic>();
             void AddStat(dynamic k, dynamic v){stats.Add(new {metric = k, result = v});}
-            AddStat("total value of assets", NotNan(TotalValue));
-            AddStat("total expense ratio", NotNan(ExpenseRatio));
-            AddStat("previous total expense ratio", NotNan(reference.ExpenseRatio));
+            // AddStat("total value of assets", NotNan(TotalValue));
             // AddStat("morningstar xray (upload csv)", "https://www.tdameritrade.com/education/tools-and-calculators/morningstar-instant-xray.page");
-            
+            AddStat("current expense ratio", NotNan(reference.ExpenseRatio));
+            AddStat("proposed expense ratio", NotNan(ExpenseRatio));
+
             if (TargetExposureRatios?.Any() == true)
             {
-                AddStat("target % stocks", TargetExposureRatios
-                    .Where(x => x.Class == AssetClass.Stock)
-                    .Sum(x => x.Value));
-                AddStat("target % bonds", TargetExposureRatios
-                    .Where(x => x.Class == AssetClass.Bond)
-                    .Sum(x => x.Value));
+                // AddStat("target % stocks", TargetExposureRatios
+                //     .Where(x => x.Class == AssetClass.Stock)
+                //     .Sum(x => x.Value));
+                // AddStat("target % bonds", TargetExposureRatios
+                //     .Where(x => x.Class == AssetClass.Bond)
+                //     .Sum(x => x.Value));
                 
                 AddStat("sum of taxable sales", SumOfTaxableSales());
+                AddStat("percent of portfolio sold", SumOfTaxableSales() / TotalValue);
                 AddStat("exposure priority order",
-                    string.Join(", ", TargetExposureRatios.Select(x => x.Class.ToString().ToLower() + x.Location.ToString().ToLower()))
+                    string.Join("\n", TargetExposureRatios.Select(x => x.Class.ToString().ToLower() + x.Location.ToString().ToLower()))
                 );
             }
 
             var scoreComparison = new List<dynamic>();
             if (Score != null)
             {
-                AddStat("weights: asset mix", Score.AssetMixWeight);
-                AddStat("weights: tax efficiency", Score.TaxEfficiencyWeight);
-                AddStat("weights: expense ratio", Score.ExpenseRatioWeight);
-                AddStat("weights: taxable sales", Score.TaxableSalesWeight);
+                AddStat("model weights", string.Join("\n", 
+                    "     asset mix: " + Score.Weights.AssetMix,
+                    "tax efficiency: " + Score.Weights.TaxEfficiency,
+                    " expense ratio: " + Score.Weights.ExpenseRatio,
+                    " taxable sales: " + Score.Weights.TaxableSales
+                    ));
             
                 scoreComparison.Add(new {
                     portfolio = "proposed",

@@ -173,20 +173,8 @@ namespace PortfolioPicker.App
             Func<AssetClass, AssetLocation, AccountType, double> GetTaxOptimizationScoreWeight,
             ICollection<Exposure> targetExposureRatios)
         {
-            // total weights should sum to 100
-            Debug.Assert(100.0 ==  
-                  Score.weight_assetMix 
-                + Score.weight_useTaxOptimalAccounts 
-                + Score.weight_lowExpenseRatio
-                );
-
-            var score = new Score()
-            {
-                AssetMixWeight = Score.weight_assetMix,
-                TaxEfficiencyWeight = Score.weight_useTaxOptimalAccounts,
-                ExpenseRatioWeight = Score.weight_lowExpenseRatio,
-                TaxableSalesWeight = Score.weight_taxableSales
-            };
+            var score = new Score();
+            Debug.Assert(score.Weights.IsValid());
 
             // keep expense ratios low: award zero points if this ER is higher than baseline
             const double vanguardTargetDateFundER = 0.15; // source: vanguard target retirement fund account expense ratio (VFIFX)

@@ -28,7 +28,7 @@ namespace PortfolioPicker.App
             var targetRatios = ComputeTargetRatios(stockRatio, domesticStockRatio, domesticBondRatio);
             
             // compute original score with these ratios
-            portfolio.Score = portfolio.GetScore(Score.GetScoreWeight, targetRatios);
+            portfolio.Score = portfolio.GetScore(portfolio.Score.Weights.GetWeight, targetRatios);
 
             // in which order should we pick from available accounts?
             var orderedAccounts = portfolio.Accounts.OrderBy(x => x.Type).ToArray();
