@@ -6,6 +6,8 @@ The application parses a current portfolio described in yaml/json and produces a
 
 This repo contains both a rest api and command line interface. 
 
+Disclaimer: I am not a financial professional. Definitely do not use this tool for anything. 
+
 # Getting Started
 To build the project you will need [dotnet core 3.1 or greater](https://code.visualstudio.com/docs/languages/dotnet).
 
