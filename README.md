@@ -77,4 +77,5 @@ cd ../build
 dotnet publish ../portfolio/CLI/ -o . -c release
 ./portfolio rebalance path/to/portfolio.yaml -o path/to/outputdir/ -db 100
 ```
-
+## Deployment
+Definitely checkout `.github/workflows/ci.yml` for an example of deploying the app to Azure. 
